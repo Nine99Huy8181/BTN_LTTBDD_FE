@@ -1,0 +1,15 @@
+// app/(customer)/(cart)/select-address.tsx
+import { View, Text, Button } from 'react-native';
+import { useRouter } from 'expo-router';
+
+export default function SelectAddressScreen() {
+  const router = useRouter();
+
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text style={{ fontSize: 20 }}>Màn hình Chọn Địa chỉ</Text>
+      <Button title="Back" onPress={() => router.back()} />
+      <Button title="Next" onPress={() => router.push('/(customer)/(cart)/payment-method')} />
+    </View>
+  );
+}
