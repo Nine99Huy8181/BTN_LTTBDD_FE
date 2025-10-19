@@ -1,6 +1,7 @@
 // app/(auth)/register.tsx
 import { View, Text, Button } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes } from '@/constants';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -9,7 +10,7 @@ export default function RegisterScreen() {
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text style={{ fontSize: 20 }}>Màn hình Đăng ký</Text>
       <Button title="Quay lại Đăng nhập" onPress={() => router.back()} />
-      <Button title="Xác minh Email" onPress={() => router.push('/(auth)/verify-email')} />
+      <Button title="Xác minh Email" onPress={() => router.push(Routes.AuthVerifyEmail)} />
     </View>
   );
 }

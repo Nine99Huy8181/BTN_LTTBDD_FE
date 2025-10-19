@@ -1,6 +1,7 @@
 // app/(admin)/(more)/coupons.tsx
 import { View, Text, Button } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes } from '@/constants';
 
 export default function CouponsScreen() {
   const router = useRouter();
@@ -8,7 +9,7 @@ export default function CouponsScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text style={{ fontSize: 20 }}>Màn hình Coupon</Text>
-      <Button title="Add Coupon" onPress={() => router.push('/(admin)/(more)/add-coupon')} />
+      <Button title="Add Coupon" onPress={() => router.push(Routes.AdminAddCoupon)} />
     </View>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/AuthContext';
+import { Routes } from '@/constants';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -48,8 +49,8 @@ export default function LoginScreen() {
         autoCapitalize="none"
       />
       <Button title="Login" onPress={handleLogin} disabled={isLoggingIn} />
-      <Button title="Đăng ký" onPress={() => router.push('/(auth)/register')} />
-      <Button title="Quên mật khẩu" onPress={() => router.push('/(auth)/forgot-password')} />
+      <Button title="Đăng ký" onPress={() => router.push(Routes.AuthRegister)} />
+      <Button title="Quên mật khẩu" onPress={() => router.push(Routes.AuthForgotPassword)} />
     </View>
   );
 }

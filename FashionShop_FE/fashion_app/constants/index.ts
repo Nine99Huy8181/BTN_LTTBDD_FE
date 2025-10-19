@@ -1,4 +1,4 @@
 export * from './Colors';
-export * from './Sizes';
+export * from './Texts';
 export * from './Routes';
 export * from './Config';

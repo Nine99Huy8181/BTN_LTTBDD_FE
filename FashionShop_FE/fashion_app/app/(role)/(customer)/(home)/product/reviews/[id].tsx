@@ -1,4 +1,4 @@
-// app/(shared)/product/reviews/[id].tsx
+// app/product/reviews/[id].tsx
 import { View, Text, Button } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 

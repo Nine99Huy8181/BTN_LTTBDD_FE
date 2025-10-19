@@ -1,6 +1,7 @@
 // app/(customer)/(categories)/[categoryId].tsx
 import { View, Text, Button } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Routes } from '@/constants';
 
 export default function CategoryDetailScreen() {
   const { categoryId } = useLocalSearchParams();
@@ -9,7 +10,7 @@ export default function CategoryDetailScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text style={{ fontSize: 20 }}>Màn hình Chi tiết Category {categoryId}</Text>
-      <Button title="Go to Subcategory" onPress={() => router.push('/(customer)/(categories)/subcategory/1')} />
+      <Button title="Go to Subcategory" onPress={() => router.push(`${Routes.CustomerSubCategoryDetail}1`)} />
       <Button title="Back" onPress={() => router.back()} />
     </View>
   );

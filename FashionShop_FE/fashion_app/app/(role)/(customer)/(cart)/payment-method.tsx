@@ -1,6 +1,7 @@
 // app/(customer)/(cart)/payment-method.tsx
 import { View, Text, Button } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes } from '@/constants';
 
 export default function PaymentMethodScreen() {
   const router = useRouter();
@@ -9,7 +10,7 @@ export default function PaymentMethodScreen() {
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text style={{ fontSize: 20 }}>Màn hình Phương thức Thanh toán</Text>
       <Button title="Back" onPress={() => router.back()} />
-      <Button title="Confirm" onPress={() => router.push('/(customer)/(cart)/order-success')} />
+      <Button title="Confirm" onPress={() => router.push(Routes.CustomerOrderSuccess)} />
     </View>
   );
 }

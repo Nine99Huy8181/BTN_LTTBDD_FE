@@ -1,6 +1,7 @@
 // app/(admin)/(products)/variants/[productId].tsx
 import { View, Text, Button } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Routes } from '@/constants';
 
 export default function VariantsScreen() {
   const { productId } = useLocalSearchParams();
@@ -9,7 +10,7 @@ export default function VariantsScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text style={{ fontSize: 20 }}>Màn hình Biến thể {productId}</Text>
-      <Button title="Inventory" onPress={() => router.push('/(admin)/(products)/inventory')} />
+      <Button title="Inventory" onPress={() => router.push(Routes.AdminInventory)} />
       <Button title="Back" onPress={() => router.back()} />
     </View>
   );

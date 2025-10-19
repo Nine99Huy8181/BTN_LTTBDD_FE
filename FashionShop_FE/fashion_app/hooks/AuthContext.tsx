@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Config } from '../constants/Config';
+import { jwtDecode } from 'jwt-decode';
 
 interface LoginResponse {
   token: string;
@@ -57,7 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       await SecureStore.setItemAsync('jwt_token', token);
-
+      console.log('Saved token:', token); // Debug
+      console.log('Decoded token:', jwtDecode(token));
       const userData = await fetchUser(token);
 
       if (!userData) {

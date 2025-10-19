@@ -1,6 +1,7 @@
 // app/(auth)/verify-email.tsx
 import { View, Text, Button } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes } from '@/constants';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -8,7 +9,7 @@ export default function VerifyEmailScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text style={{ fontSize: 20 }}>Màn hình Xác minh Email</Text>
-      <Button title="Hoàn tất" onPress={() => router.replace('/(customer)')} />
+      <Button title="Hoàn tất" onPress={() => router.replace(Routes.CustomerHome)} />
     </View>
   );
 }
