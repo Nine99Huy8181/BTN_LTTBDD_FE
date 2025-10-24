@@ -1,44 +1,48 @@
+// app/(auth)/login.tsx
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { useAuth } from '../../hooks/AuthContext';
+import { useAuth } from '@/hooks/AuthContext';
 import { Routes } from '@/constants';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
 
-  // Watch user thay đổi
   useEffect(() => {
-    if (isLoggingIn && user) {
-      console.log('User logged in:', user);
+    if (user) {
       router.replace('/(role)');
-      setIsLoggingIn(false);
     }
-  }, [user, isLoggingIn]);
+  }, [user]);
 
   const handleLogin = async () => {
-    setIsLoggingIn(true);
-    const { success, error: errorMessage } = await login(username, password);
+    if (!username || !password) {
+      Alert.alert('Error', 'Please enter username and password');
+      return;
+    }
+
+    setLoading(true);
+    const { success, error } = await login(username, password);
+    setLoading(false);
+
     if (!success) {
-      setError(errorMessage || 'Login failed');
-      setIsLoggingIn(false);
+      Alert.alert('Login Failed', error || 'Invalid credentials');
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
+
       <TextInput
         style={styles.input}
-        placeholder="Username"
+        placeholder="Email or Username"
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
+        keyboardType="email-address"
       />
       <TextInput
         style={styles.input}
@@ -46,15 +50,14 @@ export default function LoginScreen() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        autoCapitalize="none"
       />
-      <Button title="Login" onPress={handleLogin} disabled={isLoggingIn} />
-      <Button title="Đăng ký" onPress={() => router.push(Routes.AuthRegister)} />
-      <Button title="Quên mật khẩu" onPress={() => router.push(Routes.AuthForgotPassword)} />
+
+      <Button title={loading ? "Logging in..." : "Login"} onPress={handleLogin} disabled={loading} />
+      <Button title="Register" onPress={() => router.push(Routes.AuthRegister)} />
+      <Button title="Forgot Password" onPress={() => router.push(Routes.AuthForgotPassword)} />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

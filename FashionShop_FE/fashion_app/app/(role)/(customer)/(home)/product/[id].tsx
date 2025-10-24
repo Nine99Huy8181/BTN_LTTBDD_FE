@@ -28,7 +28,6 @@ export default function ProductDetailScreen() {
       <Text style={{ fontSize: 20 }}>Màn hình Chi tiết Sản phẩm {id}</Text>
       <Text style={{ fontSize: 20 }}>{product?.name}</Text>
       <Text style={{ fontSize: 20 }}>{product?.averageRating}</Text>
-      <Text style={{ fontSize: 20 }}>{product?.categoryID}</Text>
       <Text style={{ fontSize: 20 }}>{product?.createdDate}</Text>
       <Text style={{ fontSize: 20 }}>{product?.description}</Text>
       <Text style={{ fontSize: 20 }}>{product?.brand}</Text>

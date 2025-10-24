@@ -1,108 +1,70 @@
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+// app/(admin)/products/add.tsx
 import { useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 import { productService } from '@/services/product.service';
-import { Product } from '@/types';
 
 export default function AddProductScreen() {
   const router = useRouter();
-  const [product, setProduct] = useState<Partial<Product>>({
+  const [form, setForm] = useState({
     name: '',
-    basePrice: 0,
     brand: '',
+    basePrice: '',
+    discountPrice: '',
     description: '',
     material: '',
-    status: 'active',
-    averageRating: 0,
-    reviewCount: 0,
-    discountPrice: 0,
+    image: '',
+    status: 'ACTIVE',
     isFeatured: false,
   });
 
   const handleAddProduct = async () => {
-    if (!product.name || !product.basePrice || !product.brand) {
-      Alert.alert('Error', 'Please fill in all required fields');
+    if (!form.name || !form.brand || !form.basePrice) {
+      Alert.alert('Lỗi', 'Vui lòng nhập tên, thương hiệu và giá');
       return;
     }
 
     try {
-      await productService.createProduct(product as Product);
-      Alert.alert('Success', 'Product added successfully');
-      router.back();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to add product');
+      await productService.createProduct({
+        ...form,
+        basePrice: parseFloat(form.basePrice),
+        discountPrice: parseFloat(form.discountPrice) || undefined,
+        isFeatured: form.isFeatured === true,
+      });
+      Alert.alert('Thành công', 'Thêm sản phẩm thành công', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.message || 'Không thể thêm sản phẩm');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Add New Product</Text>
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Product Name"
-        value={product.name}
-        onChangeText={(text) => setProduct({ ...product, name: text })}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Price"
-        keyboardType="numeric"
-        value={product.basePrice?.toString()}
-        onChangeText={(text) => setProduct({ ...product, basePrice: parseFloat(text) || 0 })}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Brand"
-        value={product.brand}
-        onChangeText={(text) => setProduct({ ...product, brand: text })}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Description"
-        value={product.description}
-        onChangeText={(text) => setProduct({ ...product, description: text })}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Material"
-        value={product.material}
-        onChangeText={(text) => setProduct({ ...product, material: text })}
-      />
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Thêm sản phẩm mới</Text>
+
+      {['name', 'brand', 'basePrice', 'discountPrice', 'description', 'material', 'image'].map(field => (
+        <TextInput
+          key={field}
+          style={styles.input}
+          placeholder={field === 'basePrice' ? 'Giá gốc' : field === 'discountPrice' ? 'Giá khuyến mãi' : field}
+          value={form[field as keyof typeof form]}
+          onChangeText={text => setForm(prev => ({ ...prev, [field]: text }))}
+          keyboardType={['basePrice', 'discountPrice'].includes(field) ? 'numeric' : 'default'}
+        />
+      ))}
 
       <View style={styles.buttonContainer}>
-        <Button title="Add Product" onPress={handleAddProduct} />
-        <Button title="Cancel" onPress={() => router.back()} />
+        <Button title="Thêm sản phẩm" onPress={handleAddProduct} />
+        <Button title="Hủy" onPress={() => router.back()} color="gray" />
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    marginBottom: 12,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
+  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, marginBottom: 12 },
+  buttonContainer: { marginTop: 16, gap: 8 },
 });

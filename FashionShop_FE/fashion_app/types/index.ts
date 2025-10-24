@@ -1,17 +1,28 @@
+// types/index.ts
 export interface Product {
-  averageRating: number;
-  basePrice: number;
-  brand: string;
-  createdDate: string; // JSON trả về ngày tháng dưới dạng string (ISO 8601)
-  description: string;
-  discountPrice: number;
-  isFeatured: boolean;
-  material: string;
+  productID: number;
   name: string;
-  productID: number; // Trong JSON này là number
-  reviewCount: number;
-  status: string;
-  categoryID?: string | null; 
+  description?: string;
+  brand: string;
+  basePrice: number;
+  discountPrice?: number;
+  material?: string;
+  createdDate?: string;
+  status?: string;
+  averageRating?: number;
+  reviewCount?: number;
+  isFeatured?: boolean;
+  image?: string;
+}
+
+export interface ProductResponse {
+  productID: number;
+  name: string;
+  brand: string;
+  discountPrice: number;
+  averageRating: number;
+  image: string;
+  soldQuantity: number;
 }
 
 export interface Account {

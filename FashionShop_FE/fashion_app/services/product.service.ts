@@ -1,40 +1,40 @@
-import { Product } from '@/types';
-import { api } from './api';
+// services/product.service.ts
+import { api, ApiResponse } from './api';
+import { Product, ProductResponse } from '@/types';
 
 export const productService = {
-  // Lấy tất cả sản phẩm
-  getAllProducts: async (): Promise<Product[]> => {
-    const response = await api.get('/products');
-    return response.data;
+  getAllProducts: async (): Promise<ProductResponse[]> => {
+    const response = await api.get<ApiResponse<ProductResponse[]>>('/products');
+    return response.data.result || [];
   },
 
-  // Lấy sản phẩm theo ID
   getProductById: async (id: number): Promise<Product> => {
-    const response = await api.get(`/products/${id}`);
-    return response.data;
+    const response = await api.get<ApiResponse<Product>>(`/products/${id}`);
+    if (!response.data.result) throw new Error('Product not found');
+    return response.data.result;
   },
 
-  // Lấy sản phẩm theo danh mục
-  getProductsByCategoryId: async (categoryId: number): Promise<Product[]> => {
-    const response = await api.get(`/products/category/${categoryId}`);
-    return response.data;
+  getProductsByCategoryId: async (categoryId: number): Promise<ProductResponse[]> => {
+    const response = await api.get<ApiResponse<ProductResponse[]>>(`/products/category/${categoryId}`);
+    return response.data.result || [];
   },
 
-  // Lấy sản phẩm theo thương hiệu
-  getProductsByBrand: async (brand: string): Promise<Product[]> => {
-    const response = await api.get(`/products/brand/${brand}`);
-    return response.data;
+  getProductsByBrand: async (brand: string): Promise<ProductResponse[]> => {
+    const response = await api.get<ApiResponse<ProductResponse[]>>(`/products/brand/${encodeURIComponent(brand)}`);
+    return response.data.result || [];
   },
 
-  // Tạo sản phẩm mới
-  createProduct: async (product: Product): Promise<Product> => {
-    const response = await api.post('/products', product);
-    return response.data;
+  createProduct: async (product: Partial<Product>): Promise<Product> => {
+    const response = await api.post<ApiResponse<Product>>('/products', product);
+    return response.data.result!;
   },
 
-  // Cập nhật sản phẩm
-  updateProduct: async (id: number, productDetails: Product): Promise<Product> => {
-    const response = await api.put(`/products/${id}`, productDetails);
-    return response.data;
+  updateProduct: async (id: number, product: Partial<Product>): Promise<Product> => {
+    const response = await api.put<ApiResponse<Product>>(`/products/${id}`, product);
+    return response.data.result!;
+  },
+
+  deleteProduct: async (id: number): Promise<void> => {
+    await api.delete(`/products/${id}`);
   },
 };

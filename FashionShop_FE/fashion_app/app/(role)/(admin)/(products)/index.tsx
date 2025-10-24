@@ -1,18 +1,18 @@
-import { View, Text, FlatList, Button, StyleSheet, TextInput, Alert, RefreshControl } from 'react-native';
-import { useRouter } from 'expo-router';
+// app/(admin)/products/index.tsx
 import { useState, useEffect } from 'react';
+import { View, Text, TextInput, FlatList, Button, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { useRouter } from 'expo-router';
 import { productService } from '@/services/product.service';
-import { Product } from '@/types';
+import { ProductResponse } from '@/types';
 import { Routes } from '@/constants';
 
 export default function ProductManagementScreen() {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch products when component mounts
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -20,41 +20,33 @@ export default function ProductManagementScreen() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await productService.getAllProducts();
-      setProducts(response);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to fetch products');
+      const data = await productService.getAllProducts();
+      setProducts(data);
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.message || 'Không thể tải sản phẩm');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle pull-to-refresh
   const onRefresh = async () => {
     setRefreshing(true);
-    try {
-      const response = await productService.getAllProducts();
-      setProducts(response);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to refresh products');
-    } finally {
-      setRefreshing(false);
-    }
+    await fetchProducts();
+    setRefreshing(false);
   };
 
-  // Filter products based on search query
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Render individual product item
-  const renderProductItem = ({ item }: { item: Product }) => (
+  const renderProductItem = ({ item }: { item: ProductResponse }) => (
     <View style={styles.productItem}>
       <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>${item.basePrice}</Text>
+      <Text style={styles.productPrice}>${item.discountPrice}</Text>
       <Text style={styles.productBrand}>{item.brand}</Text>
+      <Text style={styles.sold}>Đã bán: {item.soldQuantity}</Text>
       <Button
-        title="Edit"
+        title="Sửa"
         onPress={() => router.push(`${Routes.AdminEditProduct}${item.productID}`)}
       />
     </View>
@@ -62,36 +54,27 @@ export default function ProductManagementScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Product Management</Text>
-      
+      <Text style={styles.title}>Quản lý sản phẩm</Text>
+
       <TextInput
         style={styles.searchInput}
-        placeholder="Search products..."
+        placeholder="Tìm kiếm sản phẩm..."
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
 
-      <Button
-        title="Add Product"
-        onPress={() => router.push(Routes.AdminAddProduct)}
-      />
+      <Button title="Thêm sản phẩm" onPress={() => router.push(Routes.AdminAddProduct)} />
 
       {loading ? (
-        <Text>Loading...</Text>
+        <Text>Đang tải...</Text>
       ) : (
         <FlatList
           data={filteredProducts}
           renderItem={renderProductItem}
           keyExtractor={item => item.productID.toString()}
-          ListEmptyComponent={<Text>No products found</Text>}
-          style={styles.flatList}
+          ListEmptyComponent={<Text>Không tìm thấy sản phẩm</Text>}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={['#0000ff']}
-              tintColor={'#0000ff'}
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
       )}
@@ -100,42 +83,12 @@ export default function ProductManagementScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  searchInput: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    marginBottom: 16,
-  },
-  flatList: {
-    flex: 1,
-  },
-  productItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginBottom: 8,
-  },
-  productName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  productPrice: {
-    fontSize: 16,
-    color: 'green',
-  },
-  productBrand: {
-    fontSize: 14,
-    color: 'gray',
-  },
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+  searchInput: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 8, marginBottom: 12 },
+  productItem: { padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
+  productName: { fontWeight: 'bold', fontSize: 16 },
+  productPrice: { color: '#e91e63', fontWeight: 'bold' },
+  productBrand: { color: '#666' },
+  sold: { fontSize: 12, color: '#888' },
 });

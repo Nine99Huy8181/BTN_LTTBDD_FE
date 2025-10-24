@@ -1,103 +1,79 @@
+// app/(role)/index.tsx
 import { useEffect, useState } from 'react';
-import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Image, Button, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { productService } from '@/services/product.service'; // Đường dẫn tới product.service.ts
-import { Product } from '@/types';
+import { productService } from '@/services/product.service';
+import { ProductResponse } from '@/types';
 import { Routes } from '@/constants';
-
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Lấy danh sách sản phẩm khi component mount
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const data = await productService.getAllProducts();
-        setProducts(data);
-        setLoading(false);
-      } catch (err) {
-        setError('Không thể tải danh sách sản phẩm');
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
+    loadProducts();
   }, []);
 
-  // Render mỗi item trong FlatList
-  const renderProductItem = ({ item }: { item: Product }) => (
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await productService.getAllProducts();
+      setProducts(data);
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.message || 'Không thể tải sản phẩm');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderItem = ({ item }: { item: ProductResponse }) => (
     <View style={styles.productItem}>
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>{item.basePrice} VNĐ</Text>
-      <Text style={styles.productPrice}>{item.reviewCount}</Text>
-      <Button
-        title="Xem chi tiết"
-        onPress={() => router.push(`${Routes.CustomerProductDetail}${item.productID}`)}
-      />
+      {item.image ? (
+        <Image source={{ uri: item.image }} style={styles.image} />
+      ) : (
+        <View style={[styles.image, styles.placeholder]} />
+      )}
+      <View style={styles.info}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.brand}>{item.brand}</Text>
+        <Text style={styles.price}>${item.discountPrice}</Text>
+        <Text style={styles.rating}>Rating: {item.averageRating} ({item.soldQuantity} sold)</Text>
+        <Button
+          title="Chi tiết"
+          onPress={() => router.push(`${Routes.CustomerProductDetail}${item.productID}`)}
+        />
+      </View>
     </View>
   );
 
+  if (loading) return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Màn hình Trang chủ</Text>
-      <Button title="Search" onPress={() => router.push(Routes.CustomerSearch)} />
-      <Button
-        title="Notifications"
-        onPress={() => router.push(Routes.CustomerNotifications)}
-      />
+      <Text style={styles.title}>Sản phẩm nổi bật</Text>
+      <Button title="Tìm kiếm" onPress={() => router.push(Routes.CustomerSearch)} />
+      <Button title="Thông báo" onPress={() => router.push(Routes.CustomerNotifications)} />
 
-      <Text style={styles.title}>Danh sách Sản phẩm</Text>
-      {loading ? (
-        <Text>Đang tải...</Text>
-      ) : error ? (
-        <Text style={styles.error}>{error}</Text>
-      ) : (
-        <FlatList
-          data={products}
-          renderItem={renderProductItem}
-          keyExtractor={(item) => item.productID.toLocaleString()}
-          style={styles.flatList}
-        />
-      )}
+      <FlatList
+        data={products}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.productID.toString()}
+        ListEmptyComponent={<Text>Không có sản phẩm</Text>}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  productItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginBottom: 10,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  productPrice: {
-    fontSize: 14,
-    color: '#555',
-  },
-  flatList: {
-    width: '100%',
-  },
-  error: {
-    color: 'red',
-    fontSize: 16,
-  },
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+  productItem: { flexDirection: 'row', padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
+  image: { width: 80, height: 80, borderRadius: 8 },
+  placeholder: { backgroundColor: '#ddd' },
+  info: { marginLeft: 12, flex: 1 },
+  name: { fontWeight: 'bold' },
+  brand: { color: '#666' },
+  price: { color: '#e91e63', fontWeight: 'bold' },
+  rating: { fontSize: 12, color: '#888' },
 });

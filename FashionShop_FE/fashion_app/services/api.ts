@@ -1,25 +1,39 @@
+// lib/api.ts
 import axios from 'axios';
 import { Config } from '@/constants';
 import * as SecureStore from 'expo-secure-store';
-import {jwtDecode} from 'jwt-decode';
+
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  result: T | null;
+}
 
 const api = axios.create({
-  baseURL: Config.API_URL,//'http://192.168.2.26:8085/api'
+  baseURL: Config.API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Interceptor để thêm token JWT vào header Authorization
+// Interceptor: Gắn token
 api.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('jwt_token');
-  // console.log(token);
-  // console.log('Decoded Token:', jwtDecode(token ? token : 'abc'));
-  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-}, (error) => {
-  return Promise.reject(error);
 });
+
+// Interceptor: Xử lý lỗi ApiResponse
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.data) {
+      const { code, message } = error.response.data;
+      error.message = message || 'Request failed';
+      error.code = code;
+    }
+    return Promise.reject(error);
+  }
+);
 
 export { api };
