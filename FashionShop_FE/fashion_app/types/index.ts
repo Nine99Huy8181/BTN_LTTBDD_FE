@@ -1,20 +1,4 @@
-// types/index.ts
-export interface Product {
-  productID: number;
-  name: string;
-  description?: string;
-  brand: string;
-  basePrice: number;
-  discountPrice?: number;
-  material?: string;
-  createdDate?: string;
-  status?: string;
-  averageRating?: number;
-  reviewCount?: number;
-  isFeatured?: boolean;
-  image?: string;
-}
-
+// types.ts
 export interface ProductResponse {
   productID: number;
   name: string;
@@ -25,6 +9,21 @@ export interface ProductResponse {
   soldQuantity: number;
 }
 
+export interface Product {
+  productID: number;
+  name: string;
+  description: string;
+  brand: string;
+  basePrice: number;
+  discountPrice: number;
+  material: string;
+  createdDate: string;
+  status: string;
+  averageRating: number;
+  reviewCount: number;
+  isFeatured: boolean;
+  image: string;
+}
 export interface Account {
   accountID: number;              // Tương ứng Long
   email: string;

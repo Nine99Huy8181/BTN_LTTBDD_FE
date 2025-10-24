@@ -79,7 +79,7 @@ export const Routes = {
   SuperReviews: '/(super)/(more)/reviews',
   SuperEditCoupon: '/(super)/(more)/edit-coupon/',
   SuperRespondReview: '/(super)/(more)/respond-review/',
-  SuperProfile: '/(super)/(more)/profile/index',
+  SuperProfile: '/(super)/(more)/profile/',
   SuperEditProfile: '/(super)/(more)/profile/edit-profile',
   SuperChangePassword: '/(super)/(more)/profile/change-password',
   SuperReferral: '/(super)/(more)/profile/referral',

@@ -6,8 +6,6 @@ import { View, ActivityIndicator } from 'react-native';
 export default function RoleLayout() {
   const { user, isInitializing } = useAuth();
 
-  console.log('RoleLayout user:', user);
-
   if (isInitializing) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

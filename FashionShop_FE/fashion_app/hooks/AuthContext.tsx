@@ -1,8 +1,10 @@
 // hooks/AuthContext.tsx
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { api } from '../services/api';
+import { Config } from '../constants/Config';
 import { jwtDecode } from 'jwt-decode';
+import { Alert } from 'react-native';
 
 interface ApiResponse<T> {
   code: number;
@@ -10,7 +12,7 @@ interface ApiResponse<T> {
   result: T | null;
 }
 
-interface LoginResponse {
+interface JwtResponse {
   token: string;
 }
 
@@ -37,88 +39,146 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUser = useCallback(async (token: string): Promise<User | null> => {
     try {
-      const response = await api.get<ApiResponse<User>>('/auth/me');
-      return response.data.result;
-    } catch (error: any) {
+      const response = await axios.get<ApiResponse<User>>(`${Config.API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data.code === 1000) {
+        return response.data.result;
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch user');
+      }
+    } catch (error) {
       console.error('Fetch user error:', error);
       return null;
     }
   }, []);
 
-  const login = useCallback(async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsInitializing(true);
-      const response = await api.post<ApiResponse<LoginResponse>>('/auth/login', {
+
+      const response = await axios.post<ApiResponse<JwtResponse>>(`${Config.API_URL}/auth/login`, {
         userName: username,
         password,
       });
 
+      if (response.data.code !== 1000) {
+        throw new Error(response.data.message || 'Login failed');
+      }
+
       const token = response.data.result?.token;
-      if (!token) throw new Error('No token received');
+      if (!token || token.split('.').length !== 3) {
+        throw new Error('Invalid JWT token received');
+      }
 
       await SecureStore.setItemAsync('jwt_token', token);
       const userData = await fetchUser(token);
-      if (!userData) throw new Error('Failed to load user info');
+
+      if (!userData) {
+        throw new Error('Failed to fetch user data');
+      }
 
       setUser(userData);
+      setIsInitializing(false);
+
       return { success: true };
     } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || 'Login failed';
-      return { success: false, error: msg };
-    } finally {
+      setUser(null);
       setIsInitializing(false);
+      const errorMessage = error.response?.data?.message || error.message || 'Invalid credentials';
+      Alert.alert(errorMessage);
+      return { success: false, error: errorMessage };
     }
   }, [fetchUser]);
 
   const register = useCallback(async (
-    email: string, password: string, fullName: string,
-    phoneNumber: string, dateOfBirth: string, gender: string
-  ) => {
+    email: string,
+    password: string,
+    fullName: string,
+    phoneNumber: string,
+    dateOfBirth: string,
+    gender: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
-      await api.post<ApiResponse<any>>('/auth/register', {
-        email, password, fullName, phoneNumber, dateOfBirth, gender,
+      const response = await axios.post<ApiResponse<string>>(`${Config.API_URL}/auth/register`, {
+        email,
+        password,
+        fullName,
+        phoneNumber,
+        dateOfBirth,
+        gender,
       });
+
+      if (response.data.code !== 1000) {
+        throw new Error(response.data.message || 'Registration failed');
+      }
+
       return { success: true };
     } catch (error: any) {
-      const msg = error.response?.data?.message || 'Registration failed';
-      return { success: false, error: msg };
+      // console.error('Register error:', error);
+      Alert.alert("Đăng kí không thành công");
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+      return { success: false, error: errorMessage };
     }
   }, []);
 
   const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync('jwt_token');
     setUser(null);
+    setIsInitializing(false);
   }, []);
 
   const getToken = useCallback(async () => {
-    return await SecureStore.getItemAsync('jwt_token');
+    const token = await SecureStore.getItemAsync('jwt_token');
+    return token;
   }, []);
 
-  // Khởi tạo auth
+  // Initialize auth - chỉ chạy 1 lần
   useEffect(() => {
-    if (hasInitialized) return;
-    const init = async () => {
+    const initializeAuth = async () => {
+      if (hasInitialized) return;
+
+      setIsInitializing(true);
+      
+      // Get token directly instead of calling getToken()
       const token = await SecureStore.getItemAsync('jwt_token');
+
       if (token) {
         const userData = await fetchUser(token);
-        setUser(userData || null);
-        if (!userData) await SecureStore.deleteItemAsync('jwt_token');
+
+        if (userData) {
+          setUser(userData);
+        } else {
+          await SecureStore.deleteItemAsync('jwt_token');
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
+
       setIsInitializing(false);
       setHasInitialized(true);
     };
-    init();
-  }, [fetchUser, hasInitialized]);
 
-  return (
-    <AuthContext.Provider value={{ user, isInitializing, login, register, logout, getToken }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    initializeAuth();
+  }, [fetchUser]);
+
+  const value: AuthContextType = {
+    user,
+    isInitializing,
+    login,
+    register,
+    logout,
+    getToken,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
   return context;
 };

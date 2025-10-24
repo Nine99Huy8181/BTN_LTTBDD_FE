@@ -26,10 +26,6 @@ const getApiUrl = () => {
     }
   }
   
-  console.log('\n📡 Real Network Interfaces:');
-  realIPs.forEach(item => {
-    console.log(`   ${item.name}: ${item.address}`);
-  });
   
   // Ưu tiên IP 192.168.x.x trong dải subnet /24 phổ biến
   const wifiIP = realIPs.find(item => 
@@ -40,8 +36,6 @@ const getApiUrl = () => {
   
   const selectedIP = wifiIP ? wifiIP.address : (realIPs[0]?.address || 'localhost');
   
-  console.log('✅ Selected IP:', selectedIP);
-  console.log('🚀 API URL: http://' + selectedIP + ':8085/api\n');
   
   return `http://${selectedIP}:8085/api`;
 };

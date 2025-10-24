@@ -5,9 +5,6 @@ import { View, ActivityIndicator } from 'react-native';
 
 function RootLayoutContent() {
   const { user, isInitializing } = useAuth();
-
-  console.log('RootLayout - user:', user, 'isInitializing:', isInitializing);
-
   // Show loading screen while initializing
   if (isInitializing) {
     return (

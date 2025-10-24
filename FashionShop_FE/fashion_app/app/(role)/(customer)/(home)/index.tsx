@@ -1,6 +1,6 @@
-// app/(role)/index.tsx
+// screens/HomeScreen.tsx
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, Button, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { productService } from '@/services/product.service';
 import { ProductResponse } from '@/types';
@@ -10,70 +10,104 @@ export default function HomeScreen() {
   const router = useRouter();
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Lấy danh sách sản phẩm khi component mount
   useEffect(() => {
-    loadProducts();
+    const fetchProducts = async () => {
+      try {
+        const data = await productService.getAllProducts();
+        setProducts(data);
+        setLoading(false);
+      } catch (err) {
+        setError('Không thể tải danh sách sản phẩm');
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      const data = await productService.getAllProducts();
-      setProducts(data);
-    } catch (error: any) {
-      Alert.alert('Lỗi', error.message || 'Không thể tải sản phẩm');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderItem = ({ item }: { item: ProductResponse }) => (
+  // Render mỗi item trong FlatList
+  const renderProductItem = ({ item }: { item: ProductResponse }) => (
     <View style={styles.productItem}>
-      {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.image} />
-      ) : (
-        <View style={[styles.image, styles.placeholder]} />
-      )}
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.brand}>{item.brand}</Text>
-        <Text style={styles.price}>${item.discountPrice}</Text>
-        <Text style={styles.rating}>Rating: {item.averageRating} ({item.soldQuantity} sold)</Text>
-        <Button
-          title="Chi tiết"
-          onPress={() => router.push(`${Routes.CustomerProductDetail}${item.productID}`)}
-        />
-      </View>
+      <Text style={styles.productName}>{item.name}</Text>
+      <Text style={styles.productPrice}>{item.discountPrice} VNĐ</Text>
+      <Text style={styles.productRating}>Đánh giá: {item.averageRating.toFixed(1)}/5</Text>
+      <Text style={styles.productSold}>Đã bán: {item.soldQuantity}</Text>
+      <Button
+        title="Xem chi tiết"
+        onPress={() => router.push(`${Routes.CustomerProductDetail}/${item.productID}`)}
+      />
     </View>
   );
 
-  if (loading) return <ActivityIndicator size="large" style={{ flex: 1 }} />;
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sản phẩm nổi bật</Text>
-      <Button title="Tìm kiếm" onPress={() => router.push(Routes.CustomerSearch)} />
-      <Button title="Thông báo" onPress={() => router.push(Routes.CustomerNotifications)} />
-
-      <FlatList
-        data={products}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.productID.toString()}
-        ListEmptyComponent={<Text>Không có sản phẩm</Text>}
+      <Text style={styles.title}>Màn hình Trang chủ</Text>
+      <Button title="Search" onPress={() => router.push(Routes.CustomerSearch)} />
+      <Button
+        title="Notifications"
+        onPress={() => router.push(Routes.CustomerNotifications)}
       />
+
+      <Text style={styles.title}>Danh sách Sản phẩm</Text>
+      {loading ? (
+        <Text>Đang tải...</Text>
+      ) : error ? (
+        <Text style={styles.error}>{error}</Text>
+      ) : (
+        <FlatList
+          data={products}
+          renderItem={renderProductItem}
+          keyExtractor={(item) => item.productID.toString()}
+          style={styles.flatList}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
-  productItem: { flexDirection: 'row', padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
-  image: { width: 80, height: 80, borderRadius: 8 },
-  placeholder: { backgroundColor: '#ddd' },
-  info: { marginLeft: 12, flex: 1 },
-  name: { fontWeight: 'bold' },
-  brand: { color: '#666' },
-  price: { color: '#e91e63', fontWeight: 'bold' },
-  rating: { fontSize: 12, color: '#888' },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginVertical: 16,
+  },
+  productItem: {
+    padding: 16,
+    marginVertical: 8,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+  },
+  productName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  productPrice: {
+    fontSize: 16,
+    color: '#e91e63',
+    marginVertical: 4,
+  },
+  productRating: {
+    fontSize: 14,
+    color: '#555',
+  },
+  productSold: {
+    fontSize: 14,
+    color: '#555',
+  },
+  error: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+  },
+  flatList: {
+    flex: 1,
+  },
 });
