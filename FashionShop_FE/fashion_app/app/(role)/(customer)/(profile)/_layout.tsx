@@ -13,7 +13,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="order-detail/[id]" options={{ title: 'Order Detail' }} />
       <Stack.Screen name="tracking/[id]" options={{ title: 'Tracking' }} />
       <Stack.Screen name="loyalty-points" options={{ title: 'Loyalty Points' }} />
-      <Stack.Screen name="referral" options={{ title: 'Referral' }} />
+      <Stack.Screen name="coupon" options={{ title: 'Coupon' }} />
       <Stack.Screen name="change-password" options={{ title: 'Change Password' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="order-detail/write-review/[id]" options={{ title: 'Write Review' }} />

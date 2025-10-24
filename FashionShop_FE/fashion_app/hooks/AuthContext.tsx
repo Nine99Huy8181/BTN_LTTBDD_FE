@@ -1,10 +1,9 @@
 // hooks/AuthContext.tsx
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { Config } from '../constants/Config';
-import { jwtDecode } from 'jwt-decode';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
+import { Config } from '../constants/Config';
 
 interface ApiResponse<T> {
   code: number;
@@ -19,6 +18,8 @@ interface JwtResponse {
 export interface User {
   userName: string;
   role: string;
+  accountId?: number;
+  customerId?: number;
 }
 
 interface AuthContextType {

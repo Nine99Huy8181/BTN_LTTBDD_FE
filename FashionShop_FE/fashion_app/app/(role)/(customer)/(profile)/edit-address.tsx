@@ -1,14 +1,14 @@
-// app/(customer)/(profile)/add-address.tsx
 import { useAuth } from '@/hooks/AuthContext';
 import { addressService } from '@/services/address.service';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert, Button, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 
-export default function AddAddressScreen() {
+export default function EditAddressScreen() {
   const router = useRouter();
-    const { user } = useAuth();
-    const customerId = user?.customerId || 1; // 🧍‍♂️ Tạm hardcode, sau này có thể lấy từ token/context
+  const { id } = useLocalSearchParams(); // 📦 Lấy ID từ route
+  const { user } = useAuth();
+  const customerId = user?.customerId || 1;
 
   const [form, setForm] = useState({
     recipientName: '',
@@ -20,19 +20,48 @@ export default function AddAddressScreen() {
     isDefault: false,
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const handleChange = (key: string, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async () => {
+  // 🧭 Lấy thông tin địa chỉ cũ
+  const fetchAddress = async () => {
+    try {
+      const data = await addressService.getAddressById(Number(id)); // ⚠️ cần có trong service
+      setForm({
+        recipientName: data.recipientName,
+        recipientPhone: data.recipientPhone,
+        streetAddress: data.streetAddress,
+        district: data.district || '',
+        city: data.city,
+        country: data.country || 'Việt Nam',
+        isDefault: data.isDefault || false,
+      });
+    } catch (error) {
+      console.error('❌ Lỗi khi tải địa chỉ:', error);
+      Alert.alert('Lỗi', 'Không thể tải thông tin địa chỉ.');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddress();
+  }, [id]);
+
+  // 💾 Cập nhật địa chỉ
+  const handleUpdate = async () => {
     if (!form.recipientName || !form.recipientPhone || !form.streetAddress || !form.city) {
       Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin bắt buộc!');
       return;
     }
 
-    const newAddress = {
+    const updatedAddress = {
+      addressID: Number(id),
       customerId,
       recipientName: form.recipientName.trim(),
       recipientPhone: form.recipientPhone.trim(),
@@ -40,40 +69,48 @@ export default function AddAddressScreen() {
       district: form.district?.trim() || '',
       city: form.city.trim(),
       country: form.country.trim() || 'Việt Nam',
-      isDefault: form.isDefault, // ✅ lấy giá trị người dùng chọn
+      isDefault: form.isDefault,
     };
 
-    console.log('📤 Gửi dữ liệu:', newAddress);
+    console.log('📤 Dữ liệu cập nhật:', updatedAddress);
 
-    setLoading(true);
+    setSaving(true);
     try {
-      await addressService.createAddress(newAddress);
-      Alert.alert('Thành công', 'Đã thêm địa chỉ mới!', [
+      // ⚠️ TODO: cần bổ sung trong service
+      await addressService.updateAddress(Number(id), updatedAddress);
+      Alert.alert('Thành công', 'Địa chỉ đã được cập nhật!', [
         { text: 'OK', onPress: () => router.replace('/(customer)/(profile)/address-book') },
       ]);
     } catch (error: any) {
-      console.error('❌ Error creating address:', error.response?.data || error.message);
+      console.error('❌ Error updating address:', error.response?.data || error.message);
       if (error.response?.status === 409) {
         Alert.alert(
           'Xung đột dữ liệu',
-          'Có thể đã tồn tại địa chỉ mặc định khác. Vui lòng bỏ chọn "Đặt làm mặc định" hoặc chỉnh lại địa chỉ cũ.'
+          'Địa chỉ mặc định khác đã tồn tại. Vui lòng bỏ chọn "Đặt làm mặc định" hoặc chỉnh địa chỉ cũ.'
         );
       } else {
-        Alert.alert('Lỗi', 'Không thể thêm địa chỉ. Vui lòng thử lại.');
+        Alert.alert('Lỗi', 'Không thể cập nhật địa chỉ. Vui lòng thử lại.');
       }
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Đang tải thông tin địa chỉ...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView contentContainerStyle={{ padding: 20 }}>
-      <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 15 }}>Thêm địa chỉ mới</Text>
+      <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 15 }}>Chỉnh sửa địa chỉ</Text>
 
       <Text>Tên người nhận *</Text>
       <TextInput
         style={styles.input}
-        placeholder="Nguyễn Văn A"
         value={form.recipientName}
         onChangeText={(text) => handleChange('recipientName', text)}
       />
@@ -81,16 +118,14 @@ export default function AddAddressScreen() {
       <Text>Số điện thoại *</Text>
       <TextInput
         style={styles.input}
-        placeholder="0123456789"
-        keyboardType="phone-pad"
         value={form.recipientPhone}
+        keyboardType="phone-pad"
         onChangeText={(text) => handleChange('recipientPhone', text)}
       />
 
       <Text>Địa chỉ *</Text>
       <TextInput
         style={styles.input}
-        placeholder="123 Đường ABC"
         value={form.streetAddress}
         onChangeText={(text) => handleChange('streetAddress', text)}
       />
@@ -98,7 +133,6 @@ export default function AddAddressScreen() {
       <Text>Quận / Huyện</Text>
       <TextInput
         style={styles.input}
-        placeholder="Quận 1"
         value={form.district}
         onChangeText={(text) => handleChange('district', text)}
       />
@@ -106,7 +140,6 @@ export default function AddAddressScreen() {
       <Text>Thành phố *</Text>
       <TextInput
         style={styles.input}
-        placeholder="TP. Hồ Chí Minh"
         value={form.city}
         onChangeText={(text) => handleChange('city', text)}
       />
@@ -114,7 +147,6 @@ export default function AddAddressScreen() {
       <Text>Quốc gia</Text>
       <TextInput
         style={styles.input}
-        placeholder="Việt Nam"
         value={form.country}
         onChangeText={(text) => handleChange('country', text)}
       />
@@ -138,9 +170,9 @@ export default function AddAddressScreen() {
       </View>
 
       <Button
-        title={loading ? 'Đang lưu...' : 'Lưu địa chỉ'}
-        onPress={handleSubmit}
-        disabled={loading}
+        title={saving ? 'Đang lưu...' : 'Cập nhật địa chỉ'}
+        onPress={handleUpdate}
+        disabled={saving}
       />
 
       <View style={{ marginTop: 10 }}>
