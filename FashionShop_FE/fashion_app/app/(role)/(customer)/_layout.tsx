@@ -5,7 +5,7 @@ export default function CustomerLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#E91E63',
+        tabBarActiveTintColor: '#000000ff',
         tabBarInactiveTintColor: '#999',
       }}
     >
@@ -15,17 +15,7 @@ export default function CustomerLayout() {
           title: 'Home',
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="(categories)"
-        options={{
-          title: 'Categories',
-          headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="grid" size={24} color={color} />
+            <Ionicons name="home" size={25} color={color} />
           ),
         }}
       />
@@ -35,7 +25,7 @@ export default function CustomerLayout() {
           title: 'Cart',
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="cart" size={24} color={color} />
+            <Ionicons name="cart" size={25} color={color} />
           ),
           tabBarBadge: 3, // Số lượng items trong cart
         }}
@@ -45,7 +35,7 @@ export default function CustomerLayout() {
         options={{
           title: 'Wishlist',
           tabBarIcon: ({ color }) => (
-            <Ionicons name="heart" size={24} color={color} />
+            <Ionicons name="heart" size={25} color={color} />
           ),
         }}
       />
@@ -55,7 +45,7 @@ export default function CustomerLayout() {
           title: 'Profile',
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={24} color={color} />
+            <Ionicons name="person" size={25} color={color} />
           ),
         }}
       />

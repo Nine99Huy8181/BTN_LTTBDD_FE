@@ -1,5 +1,5 @@
 // services/product.service.ts
-import { Product, ProductResponse } from '@/types';
+import { Product, ProductResponse, ProductSearchParams } from '@/types';
 import { api } from './api';
 
 export const productService = {
@@ -43,4 +43,12 @@ export const productService = {
   // deleteProduct: async (id: number): Promise<void> => {
   //   await api.delete(`/products/${id}`);
   // },
+
+  searchProducts: async (params: ProductSearchParams): Promise<ProductResponse[]> => {
+    // Axios sẽ tự động chuyển đối tượng `params` thành query string
+    // ví dụ: /products/search?keyword=áo&minPrice=100000
+    // Nếu một giá trị trong `params` là undefined, Axios sẽ tự động bỏ qua nó.
+    const response = await api.get('/products/search', { params: params });
+    return response.data;
+  },
 };

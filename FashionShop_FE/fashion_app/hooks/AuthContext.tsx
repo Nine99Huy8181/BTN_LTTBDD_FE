@@ -1,5 +1,6 @@
 // hooks/AuthContext.tsx
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Config } from '../constants/Config';
@@ -48,7 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(response.data.message || 'Failed to fetch user');
       }
     } catch (error) {
-      console.error('Fetch user error:', error);
+      // console.error('Fetch user error:', error);
+      Toast.show({type: "warning", text1: "Hết hạn đăng nhập", text2: "Vui lòng đăng nhập lại"})
       return null;
     }
   }, []);
@@ -72,21 +74,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       await SecureStore.setItemAsync('jwt_token', token);
+      // console.log('Saved token:', token); // Debug
+      // console.log('Decoded token:', jwtDecode(token));
       const userData = await fetchUser(token);
 
       if (!userData) {
         throw new Error('Failed to fetch user data');
       }
 
+      console.log('Login user response:', userData);
       setUser(userData);
       setIsInitializing(false);
 
       return { success: true };
     } catch (error: any) {
+      // console.error('Login error:', error);
       setUser(null);
       setIsInitializing(false);
       const errorMessage = error.response?.data?.message || error.message || 'Invalid credentials';
-      Alert.alert(errorMessage);
+      Toast.show({type: "error", text1: "Error", text2: "Email và passwpord không hợp lệ"})
       return { success: false, error: errorMessage };
     }
   }, [fetchUser]);
@@ -115,14 +121,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { success: true };
     } catch (error: any) {
-      // console.error('Register error:', error);
-      Alert.alert("Đăng kí không thành công");
+      console.error('Register error:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
       return { success: false, error: errorMessage };
     }
   }, []);
 
   const logout = useCallback(async () => {
+    console.log('Logging out, clearing token and user state');
     await SecureStore.deleteItemAsync('jwt_token');
     setUser(null);
     setIsInitializing(false);
@@ -130,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const getToken = useCallback(async () => {
     const token = await SecureStore.getItemAsync('jwt_token');
+    console.log('Retrieved token:', token ? 'Token exists' : 'No token');
     return token;
   }, []);
 
@@ -142,11 +149,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Get token directly instead of calling getToken()
       const token = await SecureStore.getItemAsync('jwt_token');
+      console.log('Retrieved token:', token ? 'Token exists' : 'No token');
 
       if (token) {
         const userData = await fetchUser(token);
 
         if (userData) {
+          console.log('Initialized user:', userData);
           setUser(userData);
         } else {
           await SecureStore.deleteItemAsync('jwt_token');

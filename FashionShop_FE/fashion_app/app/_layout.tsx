@@ -1,7 +1,8 @@
 // app/_layout.tsx
 import { AuthProvider, useAuth } from '../hooks/AuthContext';
 import { Stack } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator} from 'react-native';
+import Toast from 'react-native-toast-message';
 
 function RootLayoutContent() {
   const { user, isInitializing } = useAuth();
@@ -33,6 +34,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <RootLayoutContent />
+      <Toast/>
     </AuthProvider>
   );
 }

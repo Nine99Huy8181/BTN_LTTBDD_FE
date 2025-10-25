@@ -34,3 +34,44 @@ export interface Account {
   customerID: number | null;     // Có thể null vì không phải account nào cũng là customer
   adminID: number | null;
 }
+
+// types/index.ts (hoặc file tương tự trong @/types)
+export interface Category {
+  categoryID: number;
+  name: string;
+  description: string;
+  image: string;
+  parentID?: number | null;
+}
+
+export interface ProductVariantResponse {
+  variantID: number;
+  sku: string;
+  size: string;
+  color: string;
+  priceAdjustment: number;
+  images: string[];
+  status: string;
+  validQuantity: number | 0;
+  productID: number; // ID của Product cha
+}
+
+export interface ProductVariantPayload {
+  product: {
+    productID: number; // Khi tạo/cập nhật, chỉ cần gửi ID của product cha
+  };
+  sku: string;
+  size: string;
+  color: string;
+  priceAdjustment: number;
+  images: string[];
+  status: string;
+}
+
+export interface ProductSearchParams {
+  keyword?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  maxRating?: number;
+}

@@ -4,10 +4,10 @@ import { Stack } from 'expo-router';
 export default function HomeLayout() {
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ title: 'Home' }} />
-      <Stack.Screen name="search" options={{ title: 'Search' }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="search" options={{ headerShown: false}} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
-      <Stack.Screen name="product/[id]" options={{ title: 'product' }} />
+      <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
