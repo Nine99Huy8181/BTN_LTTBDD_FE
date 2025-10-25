@@ -1,4 +1,4 @@
-import { View, Text, Button, Image, ScrollView, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Button, Image, ScrollView, TouchableOpacity, FlatList, StyleSheet, Dimensions, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { productService } from '@/services/product.service';
@@ -10,15 +10,22 @@ import { Routes } from '@/constants';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+import { useAuth } from '@/hooks/AuthContext';
+import { CartService } from '@/services/cart.service';
+
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const numberId = Number(id);
   const router = useRouter();
+
   const [product, setProduct] = useState<Product | null>(null);
   const [variants, setVariants] = useState<ProductVariantResponse[]>([]);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const { user } = useAuth();
+
 
   // Fetch product and variants
   useEffect(() => {
@@ -107,31 +114,31 @@ export default function ProductDetailScreen() {
   };
 
   // Handle add to cart
-  const handleAddToCart = () => {
-    if (!selectedVariant) {
-      alert('Vui lòng chọn màu sắc và kích cỡ');
-      return;
-    }
+  // const handleAddToCart = () => {
+  //   if (!selectedVariant) {
+  //     alert('Vui lòng chọn màu sắc và kích cỡ');
+  //     return;
+  //   }
     
-    if (selectedVariant.validQuantity <= 0) {
-      alert('Sản phẩm này hiện đã hết hàng');
-      return;
-    }
+  //   if (selectedVariant.validQuantity <= 0) {
+  //     alert('Sản phẩm này hiện đã hết hàng');
+  //     return;
+  //   }
     
-    router.push({
-      pathname: '/(role)/(customer)/(cart)',
-      params: {
-        productId: product?.productID,
-        variantId: selectedVariant.variantID,
-        productName: product?.name,
-        color: selectedVariant.color,
-        size: selectedVariant.size,
-        price: finalPrice,
-        image: selectedVariant.images[0] || product?.image,
-        availableQuantity: selectedVariant.validQuantity,
-      },
-    });
-  };
+  //   router.push({
+  //     pathname: '/(role)/(customer)/(cart)',
+  //     params: {
+  //       productId: product?.productID,
+  //       variantId: selectedVariant.variantID,
+  //       productName: product?.name,
+  //       color: selectedVariant.color,
+  //       size: selectedVariant.size,
+  //       price: finalPrice,
+  //       image: selectedVariant.images[0] || product?.image,
+  //       availableQuantity: selectedVariant.validQuantity,
+  //     },
+  //   });
+  // };
 
   // Handle buy now
   const handleBuyNow = () => {
@@ -327,8 +334,20 @@ export default function ProductDetailScreen() {
               styles.addToCartButton,
               (!selectedVariant || selectedVariant.validQuantity <= 0) && styles.disabledButton
             ]} 
-            onPress={handleAddToCart}
-            disabled={!selectedVariant || selectedVariant.validQuantity <= 0}
+            onPress={async () => {
+            if (!user || !user.accountId) {
+              Alert.alert('Vui lòng đăng nhập trước khi thêm vào giỏ hàng');
+              return;
+            }
+
+            const variantId = (product && (product as any).productID) || numberId;
+            const result = await CartService.addToCart(user.accountId as number, variantId, 1);
+            if (result.success) {
+              Alert.alert('Thêm vào giỏ hàng thành công');
+            } else {
+              Alert.alert('Lỗi', result.message || 'Thêm vào giỏ hàng thất bại');
+            }
+        }}
           >
             <Ionicons name="cart-outline" size={20} color="#000000" />
             <Text style={[styles.actionButtonText, { color: '#000000' }]}>Thêm vào giỏ</Text>

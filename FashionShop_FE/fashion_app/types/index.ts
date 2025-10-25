@@ -27,7 +27,6 @@ export interface Product {
 export interface Account {
   accountID: number;              // Tương ứng Long
   email: string;
-  password: string;
   role: string;
   registrationDate: string;       // LocalDateTime -> string (ISO format)
   accountStatus: string;
@@ -74,4 +73,47 @@ export interface ProductSearchParams {
   maxPrice?: number;
   minRating?: number;
   maxRating?: number;
+}
+
+export interface Address {
+  addressID?: number;
+  recipientName?: string;
+  recipientPhone?: string;
+  streetAddress?: string;
+  district?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  isDefault?: boolean;
+  customer?: { customerID: number };
+}
+
+export interface OrderPayload {
+  customer: { customerID: number };
+  totalAmount?: number;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  orderStatus?: string;
+  shippingFee?: number;
+  notes?: string;
+}
+
+export interface OrderItemPayload {
+  order: { orderID: number };
+  variant: { variantID: number };
+  quantity: number;
+  unitPrice: number;
+  subTotal: number;
+}
+
+export interface OrderItemRequest {
+  variantID: number;
+  quantity: number;
+}
+
+export interface OrderCreateRequest {
+  items: OrderItemRequest[];
+  addressID?: number;
+  paymentMethod?: string;
+  notes?: string;
 }

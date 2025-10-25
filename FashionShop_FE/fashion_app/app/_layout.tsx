@@ -2,7 +2,9 @@
 import { AuthProvider, useAuth } from '../hooks/AuthContext';
 import { Stack } from 'expo-router';
 import { View, ActivityIndicator} from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
+
 
 function RootLayoutContent() {
   const { user, isInitializing } = useAuth();
@@ -32,9 +34,12 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutContent />
-      <Toast/>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <RootLayoutContent />
+        <Toast/>
+      </AuthProvider>
+    </GestureHandlerRootView>
+
   );
 }

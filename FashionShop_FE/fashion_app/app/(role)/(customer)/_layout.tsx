@@ -1,7 +1,48 @@
+import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/hooks/AuthContext';
+import { DeviceEventEmitter } from 'react-native';
+import { CartService } from '@/services/cart.service';
 
 export default function CustomerLayout() {
+  const { user } = useAuth();
+  const [badgeCount, setBadgeCount] = useState<number | undefined>(undefined);
+
+  const loadBadge = async () => {
+    try {
+      if (!user || !user.accountId) {
+        setBadgeCount(undefined);
+        return;
+      }
+      const customers: any = await CartService.getCustomersByAccountId(user.accountId as number);
+      if (!customers || customers.length === 0) {
+        setBadgeCount(undefined);
+        return;
+      }
+      const customerId = customers[0].customerID;
+      let cart = await CartService.getCartByCustomerId(customerId);
+      if (!cart) {
+        setBadgeCount(undefined);
+        return;
+      }
+      const items = await CartService.getCartItemsByCartId(cart.cartID);
+      setBadgeCount(items?.length ? items.length : undefined);
+    } catch (err) {
+      console.error('Failed to load cart badge', err);
+      setBadgeCount(undefined);
+    }
+  };
+
+  useEffect(() => {
+    loadBadge();
+    const sub = DeviceEventEmitter.addListener('cartUpdated', () => {
+      loadBadge();
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   return (
     <Tabs
       screenOptions={{
@@ -27,7 +68,7 @@ export default function CustomerLayout() {
           tabBarIcon: ({ color }) => (
             <Ionicons name="cart" size={25} color={color} />
           ),
-          tabBarBadge: 3, // Số lượng items trong cart
+          tabBarBadge: badgeCount && badgeCount > 0 ? badgeCount : undefined,
         }}
       />
       <Tabs.Screen
