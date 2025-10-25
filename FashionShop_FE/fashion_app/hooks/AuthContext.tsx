@@ -19,6 +19,7 @@ interface JwtResponse {
 export interface User {
   userName: string;
   role: string;
+  accountId?: number;
 }
 
 interface AuthContextType {
