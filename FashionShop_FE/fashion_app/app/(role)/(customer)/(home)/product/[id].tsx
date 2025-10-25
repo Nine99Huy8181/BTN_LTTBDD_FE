@@ -6,6 +6,7 @@ import { productVariantService } from '@/services/productvariant.service';
 import { Product, ProductVariantResponse } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Routes } from '@/constants';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -230,7 +231,7 @@ export default function ProductDetailScreen() {
 
         {/* Rating */}
         <TouchableOpacity
-          onPress={() => router.push(`/(home)/product/reviews/${numberId}`)}
+          onPress={() => router.push('/(role)/(customer)/(profile)/referral')}
           style={styles.ratingContainer}
         >
           <Ionicons name="star" size={20} color="#FFD700" />
