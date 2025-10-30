@@ -1,10 +1,10 @@
 // screens/HomeScreen.tsx
-import { useEffect, useState } from 'react';
-import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Routes } from '@/constants';
 import { productService } from '@/services/product.service';
 import { ProductResponse } from '@/types';
-import { Routes } from '@/constants';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Button, FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   const router = useRouter();

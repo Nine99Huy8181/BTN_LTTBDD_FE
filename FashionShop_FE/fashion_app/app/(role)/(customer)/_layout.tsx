@@ -44,6 +44,7 @@ export default function CustomerLayout() {
         name="wishlist"
         options={{
           title: 'Wishlist',
+          headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="heart" size={24} color={color} />
           ),

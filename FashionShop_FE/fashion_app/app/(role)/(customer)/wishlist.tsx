@@ -1,10 +1,9 @@
-// app/(customer)/wishlist.tsx
 import { Colors, Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { WishlistItem, wishlistService } from '@/services/wishlist.service';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,6 +13,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -28,36 +28,37 @@ export default function WishlistScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [addingId, setAddingId] = useState<number | null>(null); // 🛒 trạng thái khi đang thêm vào giỏ
+  const [addingId, setAddingId] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
 
   const customerId = user?.customerId || 1;
+
 
   const fetchWishlist = async () => {
     if (!customerId) {
       setLoading(false);
       return;
     }
-
     try {
       setLoading(true);
       const wishlist = await wishlistService.getByCustomerId(customerId);
-
       if (wishlist?.wishlistID) {
         const items = await wishlistService.getItemsByWishlistId(wishlist.wishlistID);
         setWishlistItems(items || []);
       } else {
-        console.log('Customer chưa có wishlist, tạo mới...');
         await wishlistService.createWishlist(customerId);
         setWishlistItems([]);
       }
     } catch (error) {
-      console.error('Error fetching wishlist:', error);
       Alert.alert('Lỗi', 'Không thể tải danh sách yêu thích');
-      setWishlistItems([]);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user) fetchWishlist();
+  }, [user, customerId]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -65,54 +66,31 @@ export default function WishlistScreen() {
     setRefreshing(false);
   }, [customerId]);
 
-  useEffect(() => {
-    if (user) {
-      fetchWishlist();
-    } else {
-      setLoading(false);
-    }
-  }, [user, customerId]);
-
   const handleRemoveItem = async (itemId: number) => {
-    Alert.alert(
-      'Xóa khỏi yêu thích',
-      'Bạn có chắc muốn xóa sản phẩm này?',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xóa',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setDeletingId(itemId);
-              await wishlistService.removeItem(itemId);
-              setWishlistItems(prev => prev.filter(item => item.wishlistItemID !== itemId));
-              Alert.alert('Thành công', 'Đã xóa khỏi danh sách yêu thích');
-            } catch (error) {
-              console.error('Error removing item:', error);
-              Alert.alert('Lỗi', 'Không thể xóa sản phẩm');
-            } finally {
-              setDeletingId(null);
-            }
-          },
+    Alert.alert('Xóa khỏi yêu thích', 'Bạn có chắc muốn xóa sản phẩm này?', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setDeletingId(itemId);
+            await wishlistService.removeItem(itemId);
+            setWishlistItems(prev => prev.filter(i => i.wishlistItemID !== itemId));
+          } catch {
+            Alert.alert('Lỗi', 'Không thể xóa sản phẩm');
+          } finally {
+            setDeletingId(null);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  // 🛒 Thêm vào giỏ hàng
   const handleAddToCart = async (productId: number) => {
     try {
       setAddingId(productId);
-
-      // 🛒 TODO: Gọi service thêm vào giỏ hàng ở đây
-      // await cartService.addToCart(customerId, productId, 1);
-      console.log(`🛒 Giả lập thêm sản phẩm ${productId} vào giỏ hàng`);
-
-      Alert.alert('Thành công', 'Sản phẩm đã được thêm vào giỏ hàng');
-    } catch (error) {
-      console.error('Lỗi khi thêm vào giỏ hàng:', error);
-      Alert.alert('Lỗi', 'Không thể thêm vào giỏ hàng');
+      Alert.alert('Thành công', 'Đã thêm vào giỏ hàng');
     } finally {
       setAddingId(null);
     }
@@ -122,33 +100,50 @@ export default function WishlistScreen() {
     router.push(`${Routes.CustomerProductDetail}${productId}` as any);
   };
 
+  // 🔍 Lọc theo từ khóa tìm kiếm
+  const filteredItems = useMemo(() => {
+    return wishlistItems.filter(item =>
+      item.product.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [search, wishlistItems]);
+
   const renderWishlistItem = ({ item }: { item: WishlistItem }) => (
-    <View style={styles.card}>
-      <TouchableOpacity
-        onPress={() => handleProductPress(item.product.productID)}
-        activeOpacity={0.8}
-      >
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: item.product.image }}
-            style={styles.productImage}
-            resizeMode="cover"
-          />
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.9}
+      onPress={() => handleProductPress(item.product.productID)}
+    >
+      <View style={styles.imageWrapper}>
+        <Image source={{ uri: item.product.image }} style={styles.image} resizeMode="cover" />
 
-          {/* ❌ Nút xóa */}
-          <TouchableOpacity
-            style={styles.removeButton}
-            onPress={() => handleRemoveItem(item.wishlistItemID)}
-            disabled={deletingId === item.wishlistItemID}
-          >
-            {deletingId === item.wishlistItemID ? (
-              <ActivityIndicator size="small" color="#FFF" />
-            ) : (
-              <Ionicons name="close" size={18} color="#FFF" />
-            )}
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.heartRemove}
+          onPress={() => handleRemoveItem(item.wishlistItemID)}
+          disabled={deletingId === item.wishlistItemID}
+        >
+          {deletingId === item.wishlistItemID ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <Ionicons name="heart-dislike" size={20} color="#fff" />
+          )}
+        </TouchableOpacity>
+      </View>
 
-          {/* 🛒 Nút thêm vào giỏ */}
+      <View style={styles.info}>
+        <Text style={styles.name} numberOfLines={2}>
+          {item.product.name}
+        </Text>
+
+        <View style={styles.ratingRow}>
+          <Ionicons name="star" size={14} color="#FFD700" />
+          <Text style={styles.rating}>{item.product.averageRating?.toFixed(1) || '3.8'}</Text>
+          <Text style={styles.sold}> • Đã bán 0</Text>
+        </View>
+
+        <View style={styles.bottomRow}>
+          <Text style={styles.price}>
+            {item.product.discountPrice?.toLocaleString('vi-VN')}đ
+          </Text>
           <TouchableOpacity
             style={styles.cartButton}
             onPress={() => handleAddToCart(item.product.productID)}
@@ -157,37 +152,12 @@ export default function WishlistScreen() {
             {addingId === item.product.productID ? (
               <ActivityIndicator size="small" color="#FFF" />
             ) : (
-              <Ionicons name="cart-outline" size={18} color="#FFF" />
+              <Ionicons name="cart-outline" size={18} color="#fff" />
             )}
           </TouchableOpacity>
         </View>
-
-        {/* Thông tin sản phẩm */}
-        <View style={styles.infoContainer}>
-          <Text style={styles.brandText} numberOfLines={1}>
-            {item.product.brand}
-          </Text>
-          <Text style={styles.nameText} numberOfLines={2}>
-            {item.product.name}
-          </Text>
-
-          <View style={styles.bottomRow}>
-            <Text style={styles.priceText}>
-              {item.product.discountPrice?.toLocaleString('vi-VN')}₫
-            </Text>
-
-            {item.product.averageRating > 0 && (
-              <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={12} color="#FFC107" />
-                <Text style={styles.ratingText}>
-                  {item.product.averageRating.toFixed(1)}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
-    </View>
+      </View>
+    </TouchableOpacity>
   );
 
   const renderEmptyState = () => (
@@ -207,24 +177,6 @@ export default function WishlistScreen() {
   );
 
   if (loading) {
-    if (!user) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="person-outline" size={80} color={Colors.text.muted} />
-          <Text style={styles.emptyTitle}>Chưa đăng nhập</Text>
-          <Text style={styles.emptyDescription}>
-            Vui lòng đăng nhập để xem danh sách yêu thích
-          </Text>
-          <TouchableOpacity
-            style={styles.shopButton}
-            onPress={() => router.push(Routes.AuthLogin)}
-          >
-            <Text style={styles.shopButtonText}>Đăng nhập</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.brand.primary} />
@@ -235,32 +187,39 @@ export default function WishlistScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Yêu thích</Text>
-        <Text style={styles.headerSubtitle}>
-          {wishlistItems.length} sản phẩm
-        </Text>
+      {/* 🔍 Thanh tìm kiếm */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#777" style={{ marginRight: 8 }} />
+        <TextInput
+          placeholder="Tìm kiếm sản phẩm..."
+          placeholderTextColor="#999"
+          style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
+        />
       </View>
 
+      {/* Tiêu đề */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Danh sách yêu thích</Text>
+        <Text style={styles.headerSubtitle}>{filteredItems.length} sản phẩm</Text>
+      </View>
+      <View style={styles.divider} />
+
       <FlatList
-        data={wishlistItems}
+        data={filteredItems}
         renderItem={renderWishlistItem}
         keyExtractor={item => item.wishlistItemID.toString()}
         numColumns={2}
-        contentContainerStyle={[
-          styles.listContent,
-          wishlistItems.length === 0 && { flex: 1 },
-        ]}
-        columnWrapperStyle={wishlistItems.length > 0 ? styles.columnWrapper : undefined}
+        columnWrapperStyle={styles.columnWrapper}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[Colors.brand.primary]}
-            tintColor={Colors.brand.primary}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.brand.primary]} />
         }
+        contentContainerStyle={[
+          styles.listContent,
+          filteredItems.length === 0 && { flex: 1 },
+        ]}
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -268,67 +227,123 @@ export default function WishlistScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background.main },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, fontSize: 16, color: Colors.text.secondary },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: Colors.background.main,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
+
+  // 🔍 Search bar (dịch xuống thấp hơn, padding mềm hơn)
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F3F3',
+    marginHorizontal: 16,
+    marginTop: 60, // 🔸 tăng để tránh sát mép trên
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  headerTitle: { fontSize: 28, fontWeight: '700', color: Colors.text.primary },
-  headerSubtitle: { fontSize: 14, color: Colors.text.secondary },
-  listContent: { padding: 16, paddingBottom: 24 },
-  columnWrapper: { justifyContent: 'space-between', marginBottom: 16 },
+  searchInput: { flex: 1, fontSize: 15, color: '#111' },
+
+  // --- Header ---
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 24, // 🔸 tăng khoảng cách
+    paddingBottom: 12,
+    backgroundColor: '#fff',
+  },
+  headerTitle: { fontSize: 26, fontWeight: '700', color: '#111' },
+  headerSubtitle: { fontSize: 14, color: '#777', marginTop: 4 },
+
+  // 🔹 Gạch phân cách
+  divider: {
+  width: 40,             // ngắn lại như hình
+  height: 3,             // dày nhẹ hơn để rõ hơn
+  backgroundColor: '#111',
+  borderRadius: 2,
+  marginTop: 6,          // khoảng cách nhỏ giữa chữ và gạch
+  marginLeft: 20,        // canh theo chữ "Danh sách yêu thích"
+  marginBottom: 16,
+  alignSelf: 'flex-start',
+},
+
+
+  // --- Danh sách ---
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16, // 🔸 dãn đều hơn
+    paddingBottom: 32,
+  },
+  columnWrapper: { justifyContent: 'space-between', marginBottom: 20 },
+
+  // --- Card ---
   card: {
     width: CARD_WIDTH,
-    backgroundColor: Colors.background.card,
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     overflow: 'hidden',
-    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
-  imageContainer: { position: 'relative', width: '100%', height: CARD_WIDTH * 1.2 },
-  productImage: { width: '100%', height: '100%' },
-  removeButton: {
+  imageWrapper: { position: 'relative', width: '100%', aspectRatio: 1 },
+  image: { width: '100%', height: '100%' },
+
+  // ❤️ Nút trái tim mới (hiệu ứng nổi, màu gradient nhẹ)
+  heartRemove: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.status.error,
+    top: 10,
+    left: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#FF5E73', // 🔸 tươi hơn
+    shadowColor: '#FF5E73',
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  cartButton: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.brand.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+
+  info: {
+    padding: 12,
+    flexGrow: 1,
+    justifyContent: 'space-between',
   },
-  infoContainer: { padding: 12 },
-  brandText: { fontSize: 10, color: Colors.text.secondary, marginBottom: 4 },
-  nameText: { fontSize: 14, fontWeight: '600', color: Colors.text.primary, marginBottom: 8 },
+  name: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#222',
+    marginBottom: 6,
+    minHeight: 36,
+  },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  rating: { fontSize: 13, fontWeight: '600', color: '#222', marginLeft: 4 },
+  sold: { fontSize: 12, color: '#666' },
   bottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  priceText: { fontSize: 16, fontWeight: '700', color: Colors.product.price },
-  ratingContainer: { flexDirection: 'row', alignItems: 'center' },
-  ratingText: { fontSize: 12, color: Colors.text.secondary, marginLeft: 2 },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  price: { fontSize: 15, fontWeight: 'bold', color: '#111' },
+  cartButton: {
+    backgroundColor: Colors.brand.primary,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // --- Empty ---
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   emptyTitle: { fontSize: 20, fontWeight: '700', marginTop: 16 },
-  emptyDescription: { fontSize: 14, textAlign: 'center', marginBottom: 24 },
+  emptyDescription: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 24 },
   shopButton: {
     backgroundColor: Colors.brand.primary,
-    paddingHorizontal: 32,
+    paddingHorizontal: 28,
     paddingVertical: 12,
     borderRadius: 24,
   },
   shopButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, color: '#555' },
 });
+

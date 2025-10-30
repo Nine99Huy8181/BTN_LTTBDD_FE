@@ -1,14 +1,24 @@
-// app/(customer)/(profile)/add-address.tsx
 import { useAuth } from '@/hooks/AuthContext';
 import { addressService } from '@/services/address.service';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Button, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function AddAddressScreen() {
   const router = useRouter();
-    const { user } = useAuth();
-    const customerId = user?.customerId || 1; // 🧍‍♂️ Tạm hardcode, sau này có thể lấy từ token/context
+  const { user } = useAuth();
+  const customerId = user?.customerId || 1;
 
   const [form, setForm] = useState({
     recipientName: '',
@@ -40,10 +50,8 @@ export default function AddAddressScreen() {
       district: form.district?.trim() || '',
       city: form.city.trim(),
       country: form.country.trim() || 'Việt Nam',
-      isDefault: form.isDefault, // ✅ lấy giá trị người dùng chọn
+      isDefault: form.isDefault,
     };
-
-    console.log('📤 Gửi dữ liệu:', newAddress);
 
     setLoading(true);
     try {
@@ -52,7 +60,6 @@ export default function AddAddressScreen() {
         { text: 'OK', onPress: () => router.replace('/(customer)/(profile)/address-book') },
       ]);
     } catch (error: any) {
-      console.error('❌ Error creating address:', error.response?.data || error.message);
       if (error.response?.status === 409) {
         Alert.alert(
           'Xung đột dữ liệu',
@@ -67,95 +74,189 @@ export default function AddAddressScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20 }}>
-      <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 15 }}>Thêm địa chỉ mới</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* 🔹 Tiêu đề */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Thêm địa chỉ mới</Text>
+          <View style={styles.titleLine} />
+        </View>
 
-      <Text>Tên người nhận *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nguyễn Văn A"
-        value={form.recipientName}
-        onChangeText={(text) => handleChange('recipientName', text)}
-      />
+        {/* 🔹 Form nhập thông tin */}
+        <View style={styles.formCard}>
+          <Text style={styles.label}>Tên người nhận *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nhập tên người nhận"
+            placeholderTextColor="#888"
+            value={form.recipientName}
+            onChangeText={(text) => handleChange('recipientName', text)}
+          />
 
-      <Text>Số điện thoại *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="0123456789"
-        keyboardType="phone-pad"
-        value={form.recipientPhone}
-        onChangeText={(text) => handleChange('recipientPhone', text)}
-      />
+          <Text style={styles.label}>Số điện thoại *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nhập số điện thoại"
+            placeholderTextColor="#888"
+            keyboardType="phone-pad"
+            value={form.recipientPhone}
+            onChangeText={(text) => handleChange('recipientPhone', text)}
+          />
 
-      <Text>Địa chỉ *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="123 Đường ABC"
-        value={form.streetAddress}
-        onChangeText={(text) => handleChange('streetAddress', text)}
-      />
+          <Text style={styles.label}>Địa chỉ *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ví dụ: 123 Đường ABC"
+            placeholderTextColor="#888"
+            value={form.streetAddress}
+            onChangeText={(text) => handleChange('streetAddress', text)}
+          />
 
-      <Text>Quận / Huyện</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Quận 1"
-        value={form.district}
-        onChangeText={(text) => handleChange('district', text)}
-      />
+          <Text style={styles.label}>Quận / Huyện</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ví dụ: Quận 1"
+            placeholderTextColor="#888"
+            value={form.district}
+            onChangeText={(text) => handleChange('district', text)}
+          />
 
-      <Text>Thành phố *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="TP. Hồ Chí Minh"
-        value={form.city}
-        onChangeText={(text) => handleChange('city', text)}
-      />
+          <Text style={styles.label}>Thành phố *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ví dụ: TP. Hồ Chí Minh"
+            placeholderTextColor="#888"
+            value={form.city}
+            onChangeText={(text) => handleChange('city', text)}
+          />
 
-      <Text>Quốc gia</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Việt Nam"
-        value={form.country}
-        onChangeText={(text) => handleChange('country', text)}
-      />
+          <Text style={styles.label}>Quốc gia</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Việt Nam"
+            placeholderTextColor="#888"
+            value={form.country}
+            onChangeText={(text) => handleChange('country', text)}
+          />
 
-      {/* 🔘 Chọn làm địa chỉ mặc định */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginTop: 10,
-          marginBottom: 20,
-        }}
-      >
-        <Text style={{ fontSize: 16 }}>Đặt làm địa chỉ mặc định</Text>
-        <Switch
-          value={form.isDefault}
-          onValueChange={(value) => handleChange('isDefault', value)}
-          thumbColor={form.isDefault ? '#007bff' : '#ccc'}
-        />
-      </View>
+          {/* 🔘 Đặt làm mặc định */}
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Đặt làm địa chỉ mặc định</Text>
+            <Switch
+              value={form.isDefault}
+              onValueChange={(value) => handleChange('isDefault', value)}
+              thumbColor={form.isDefault ? '#000' : '#ccc'}
+            />
+          </View>
+        </View>
 
-      <Button
-        title={loading ? 'Đang lưu...' : 'Lưu địa chỉ'}
-        onPress={handleSubmit}
-        disabled={loading}
-      />
+        {/* 🔹 Nút hành động */}
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.primaryButtonText}>
+            {loading ? 'Đang lưu...' : 'Lưu địa chỉ'}
+          </Text>
+        </TouchableOpacity>
 
-      <View style={{ marginTop: 10 }}>
-        <Button title="Quay lại" color="gray" onPress={() => router.back()} />
-      </View>
-    </ScrollView>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.secondaryButtonText}>Quay lại</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
+  container: {
+    padding: 20,
+    paddingTop: 40,
+    backgroundColor: '#fff',
+  },
+  header: {
+    marginBottom: 25,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#111',
+  },
+  titleLine: {
+    width: 40,
+    height: 3,
+    backgroundColor: '#000',
+    borderRadius: 2,
+    marginTop: 6,
+  },
+  formCard: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  label: {
+    fontWeight: '600',
+    marginBottom: 6,
+    color: '#333',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 10,
-    marginBottom: 12,
+    marginBottom: 15,
+    fontSize: 15,
+    backgroundColor: '#f7f7f7', // 🌿 Nền xám nhẹ cho dịu mắt
   },
-};
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  switchLabel: {
+    fontSize: 16,
+    color: '#333',
+  },
+  primaryButton: {
+    backgroundColor: '#000',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  secondaryButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 40,
+  },
+  secondaryButtonText: {
+    color: '#000',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+});
