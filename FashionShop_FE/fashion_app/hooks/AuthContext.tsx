@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       // console.error('Fetch user error:', error);
-      Toast.show({type: "warning", text1: "Hết hạn đăng nhập", text2: "Vui lòng đăng nhập lại"})
+      Toast.show({type: "error", text1: "Hết hạn đăng nhập", text2: "Vui lòng đăng nhập lại"})
       return null;
     }
   }, []);
