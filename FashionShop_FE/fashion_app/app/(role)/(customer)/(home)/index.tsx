@@ -22,6 +22,7 @@ import ProductItem from '@/components/ProductItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+
 export default function HomeScreen() {
   const router = useRouter();
   const [products, setProducts] = useState<ProductResponse[]>([]);
@@ -65,7 +66,7 @@ export default function HomeScreen() {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      router.push(`${Routes.CustomerSearch}?keyword=${encodeURIComponent(searchQuery.trim())}`);
+      // router.push(`${Routes.CustomerSearch}?keyword=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
     }
   };
@@ -93,7 +94,7 @@ export default function HomeScreen() {
       params.append('maxRating', maxRating.trim());
     }
 
-    router.push(`${Routes.CustomerSearch}?${params.toString()}`);
+    // router.push(`${Routes.CustomerSearch}?${params.toString()}`);
     setFilterModalVisible(false);
   };
 

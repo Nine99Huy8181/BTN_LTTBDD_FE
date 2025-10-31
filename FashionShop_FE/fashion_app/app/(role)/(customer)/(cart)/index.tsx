@@ -121,7 +121,7 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 12 },
+  container: { flex: 1},
   itemRow: { flexDirection: 'row', padding: 8, borderBottomWidth: 1, borderColor: '#eee', alignItems: 'center' },
   image: { width: 64, height: 64, borderRadius: 8, marginRight: 12, backgroundColor: '#f0f0f0' },
   title: { fontSize: 14, fontWeight: '600' },

@@ -57,9 +57,11 @@ export const Routes = {
   CustomerOrderDetail: '/(customer)/(profile)/order-detail/',
   // CustomerWriteReview: '/(customer)/(profile)/order-detail/:id/write-review',
   CustomerOrderTracking: '/(customer)/(profile)/tracking/',
-  CustomerReferral: '/(customer)/(profile)/referral',
+  CustomerCoupon: '/(customer)/(profile)/coupon',
   CustomerSettings: '/(customer)/(profile)/settings',
   CustomerLoyaltyPoints: '/(customer)/(profile)/loyalty-points',
+  CustomerEditAddress: '/(customer)/(profile)/edit-address',
+
 
   // Super Area
   SuperDashboard: '/(super)/dashboard',

@@ -1,8 +1,8 @@
 // app/(customer)/(profile)/index.tsx
-import { View, Text, Button } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/AuthContext';
 import { Routes } from '@/constants';
+import { useAuth } from '@/hooks/AuthContext';
+import { useRouter } from 'expo-router';
+import { Button, Text, View } from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -18,9 +18,10 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text style={{ fontSize: 20 }}>Màn hình Hồ sơ</Text>
-      <Button title="Edit Profile" onPress={() => router.push(Routes.CustomerEditProfile)} />
-      <Button title="Address Book" onPress={() => router.push(Routes.CustomerAddressBook)} />
-      <Button title="Orders" onPress={() => router.push(Routes.CustomerOrders)} />
+      <Button title="Chỉnh sửa thông tin cá nhân" onPress={() => router.push(Routes.CustomerEditProfile)} />
+      <Button title="Thông tin địa chỉ" onPress={() => router.push(Routes.CustomerAddressBook)} />
+      <Button title="Đơn hàng" onPress={() => router.push(Routes.CustomerOrders)} />
+      <Button title="Mã giảm giá của tôi" onPress={() => router.push(Routes.CustomerCoupon)} />
       <Button title="Logout" onPress={handleLogout} />
     </View>
   );

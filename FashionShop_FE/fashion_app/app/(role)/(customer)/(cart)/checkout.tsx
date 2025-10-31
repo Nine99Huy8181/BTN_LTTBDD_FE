@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { CartService } from '@/services/cart.service';
-import { AddressService } from '@/services/address.service';
+import { addressService } from '@/services/address.service';
 import { OrderService } from '@/services/order.service';
 
 export default function CheckoutScreen() {
@@ -37,7 +37,7 @@ export default function CheckoutScreen() {
 
       // load addresses
       try {
-        const addrs: any = await AddressService.getAddressesByCustomerId(customerId);
+        const addrs: any = await addressService.getAddressesByCustomerId(customerId);
         if (addrs && addrs.length > 0) {
           const a = addrs[0];
           setAddressId(a.addressID ?? null);
@@ -77,7 +77,7 @@ export default function CheckoutScreen() {
       // If address info is provided and not saved, create address first so it's stored
       if (!addressId && (address1 || city || district || fullName || phone)) {
         try {
-          const newAddr: any = await AddressService.createAddress({
+          const newAddr: any = await addressService.createAddress({
             customer: { customerID: customerId },
             recipientName: fullName,
             recipientPhone: phone,

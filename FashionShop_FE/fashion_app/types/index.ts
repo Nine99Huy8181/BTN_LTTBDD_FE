@@ -117,3 +117,46 @@ export interface OrderCreateRequest {
   paymentMethod?: string;
   notes?: string;
 }
+
+export interface User {
+  userName: string;
+  role: string;
+  accountId?: number;
+  customerId?: number;
+}
+
+export interface Customer {
+  customerID: number;
+  fullName: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+  gender: string;
+  email: string;
+  loyaltyPoints: number;
+}
+
+export interface WishlistItem {
+  wishlistItemID: number;
+  wishlist: {
+    wishlistID: number;
+  };
+  product: {
+    productID: number;
+    name: string;
+    brand: string;
+    discountPrice: number;
+    averageRating: number;
+    image: string;
+  };
+  addedDate: string;
+}
+
+export interface Wishlist {
+  wishlistID: number;
+  customer: {
+    customerID: number;
+  };
+  createdDate: string;
+  items?: WishlistItem[];
+}
+

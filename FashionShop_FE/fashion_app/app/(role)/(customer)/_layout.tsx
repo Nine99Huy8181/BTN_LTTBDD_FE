@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/AuthContext';
 import { DeviceEventEmitter } from 'react-native';
 import { CartService } from '@/services/cart.service';
 
+
 export default function CustomerLayout() {
   const { user } = useAuth();
   const [badgeCount, setBadgeCount] = useState<number | undefined>(undefined);
@@ -75,8 +76,19 @@ export default function CustomerLayout() {
         name="wishlist"
         options={{
           title: 'Wishlist',
+          headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="heart" size={25} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notification"
+        options={{
+          title: 'Notification',
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="notifications" size={25} color={color} />
           ),
         }}
       />
