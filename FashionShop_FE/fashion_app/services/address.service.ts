@@ -1,5 +1,5 @@
-import { api } from './api';
 import { Address } from '@/types';
+import { api } from './api';
 
 const AddressService = {
   getAddressesByCustomerId: async (customerId: number): Promise<Address[]> => {
