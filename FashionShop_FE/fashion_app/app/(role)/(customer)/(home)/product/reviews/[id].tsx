@@ -151,7 +151,14 @@ export default function ProductReviewScreen() {
 
     // Real backend submission (includes images)
     submitReviewToBackend(parsed, newReview.comment, imageUris).then(() => {
-      Alert.alert('Thành công', 'Đã gửi đánh giá. Cảm ơn bạn!');
+      Alert.alert('Thành công', 'Đã gửi đánh giá. Cảm ơn bạn!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            router.back();
+          }
+        }
+      ]);
     }).catch(err => {
       console.error('Failed to submit review:', err);
       Alert.alert('Lỗi', 'Không thể gửi đánh giá tới server');
@@ -166,22 +173,30 @@ export default function ProductReviewScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>Back</Text>
+          <Text style={styles.backText}>Quay lại</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Gửi đánh giá cho sản phẩm #{id}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.form}>
-          <Text style={styles.label}>Rating (1-5)</Text>
-          <TextInput
-            value={rating}
-            onChangeText={setRating}
-            keyboardType="numeric"
-            style={styles.input}
-            placeholder="5"
-            maxLength={1}
-          />
+          <Text style={styles.label}>Chọn số sao đánh giá</Text>
+          <View style={styles.starsContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity
+                key={star}
+                onPress={() => setRating(star.toString())}
+                style={styles.starButton}
+              >
+                <Text style={[
+                  styles.starText,
+                  { color: Number(rating) >= star ? '#f5a623' : '#ddd' }
+                ]}>
+                  ★
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <Text style={styles.label}>Nội dung bình luận</Text>
           <TextInput
@@ -228,6 +243,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
   backButton: { padding: 6, marginRight: 8 },
+  starsContainer: { 
+    flexDirection: 'row', 
+    marginBottom: 10 
+  },
+  starButton: { 
+    padding: 4 
+  },
+  starText: { 
+    fontSize: 32,
+  },
   backText: { color: '#007AFF' },
   title: { fontSize: 16, fontWeight: '600' },
   content: { padding: 12, paddingBottom: 40 },
