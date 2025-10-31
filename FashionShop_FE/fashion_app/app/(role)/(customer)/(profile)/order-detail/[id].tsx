@@ -1,5 +1,6 @@
 // app/(customer)/(profile)/order-detail/[id].tsx
-import { cancelOrder, getOrderDetail } from '@/services/order.service';
+import { Routes } from "@/constants";
+import { OrderService } from "@/services/order.service";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -21,7 +22,7 @@ export default function OrderDetailScreen() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const data = await getOrderDetail(Number(id));
+        const data = await OrderService.getOrderDetail(Number(id));
         setOrder(data);
       } catch (error) {
         console.error('❌ Lỗi khi tải đơn hàng:', error);
@@ -39,7 +40,7 @@ export default function OrderDetailScreen() {
         text: 'Có',
         onPress: async () => {
           try {
-            await cancelOrder(Number(id));
+            await OrderService.cancelOrder(Number(id));
             Alert.alert('✅ Thành công', 'Đơn hàng đã được hủy!');
             router.back();
           } catch (error) {
@@ -106,7 +107,9 @@ export default function OrderDetailScreen() {
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() =>
-            router.push('/(customer)/(profile)/order-detail/write-review/1')
+            router.push(Routes.CustomerWriteReview)
+            // router.push('/(customer)/(profile)/order-detail/write-review/1')
+            //luu y
           }
         >
           <Text style={styles.primaryButtonText}>Viết đánh giá</Text>

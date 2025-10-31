@@ -55,7 +55,7 @@ export const Routes = {
   CustomerChangePassword: '/(customer)/(profile)/change-password',
   CustomerOrders: '/(customer)/(profile)/orders',
   CustomerOrderDetail: '/(customer)/(profile)/order-detail/',
-  // CustomerWriteReview: '/(customer)/(profile)/order-detail/:id/write-review',
+  CustomerWriteReview: '/(customer)/(profile)/order-detail/:id/write-review',
   CustomerOrderTracking: '/(customer)/(profile)/tracking/',
   CustomerCoupon: '/(customer)/(profile)/coupon',
   CustomerSettings: '/(customer)/(profile)/settings',

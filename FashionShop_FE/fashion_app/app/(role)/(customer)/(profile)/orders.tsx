@@ -1,6 +1,6 @@
 // app/(role)/(customer)/(profile)/orders.tsx
 import { useAuth } from '@/hooks/AuthContext';
-import { getOrdersByCustomer } from "@/services/order.service";
+import { OrderService } from "@/services/order.service";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -27,7 +27,7 @@ export default function OrdersScreen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getOrdersByCustomer(customerId);
+        const data = await OrderService.getOrdersByCustomer(customerId);
         setOrders(data);
         setFiltered(data);
       } catch (error) {
