@@ -63,6 +63,9 @@ export const Routes: Record<string, string> = {
   CustomerSettings: '/(role)/(customer)/(profile)/settings',
   CustomerLoyaltyPoints: '/(role)/(customer)/(profile)/loyalty-points',
   CustomerEditAddress: '/(role)/(customer)/(profile)/edit-address',
+  CustomerWriteReview: '/(customer)/(profile)/order-detail/:id/write-review',
+
+
 
 
   // Super Area

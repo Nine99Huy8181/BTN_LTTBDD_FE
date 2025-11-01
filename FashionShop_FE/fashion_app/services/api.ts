@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { Config } from '@/constants';
+import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 const api = axios.create({

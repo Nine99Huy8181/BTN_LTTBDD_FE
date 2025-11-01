@@ -1,4 +1,4 @@
-// app/(customer)/(profile)/referral.tsx
+// app/(customer)/(profile)/coupon.tsx
 import { couponService } from '@/services/coupon.service';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';

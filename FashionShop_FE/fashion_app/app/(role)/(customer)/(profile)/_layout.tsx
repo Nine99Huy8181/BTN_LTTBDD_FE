@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 export default function ProfileLayout() {
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ title: 'Profile' }} />
+      <Stack.Screen name="index" options={{ title: 'Profile', headerShown: false }} />
       <Stack.Screen name="edit-profile" options={{ title: 'Edit Profile' }} />
       <Stack.Screen name="address-book" options={{ title: 'Address Book', headerShown: false }} />
       <Stack.Screen name="add-address" options={{ title: 'Add Address', headerShown: false }} />

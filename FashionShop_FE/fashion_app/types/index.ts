@@ -125,6 +125,20 @@ export interface OrderCreateRequest {
   notes?: string;
 }
 
+//hung
+// Cấu trúc đơn hàng trả về từ backend
+export interface Order {
+  orderId: number;
+  customerId: number;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+  updatedAt?: string;
+  paymentMethod: string;
+  address?: string;
+  items?: OrderItemPayload[]; // tùy backend trả có kèm item không
+}
+
 export interface User {
   userName: string;
   role: string;
