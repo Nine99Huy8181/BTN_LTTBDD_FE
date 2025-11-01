@@ -149,7 +149,9 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Fashion Store</Text>
-        <TouchableOpacity style={styles.chatbotButton} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.chatbotButton} activeOpacity={0.7}
+          onPress={() => router.push('/chatbox')}
+        >
           <Ionicons name="chatbubble-ellipses-outline" size={24} color="#000000" />
         </TouchableOpacity>
       </View>

@@ -5,7 +5,7 @@ export default function ProfileLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ title: 'Profile', headerShown: false }} />
-      <Stack.Screen name="edit-profile" options={{ title: 'Edit Profile' }} />
+      <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Stack.Screen name="address-book" options={{ title: 'Address Book', headerShown: false }} />
       <Stack.Screen name="add-address" options={{ title: 'Add Address', headerShown: false }} />
       <Stack.Screen name="edit-address/[id]" options={{ title: 'Edit Address', headerShown: false }} />
