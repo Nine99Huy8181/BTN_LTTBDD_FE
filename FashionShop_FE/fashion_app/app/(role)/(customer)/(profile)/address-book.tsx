@@ -2,7 +2,7 @@
 import { Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { addressService } from '@/services/address.service';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,6 +17,7 @@ import {
 
 export default function AddressBookScreen() {
   const router = useRouter();
+  const { fromCheckout } = useLocalSearchParams();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -57,6 +58,17 @@ export default function AddressBookScreen() {
     ]);
   };
 
+  // Xử lý việc chọn địa chỉ cho đơn hàng (từ màn checkout)
+  const handleSelectAddress = (address: any) => {
+    if (fromCheckout) {
+      router.navigate({
+        pathname: Routes.CustomerCheckout as any,
+        params: { selectedAddressId: address.addressID }
+      });
+    }
+  };
+
+  // Xử lý việc đặt địa chỉ làm mặc định
   const handleSetDefault = async (id: number) => {
     try {
       await addressService.setDefaultAddress(id);
@@ -95,7 +107,8 @@ export default function AddressBookScreen() {
           keyExtractor={(item) => item.addressID.toString()}
           scrollEnabled={false}
           renderItem={({ item }) => (
-            <View
+            <TouchableOpacity
+              onPress={() => fromCheckout && handleSelectAddress(item)}
               style={[
                 styles.card,
                 item.isDefault && { borderColor: '#000', backgroundColor: '#fafafa' },
@@ -113,7 +126,7 @@ export default function AddressBookScreen() {
               <Text style={styles.info}>{item.country}</Text>
 
               <View style={styles.actionsRow}>
-                {!item.isDefault && (
+                {!item.isDefault && !fromCheckout && (
                   <TouchableOpacity
                     style={styles.actionButton}
                     onPress={() => handleSetDefault(item.addressID)}
@@ -121,22 +134,26 @@ export default function AddressBookScreen() {
                     <Text style={styles.actionText}>Đặt mặc định</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() =>
-                    router.push(`${Routes.CustomerEditAddress}/${item.addressID}`)
-                  }
-                >
-                  <Text style={styles.actionText}>Chỉnh sửa</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: '#ff3b30' }]}
-                  onPress={() => handleDelete(item.addressID)}
-                >
-                  <Text style={[styles.actionText, { color: '#fff' }]}>Xóa</Text>
-                </TouchableOpacity>
+                {!fromCheckout && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() =>
+                        router.push(`${Routes.CustomerEditAddress}/${item.addressID}` as any)
+                      }
+                    >
+                      <Text style={styles.actionText}>Chỉnh sửa</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: '#ff3b30' }]}
+                      onPress={() => handleDelete(item.addressID)}
+                    >
+                      <Text style={[styles.actionText, { color: '#fff' }]}>Xóa</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
-            </View>
+            </TouchableOpacity>
           )}
         />
       )}
@@ -145,7 +162,7 @@ export default function AddressBookScreen() {
       <View style={{ marginTop: 30 }}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => router.push(Routes.CustomerAddAddress)}
+          onPress={() => router.push(Routes.CustomerAddAddress as any)}
         >
           <Text style={styles.primaryButtonText}>Thêm địa chỉ mới</Text>
         </TouchableOpacity>

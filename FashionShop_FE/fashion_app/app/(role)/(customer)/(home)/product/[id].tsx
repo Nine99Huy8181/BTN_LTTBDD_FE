@@ -15,7 +15,40 @@ import { useAuth } from '@/hooks/AuthContext';
 import { CartService } from '@/services/cart.service';
 import { useWishlist } from '@/hooks/WishlistContext';
 
+import { useFocusEffect } from '@react-navigation/native';
+import React from 'react';
+
 export default function ProductDetailScreen() {
+  const params = useLocalSearchParams();
+
+  // Fetch reviews khi màn hình được mount và khi focus
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (params.id) {
+        fetchReviews();
+      }
+    }, 1000); // Fetch mỗi giây
+
+    return () => clearInterval(interval);
+  }, [params.id]);
+  
+  // Fetch reviews mỗi khi màn hình được focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Fetch ngay khi màn hình được focus
+      fetchReviews();
+    }, [])
+  );
+  
+  // Fetch reviews mỗi khi màn hình được focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Fetch ngay khi màn hình được focus
+      fetchReviews();
+    }, [])
+  );
+
+  /* Lines 18-183 omitted */
   const { id } = useLocalSearchParams();
   const numberId = Number(id);
   const router = useRouter();
