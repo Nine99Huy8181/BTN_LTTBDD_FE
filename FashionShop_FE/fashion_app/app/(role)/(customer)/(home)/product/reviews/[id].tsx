@@ -143,7 +143,6 @@ export default function ProductReviewScreen() {
       author: 'Bạn',
       date: new Date().toISOString(),
     };
-
     // Reset form and submit to backend
     setComment('');
     setRating('5');

@@ -223,6 +223,7 @@ export default function ProductDetailScreen() {
         <Ionicons name="arrow-back" size={24} color="#000000" />
       </TouchableOpacity>
 
+
       <FlatList
         data={['content']}
         keyExtractor={(item) => item}
