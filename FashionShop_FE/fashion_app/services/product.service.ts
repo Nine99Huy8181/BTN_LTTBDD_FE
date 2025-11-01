@@ -1,5 +1,5 @@
 // services/product.service.ts
-import { Product, ProductResponse, ProductSearchParams } from '@/types';
+import {Product, ProductResponse, ProductSearchParams } from '@/types';
 import { api } from './api';
 
 export const productService = {
@@ -10,7 +10,7 @@ export const productService = {
   },
 
   // Lấy sản phẩm theo ID
-  getProductById: async (id: number): Promise<Product> => {
+  getProductById: async (id: number): Promise<ProductResponse> => {
     const response = await api.get(`/products/${id}`);
     return response.data;
   },
@@ -28,13 +28,13 @@ export const productService = {
   },
 
   // Tạo sản phẩm mới
-  createProduct: async (product: Product): Promise<Product> => {
+  createProduct: async (product: Product): Promise<ProductResponse> => {
     const response = await api.post('/products', product);
     return response.data;
   },
 
   // Cập nhật sản phẩm
-  updateProduct: async (id: number, productDetails: Product): Promise<Product> => {
+  updateProduct: async (id: number, productDetails: Product): Promise<ProductResponse> => {
     const response = await api.put(`/products/${id}`, productDetails);
     return response.data;
   },

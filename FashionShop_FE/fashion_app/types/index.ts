@@ -2,9 +2,16 @@
 export interface ProductResponse {
   productID: number;
   name: string;
+  description: string;
   brand: string;
+  basePrice: number;
   discountPrice: number;
+  material: string;
+  createdDate: string;
+  status: string;
   averageRating: number;
+  reviewCount: number;
+  isFeatured: boolean;
   image: string;
   soldQuantity: number;
 }

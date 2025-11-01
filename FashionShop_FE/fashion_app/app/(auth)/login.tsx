@@ -4,7 +4,6 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, StatusBar, Keyboar
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/AuthContext';
 import { Routes } from '@/constants';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -33,7 +32,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -42,52 +41,48 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Section */}
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <View style={styles.logoCircle}>
-                <Text style={styles.logoText}>L</Text>
-              </View>
-            </View>
-            <Text style={styles.title}>Chào mừng trở lại</Text>
-            <Text style={styles.subtitle}>Đăng nhập để tiếp tục</Text>
-          </View>
+          <View style={styles.card}>
+            {/* Logo */}
+            <Text style={styles.brandName}>Fashion Store</Text>
+            
+            {/* Title */}
+            <Text style={styles.title}>Login</Text>
 
-          {/* Form Section */}
-          <View style={styles.formContainer}>
             {error && (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorIcon}>⚠️</Text>
                 <Text style={styles.error}>{error}</Text>
               </View>
             )}
 
+            {/* Email Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Tên đăng nhập</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput
                 style={[
                   styles.input,
                   focusedInput === 'username' && styles.inputFocused
                 ]}
-                placeholder="Nhập tên đăng nhập"
-                placeholderTextColor="#666"
+                placeholder="username@gmail.com"
+                placeholderTextColor="#999"
                 value={username}
                 onChangeText={setUsername}
                 onFocus={() => setFocusedInput('username')}
                 onBlur={() => setFocusedInput(null)}
                 autoCapitalize="none"
+                keyboardType="email-address"
               />
             </View>
 
+            {/* Password Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Mật khẩu</Text>
+              <Text style={styles.label}>Password</Text>
               <TextInput
                 style={[
                   styles.input,
                   focusedInput === 'password' && styles.inputFocused
                 ]}
-                placeholder="Nhập mật khẩu"
-                placeholderTextColor="#666"
+                placeholder="Password"
+                placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
                 onFocus={() => setFocusedInput('password')}
@@ -97,13 +92,15 @@ export default function LoginScreen() {
               />
             </View>
 
+            {/* Forgot Password */}
             <TouchableOpacity 
               style={styles.forgotPasswordLink}
               onPress={() => router.push(Routes.AuthForgotPassword)}
             >
-              <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
+            {/* Sign In Button */}
             <TouchableOpacity
               style={[styles.loginButton, isLoggingIn && styles.loginButtonDisabled]}
               onPress={handleLogin}
@@ -111,23 +108,17 @@ export default function LoginScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.loginButtonText}>
-                {isLoggingIn ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                {isLoggingIn ? 'Signing in...' : 'Sign in'}
               </Text>
             </TouchableOpacity>
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>hoặc</Text>
-              <View style={styles.dividerLine} />
+            {/* Register Link */}
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Don't have an account yet? </Text>
+              <TouchableOpacity onPress={() => router.push(Routes.AuthRegister)}>
+                <Text style={styles.registerLink}>Register for free</Text>
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={styles.registerButton}
-              onPress={() => router.push(Routes.AuthRegister)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.registerButtonText}>Tạo tài khoản mới</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -138,7 +129,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f5f5f5',
   },
   keyboardView: {
     flex: 1,
@@ -146,148 +137,103 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
+    padding: 20,
+    paddingTop: 60,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  logoContainer: {
-    marginBottom: 24,
-  },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  logoText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#ffffff',
+  brandName: {
+    fontSize: 32,
+    fontFamily: 'Georgia',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    color: '#000',
+    marginBottom: 40,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#999999',
-    letterSpacing: 0.5,
-  },
-  formContainer: {
-    width: '100%',
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 24,
   },
   errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2A0A0A',
-    borderWidth: 1,
-    borderColor: '#FF4444',
-    borderRadius: 12,
+    backgroundColor: '#fee',
     padding: 12,
-    marginBottom: 20,
-  },
-  errorIcon: {
-    fontSize: 18,
-    marginRight: 8,
+    borderRadius: 8,
+    marginBottom: 16,
   },
   error: {
-    color: '#FF6666',
+    color: '#c00',
     fontSize: 14,
-    flex: 1,
+    textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: '500',
+    color: '#000',
     marginBottom: 8,
-    letterSpacing: 0.3,
   },
   input: {
-    backgroundColor: '#ffffffff',
-    borderWidth: 2,
-    borderColor: '#2A2A2A',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#000000',
-    // transition: 'all 0.3s',
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: '#000',
+    backgroundColor: '#fff',
   },
   inputFocused: {
-    borderColor: '#000000ff',
-    backgroundColor: '#f5f5f5',
+    borderColor: '#000',
+    borderWidth: 1.5,
   },
   forgotPasswordLink: {
     alignSelf: 'flex-end',
     marginBottom: 24,
   },
   forgotPasswordText: {
-    color: '#CCCCCC',
     fontSize: 14,
-    fontWeight: '500',
+    color: '#000',
   },
   loginButton: {
-    backgroundColor: '#000000',
-    borderRadius: 12,
-    padding: 18,
+    backgroundColor: '#000',
+    height: 50,
+    borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    marginBottom: 20,
   },
   loginButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   loginButtonText: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+    fontWeight: '600',
   },
-  divider: {
+  registerContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 32,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#2A2A2A',
-  },
-  dividerText: {
-    color: '#666666',
+  registerText: {
     fontSize: 14,
-    marginHorizontal: 16,
-    fontWeight: '500',
+    color: '#666',
   },
-  registerButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#000000',
-    borderRadius: 12,
-    padding: 18,
-    alignItems: 'center',
-  },
-  registerButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+  registerLink: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '600',
   },
 });

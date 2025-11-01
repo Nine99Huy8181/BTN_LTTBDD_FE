@@ -1,4 +1,5 @@
 // app/_layout.tsx
+import { WishlistProvider } from '@/hooks/WishlistContext';
 import { AuthProvider, useAuth } from '../hooks/AuthContext';
 import { Stack } from 'expo-router';
 import { View, ActivityIndicator} from 'react-native';
@@ -34,10 +35,13 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
+    
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <RootLayoutContent />
-        <Toast/>
+        <WishlistProvider>
+            <RootLayoutContent />
+            <Toast/>
+        </WishlistProvider>
       </AuthProvider>
     </GestureHandlerRootView>
 

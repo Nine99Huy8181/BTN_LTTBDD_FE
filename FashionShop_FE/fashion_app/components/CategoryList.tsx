@@ -41,7 +41,7 @@ export default function CategoryList({ categories }: CategoryListProps) {
           style={styles.toggleButton}
         >
           <Text style={styles.toggleText}>
-            {showAll ? 'Thu gọn' : 'Xem tất cả'}
+            {showAll ? 'Thu gọn' : 'See All'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -59,7 +59,7 @@ export default function CategoryList({ categories }: CategoryListProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 24,
+    paddingVertical: 20,
     backgroundColor: '#FFFFFF',
   },
   header: {
@@ -67,53 +67,54 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#000000',
-    letterSpacing: -0.5,
+    letterSpacing: 0,
+    fontFamily: 'serif',
   },
   titleUnderline: {
-    width: 40,
-    height: 3,
+    width: 32,
+    height: 2,
     backgroundColor: '#000000',
-    marginTop: 8,
+    marginTop: 4,
   },
   toggleButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
   },
   toggleText: {
     fontSize: 14,
-    color: '#000000',
-    fontWeight: '600',
+    color: '#666666',
+    fontWeight: '400',
   },
   flatList: {
     paddingHorizontal: 16,
-    gap: 12,
+    gap: 0,
   },
   categoryItem: {
-    marginRight: 12,
+    marginRight: 8,
   },
   categoryContent: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: '#000000',
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 20,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   categoryName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+    letterSpacing: 0,
   },
 });

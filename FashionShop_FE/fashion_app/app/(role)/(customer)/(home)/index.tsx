@@ -21,9 +21,12 @@ import CategoryList from '@/components/CategoryList';
 import ProductItem from '@/components/ProductItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/hooks/AuthContext';
+import FilterModal from '@/components/FilterModal';
 
 
 export default function HomeScreen() {
+  const {user} = useAuth();
   const router = useRouter();
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -66,7 +69,7 @@ export default function HomeScreen() {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      // router.push(`${Routes.CustomerSearch}?keyword=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`${Routes.CustomerSearch}?keyword=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
     }
   };
@@ -94,7 +97,7 @@ export default function HomeScreen() {
       params.append('maxRating', maxRating.trim());
     }
 
-    // router.push(`${Routes.CustomerSearch}?${params.toString()}`);
+    router.push(`${Routes.CustomerSearch}?${params.toString()}`);
     setFilterModalVisible(false);
   };
 
@@ -144,13 +147,20 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Fashion Store</Text>
+        <TouchableOpacity style={styles.chatbotButton} activeOpacity={0.7}>
+          <Ionicons name="chatbubble-ellipses-outline" size={24} color="#000000" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#666666" style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color="#999999" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm kiếm sản phẩm..."
-            placeholderTextColor="#999999"
+            placeholder="What are you looking for... ?"
+            placeholderTextColor="#CCCCCC"
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={handleSearch}
@@ -162,18 +172,15 @@ export default function HomeScreen() {
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Ionicons name="search-outline" size={22} color="#FFFFFF" />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.filterButton} onPress={handleFilter} activeOpacity={0.7}>
-          <Ionicons name="filter" size={20} color="#FFFFFF" />
+          <Ionicons name="options-outline" size={22} color="#000000" />
         </TouchableOpacity>
       </View>
       
       <FlatList
         style={styles.container}
         data={products}
-        renderItem={({ item }) => <ProductItem product={item} />}
+        renderItem={({ item }) => <ProductItem product={item} accountId={user?.accountId}/>}
         keyExtractor={(item) => item.productID.toString()}
         numColumns={2}
         columnWrapperStyle={styles.productRow}
@@ -186,78 +193,20 @@ export default function HomeScreen() {
       />
 
       {/* Filter Modal */}
-      <Modal
+      <FilterModal
         visible={filterModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setFilterModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Bộ lọc</Text>
-              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#000000" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.filterSection}>
-              <Text style={styles.filterLabel}>Khoảng giá (VNĐ)</Text>
-              <View style={styles.filterRow}>
-                <TextInput
-                  style={styles.filterInput}
-                  placeholder="Từ"
-                  value={minPrice}
-                  onChangeText={setMinPrice}
-                  keyboardType="numeric"
-                  placeholderTextColor="#999999"
-                />
-                <Text style={styles.filterSeparator}>-</Text>
-                <TextInput
-                  style={styles.filterInput}
-                  placeholder="Đến"
-                  value={maxPrice}
-                  onChangeText={setMaxPrice}
-                  keyboardType="numeric"
-                  placeholderTextColor="#999999"
-                />
-              </View>
-            </View>
-
-            <View style={styles.filterSection}>
-              <Text style={styles.filterLabel}>Đánh giá</Text>
-              <View style={styles.filterRow}>
-                <TextInput
-                  style={styles.filterInput}
-                  placeholder="Từ (0-5)"
-                  value={minRating}
-                  onChangeText={setMinRating}
-                  keyboardType="decimal-pad"
-                  placeholderTextColor="#999999"
-                />
-                <Text style={styles.filterSeparator}>-</Text>
-                <TextInput
-                  style={styles.filterInput}
-                  placeholder="Đến (0-5)"
-                  value={maxRating}
-                  onChangeText={setMaxRating}
-                  keyboardType="decimal-pad"
-                  placeholderTextColor="#999999"
-                />
-              </View>
-            </View>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.clearButton} onPress={clearFilter}>
-                <Text style={styles.clearButtonText}>Xóa bộ lọc</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.applyButton} onPress={applyFilter}>
-                <Text style={styles.applyButtonText}>Áp dụng</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setFilterModalVisible(false)}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        minRating={minRating}
+        maxRating={maxRating}
+        setMinPrice={setMinPrice}
+        setMaxPrice={setMaxPrice}
+        setMinRating={setMinRating}
+        setMaxRating={setMaxRating}
+        onClear={clearFilter}
+        onApply={applyFilter}
+      />
     </SafeAreaView>
   );
 }
@@ -286,12 +235,34 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontWeight: '500',
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '400',
+    color: '#000000',
+    fontStyle: 'italic',
+    letterSpacing: 0.5,
+  },
+  chatbotButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingTop: 8,
+    paddingBottom: 16,
     backgroundColor: '#FFFFFF',
     gap: 8,
   },
@@ -299,34 +270,30 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: '#000000',
   },
-  searchButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#000000',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   filterButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#000000',
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   allProductsSection: {
     paddingHorizontal: 16,
@@ -337,16 +304,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    letterSpacing: -0.5,
-  },
+  fontSize: 20,
+  fontWeight: '400',
+  color: '#000000',
+  letterSpacing: 0.5,
+  fontFamily: 'serif',
+},
   titleUnderline: {
-    width: 40,
-    height: 3,
+    width: 32,
+    height: 2,
     backgroundColor: '#000000',
-    marginTop: 8,
+    marginTop: 4,
   },
   productRow: {
     justifyContent: 'space-between',
@@ -372,87 +340,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     flex: 1,
     fontWeight: '500',
-  },
-  // Modal styles - giống Search screen
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  filterSection: {
-    marginBottom: 20,
-  },
-  filterLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 12,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  filterInput: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#000000',
-  },
-  filterSeparator: {
-    fontSize: 16,
-    color: '#666666',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
-  },
-  clearButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#000000',
-    alignItems: 'center',
-  },
-  clearButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  applyButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-  },
-  applyButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
 });

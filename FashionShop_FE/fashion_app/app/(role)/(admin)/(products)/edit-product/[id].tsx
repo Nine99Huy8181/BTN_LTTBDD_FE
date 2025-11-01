@@ -3,12 +3,12 @@ import { View, Text, TextInput, Button, StyleSheet, Alert, Switch } from 'react-
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { productService } from '@/services/product.service';
-import { Product } from '@/types';
+import { ProductResponse } from '@/types';
 
 export default function EditProductScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<ProductResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

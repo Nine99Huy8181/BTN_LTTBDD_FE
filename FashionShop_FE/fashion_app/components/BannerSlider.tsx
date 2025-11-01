@@ -1,4 +1,4 @@
-import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Image, StyleSheet, Dimensions, Text } from 'react-native';
 import Swiper from 'react-native-swiper';
 
 const { width } = Dimensions.get('window');
@@ -28,7 +28,6 @@ export default function BannerSlider() {
               style={styles.image}
               resizeMode="cover"
             />
-            <View style={styles.overlay} />
           </View>
         ))}
       </Swiper>
@@ -38,40 +37,42 @@ export default function BannerSlider() {
 
 const styles = StyleSheet.create({
   container: {
-    height: 240,
-    backgroundColor: '#F5F5F5',
-    marginBottom: 8,
+    height: 200,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 20,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   swiper: {
-    height: 240,
+    height: 200,
   },
   slide: {
     flex: 1,
-    position: 'relative',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   image: {
     width: '100%',
     height: '100%',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 12,
   },
   pagination: {
-    bottom: 16,
+    bottom: 12,
   },
   dot: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginHorizontal: 3,
   },
   activeDot: {
-    backgroundColor: '#FFFFFF',
-    width: 24,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    width: 20,
+    height: 6,
+    borderRadius: 3,
+    marginHorizontal: 3,
   },
 });

@@ -1,6 +1,6 @@
 // app/(auth)/register.tsx
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/AuthContext';
 import { Routes } from '@/constants';
@@ -8,16 +8,24 @@ import { Routes } from '@/constants';
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [gender, setGender] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const { register } = useAuth();
 
   const handleRegister = async () => {
     setError(null);
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
     setIsRegistering(true);
     const { success, error: errorMessage } = await register(
       email,
@@ -36,209 +44,213 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Đăng Ký</Text>
-          <Text style={styles.subtitle}>Tạo tài khoản mới</Text>
-        </View>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.card}>
+            {/* Logo */}
+            <Text style={styles.brandName}>Fashion Store</Text>
+            
+            {/* Title */}
+            <Text style={styles.title}>Register</Text>
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+            {error && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.error}>{error}</Text>
+              </View>
+            )}
+
+            {/* Email Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  focusedInput === 'email' && styles.inputFocused
+                ]}
+                placeholder="username@gmail.com"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={setEmail}
+                onFocus={() => setFocusedInput('email')}
+                onBlur={() => setFocusedInput(null)}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+            </View>
+
+            {/* Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  focusedInput === 'password' && styles.inputFocused
+                ]}
+                placeholder="Password"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setFocusedInput('password')}
+                onBlur={() => setFocusedInput(null)}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Confirm Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password again</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  focusedInput === 'confirmPassword' && styles.inputFocused
+                ]}
+                placeholder="Password"
+                placeholderTextColor="#999"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                onFocus={() => setFocusedInput('confirmPassword')}
+                onBlur={() => setFocusedInput(null)}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Register Button */}
+            <TouchableOpacity
+              style={[styles.registerButton, isRegistering && styles.registerButtonDisabled]}
+              onPress={handleRegister}
+              disabled={isRegistering}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.registerButtonText}>
+                {isRegistering ? 'Registering...' : 'Register'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Login Link */}
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>Have an account ? </Text>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={styles.loginLink}>Login now</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        )}
-
-        <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="example@email.com"
-              placeholderTextColor="#999"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mật khẩu</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nhập mật khẩu"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Họ và tên</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nguyễn Văn A"
-              placeholderTextColor="#999"
-              value={fullName}
-              onChangeText={setFullName}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Số điện thoại</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="0123456789"
-              placeholderTextColor="#999"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Ngày sinh</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor="#999"
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Giới tính</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="MALE/FEMALE/OTHER"
-              placeholderTextColor="#999"
-              value={gender}
-              onChangeText={setGender}
-              autoCapitalize="characters"
-            />
-          </View>
-
-          <TouchableOpacity 
-            style={[styles.button, styles.primaryButton, isRegistering && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={isRegistering}
-          >
-            <Text style={styles.primaryButtonText}>
-              {isRegistering ? 'Đang xử lý...' : 'Đăng ký'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.button, styles.secondaryButton]}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.secondaryButtonText}>Quay lại Đăng nhập</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f5f5f5',
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    justifyContent: 'center',
+    padding: 20,
     paddingTop: 60,
-    paddingBottom: 40,
   },
-  header: {
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  brandName: {
+    fontSize: 32,
+    fontFamily: 'Georgia',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    color: '#000',
     marginBottom: 40,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666666',
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 24,
   },
   errorContainer: {
-    backgroundColor: '#FFE5E5',
+    backgroundColor: '#fee',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF0000',
+    marginBottom: 16,
   },
-  errorText: {
-    color: '#D8000C',
+  error: {
+    color: '#c00',
     fontSize: 14,
+    textAlign: 'center',
   },
-  formContainer: {
-    width: '100%',
-  },
-  inputGroup: {
+  inputContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
+    fontWeight: '500',
+    color: '#000',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F5F5F5',
+    height: 48,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#ddd',
     borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
-    color: '#000000',
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: '#000',
+    backgroundColor: '#fff',
   },
-  button: {
+  inputFocused: {
+    borderColor: '#000',
+    borderWidth: 1.5,
+  },
+  registerButton: {
+    backgroundColor: '#000',
+    height: 50,
     borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 20,
   },
-  primaryButton: {
-    backgroundColor: '#000000',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  registerButtonDisabled: {
+    opacity: 0.7,
   },
-  primaryButtonText: {
-    color: '#FFFFFF',
+  registerButtonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  secondaryButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E0E0E0',
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  secondaryButtonText: {
-    color: '#333333',
-    fontSize: 16,
-    fontWeight: '500',
+  loginText: {
+    fontSize: 14,
+    color: '#666',
   },
-  buttonDisabled: {
-    backgroundColor: '#999999',
-    opacity: 0.7,
+  loginLink: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '600',
   },
 });

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { ProductResponse } from '@/types';
 import ProductItem from './ProductItem';
+import FeaturedProductItem from './FeaturedProductItem';
 
 interface FeaturedProductsProps {
   products: ProductResponse[];
@@ -23,13 +24,13 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
           onPress={() => setShowAll(!showAll)}
         >
           <Text style={styles.toggleText}>
-            {showAll ? 'Thu gọn' : 'Xem tất cả'}
+            {showAll ? 'Thu gọn' : 'See All'}
           </Text>
         </TouchableOpacity>
       </View>
       <FlatList
         data={displayedProducts}
-        renderItem={({ item }) => <ProductItem product={item} horizontal />}
+        renderItem={({ item }) => <FeaturedProductItem product={item} />}
         keyExtractor={(item) => item.productID.toString()}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -41,41 +42,44 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 20,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#000000',
-    letterSpacing: -0.5,
+    letterSpacing: 0,
+    fontFamily:'serif',
   },
   titleUnderline: {
-    width: 40,
-    height: 3,
+    width: 32,
+    height: 2,
     backgroundColor: '#000000',
-    marginTop: 8,
+    marginTop: 4,
   },
   toggleButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   toggleText: {
     fontSize: 14,
-    color: '#000000',
-    fontWeight: '600',
+    color: '#666666',
+    fontWeight: '400',
   },
   flatList: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
 });

@@ -1,4 +1,5 @@
 export const Colors = {
+  start: '#FFC50F',
   // 🎨 Thương hiệu & nhận diện
   brand: {
     primary: '#E91E63',      // Màu chính (hồng thời trang)
