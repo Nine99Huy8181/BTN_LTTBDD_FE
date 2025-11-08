@@ -1,6 +1,6 @@
 // app/(admin)/_layout.tsx
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 
 export default function AdminLayout() {
   return (
@@ -17,6 +17,9 @@ export default function AdminLayout() {
             <Ionicons name="stats-chart" size={24} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => router.replace('/(role)/(super)/dashboard'),
+        })}
       />
       <Tabs.Screen
         name="(products)"
@@ -27,6 +30,9 @@ export default function AdminLayout() {
             <Ionicons name="cube" size={24} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => router.replace('/(role)/(super)/(products)'),
+        })}
       />
       <Tabs.Screen
         name="(orders)"
@@ -37,6 +43,9 @@ export default function AdminLayout() {
             <Ionicons name="receipt" size={24} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => router.replace('/(role)/(super)/(orders)'),
+        })}
       />
       <Tabs.Screen
         name="(staffs)"
@@ -47,6 +56,9 @@ export default function AdminLayout() {
             <Ionicons name="people" size={24} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => router.replace('/(role)/(super)/(staffs)'),
+        })}
       />
       <Tabs.Screen
         name="(more)"
@@ -57,6 +69,9 @@ export default function AdminLayout() {
             <Ionicons name="menu" size={24} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => router.replace('/(role)/(super)/(more)'),
+        })}
       />
     </Tabs>
   );

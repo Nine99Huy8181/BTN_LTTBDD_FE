@@ -107,9 +107,7 @@ export default function OrderDetailScreen() {
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() =>
-            router.push(Routes.CustomerWriteReview)
-            // router.push('/(customer)/(profile)/order-detail/write-review/1')
-            //luu y
+            router.push(`/(role)/(customer)/(profile)/order-detail/write-review/${id}`)
           }
         >
           <Text style={styles.primaryButtonText}>Viết đánh giá</Text>

@@ -7,6 +7,7 @@ import { Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { CartService, CartItem } from '@/services/cart.service';
 import { Swipeable } from 'react-native-gesture-handler';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -70,7 +71,11 @@ export default function CartScreen() {
   }, 0);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.container}>
+      <Text
+        style={styles.titleCart}
+      >Giỏ hàng của bạn</Text>
       <FlatList
         data={items}
         keyExtractor={(i) => String(i.cartItemID)}
@@ -116,12 +121,21 @@ export default function CartScreen() {
       <TouchableOpacity style={styles.checkoutBtn} onPress={() => router.push(Routes.CustomerCheckout)}>
         <Text style={{ color: '#fff', fontWeight: '600' }}>Checkout</Text>
       </TouchableOpacity>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+  },
   container: { flex: 1},
+  titleCart: {
+    fontWeight: 'bold',
+    fontSize: 20,
+    margin: 10,
+  },
   itemRow: { flexDirection: 'row', padding: 8, borderBottomWidth: 1, borderColor: '#eee', alignItems: 'center' },
   image: { width: 64, height: 64, borderRadius: 8, marginRight: 12, backgroundColor: '#f0f0f0' },
   title: { fontSize: 14, fontWeight: '600' },

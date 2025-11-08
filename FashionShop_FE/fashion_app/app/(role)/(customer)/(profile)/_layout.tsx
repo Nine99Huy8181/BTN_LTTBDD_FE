@@ -16,7 +16,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="coupon" options={{ title: 'Coupon' , headerShown: false }} />
       <Stack.Screen name="change-password" options={{ title: 'Change Password' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-      <Stack.Screen name="order-detail/write-review/[id]" options={{ title: 'Write Review' }} />
+      <Stack.Screen name="order-detail/write-review/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

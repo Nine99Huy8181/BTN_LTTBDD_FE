@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/AuthContext';
 import { DeviceEventEmitter } from 'react-native';
 import { CartService } from '@/services/cart.service';
 
-
 export default function CustomerLayout() {
   const { user } = useAuth();
   const [badgeCount, setBadgeCount] = useState<number | undefined>(undefined);
-
   const loadBadge = async () => {
     try {
       if (!user || !user.accountId) {
@@ -41,11 +39,11 @@ export default function CustomerLayout() {
       loadBadge();
     });
     return () => sub.remove();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (
     <Tabs
+      // unmount handled per-screen below to ensure compatibility with BottomTabNavigationOptions types
       screenOptions={{
         tabBarActiveTintColor: '#000000ff',
         tabBarInactiveTintColor: '#999',
@@ -60,6 +58,12 @@ export default function CustomerLayout() {
             <Ionicons name="home" size={25} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => {
+            // Reset the nested stack by replacing the route with the tab's root
+            router.replace('/(role)/(customer)/(home)');
+          },
+        })}
       />
       <Tabs.Screen
         name="(cart)"
@@ -71,6 +75,11 @@ export default function CustomerLayout() {
           ),
           tabBarBadge: badgeCount && badgeCount > 0 ? badgeCount : undefined,
         }}
+        listeners={() => ({
+          tabPress: () => {
+            router.replace('/(role)/(customer)/(cart)');
+          },
+        })}
       />
       <Tabs.Screen
         name="wishlist"
@@ -81,6 +90,11 @@ export default function CustomerLayout() {
             <Ionicons name="heart" size={25} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => {
+            router.replace('/(role)/(customer)/wishlist');
+          },
+        })}
       />
       <Tabs.Screen
         name="notification"
@@ -91,6 +105,11 @@ export default function CustomerLayout() {
             <Ionicons name="notifications" size={25} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => {
+            router.replace('/(role)/(customer)/notification');
+          },
+        })}
       />
       <Tabs.Screen
         name="(profile)"
@@ -101,6 +120,11 @@ export default function CustomerLayout() {
             <Ionicons name="person" size={25} color={color} />
           ),
         }}
+        listeners={() => ({
+          tabPress: () => {
+            router.replace('/(role)/(customer)/(profile)');
+          },
+        })}
       />
     </Tabs>
   );
