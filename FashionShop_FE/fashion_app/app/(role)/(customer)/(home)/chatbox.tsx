@@ -8,45 +8,31 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Alert,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; // Để quay lại trang trước
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { api } from '../../../../services/api';
+
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  inventory: number;
+  image?: string;
+};
 
 type Message = {
   id: string;
   text: string;
   sender: 'user' | 'bot';
-  product?: {
-    name: string;
-    price: string;
-  };
+  products?: Product[];
 };
 
-const fakeProducts = [
-  {
-    id: '1',
-    name: "Men's Stylish Tee Shirt",
-    price: '$120.00',
-    keywords: ['áo', 'tee', 'trắng', 'nam', 'stylish'],
-  },
-  {
-    id: '2',
-    name: "Men's Neck Tee Shirt",
-    price: '$120.00',
-    keywords: ['áo', 'cổ', 'trắng', 'nam', 'neck'],
-  },
-  {
-    id: '3',
-    name: 'Short Sleeve Polo Shirt',
-    price: '$150.00',
-    keywords: ['polo', 'ngắn', 'xanh', 'nam'],
-  },
-];
-
 export default function ChatboxScreen() {
-  const router = useRouter(); // Dùng để quay lại
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -60,47 +46,11 @@ export default function ChatboxScreen() {
     },
   ]);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  const findProductByKeyword = (keyword: string) => {
-    const lowerKeyword = keyword.toLowerCase();
-    return fakeProducts.find((p) =>
-      p.keywords.some((k) => lowerKeyword.includes(k) || k.includes(lowerKeyword))
-    );
-  };
-
-  const generateBotResponse = (userText: string): Message => {
-    const product = findProductByKeyword(userText);
-
-    if (product) {
-      return {
-        id: Date.now().toString(),
-        text: `Tôi tìm thấy sản phẩm phù hợp:`,
-        sender: 'bot',
-        product: {
-          name: product.name,
-          price: product.price,
-        },
-      };
-    }
-
-    if (userText.toLowerCase().includes('giảm giá') || userText.toLowerCase().includes('sale')) {
-      return {
-        id: Date.now().toString(),
-        text: 'Đang có chương trình GIẢM 40% TOÀN BỘ sản phẩm mùa đông! Nhanh tay mua ngay!',
-        sender: 'bot',
-      };
-    }
-
-    return {
-      id: Date.now().toString(),
-      text: 'Xin lỗi, tôi chưa hiểu rõ. Bạn có thể nói rõ hơn? (VD: áo thun, polo, giảm giá...)',
-      sender: 'bot',
-    };
-  };
-
-  const sendMessage = () => {
-    if (!inputText.trim()) return;
+  const sendMessage = async () => {
+    if (!inputText.trim() || isLoading) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -108,49 +58,128 @@ export default function ChatboxScreen() {
       sender: 'user',
     };
 
-    const botReply = generateBotResponse(inputText);
-
-    setMessages((prev) => [...prev, userMsg, botReply]);
+    setMessages((prev) => [...prev, userMsg]);
+    const currentInput = inputText;
     setInputText('');
+    setIsLoading(true);
 
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    try {
+      const response = await api.post('/chat', { message: currentInput });
+      const data = response.data;
+
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.message,
+        sender: 'bot',
+        products: data.type === 'products' ? data.products : undefined,
+      };
+
+      setMessages((prev) => [...prev, botMsg]);
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Xin lỗi, có lỗi kết nối. Vui lòng thử lại sau.',
+        sender: 'bot',
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
   };
 
   const handleBack = () => {
-    router.back(); // Quay lại trang trước (Home)
+    router.back();
+  };
+
+  const handleProductPress = (productId: number) => {
+    // Navigate to product detail screen
+    router.push(`/product/${productId}`);
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(price);
   };
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.sender === 'user';
 
-    if (item.product) {
+    // Render product cards
+    if (item.products && item.products.length > 0) {
       return (
         <View style={[styles.messageContainer, styles.botContainer]}>
-          <View style={styles.botBubble}>
+          <View style={styles.botMessageWithProducts}>
+            {/* Message text */}
             <Text style={styles.botText}>{item.text}</Text>
-            <View style={styles.productCard}>
-              <View style={styles.productImagePlaceholder}>
-                <Text style={styles.placeholderText}>Áo</Text>
-              </View>
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={styles.productName}>{item.product.name}</Text>
-                <Text style={styles.productPrice}>{item.product.price}</Text>
-                <TouchableOpacity style={styles.viewButton}>
-                  <Text style={styles.viewButtonText}>Xem ngay</Text>
+            
+            {/* Product cards */}
+            <View style={styles.productsContainer}>
+              {item.products.map((product) => (
+                <TouchableOpacity
+                  key={product.id}
+                  style={styles.productCard}
+                  onPress={() => handleProductPress(product.id)}
+                  activeOpacity={0.7}
+                >
+                  {/* Product Image */}
+                  {product.image ? (
+                    <Image
+                      source={{ uri: product.image }}
+                      style={styles.productImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.productImagePlaceholder}>
+                      <Ionicons name="image-outline" size={32} color="#999" />
+                    </View>
+                  )}
+
+                  {/* Product Info */}
+                  <View style={styles.productInfo}>
+                    <Text style={styles.productName} numberOfLines={2}>
+                      {product.name}
+                    </Text>
+                    <Text style={styles.productPrice}>
+                      {formatPrice(product.price)}
+                    </Text>
+                    <Text style={styles.productInventory}>
+                      Còn: {product.inventory} sản phẩm
+                    </Text>
+
+                    {/* View Detail Button */}
+                    <View style={styles.viewButtonWrapper}>
+                      <Text style={styles.viewButtonText}>Xem chi tiết</Text>
+                      <Ionicons name="arrow-forward" size={14} color="#FFF" />
+                    </View>
+                  </View>
                 </TouchableOpacity>
-              </View>
+              ))}
             </View>
           </View>
         </View>
       );
     }
 
+    // Render normal text message
     return (
-      <View style={[styles.messageContainer, isUser ? styles.userContainer : styles.botContainer]}>
-        <View style={[styles.bubble, isUser ? styles.userBubble : styles.botBubble]}>
-          <Text style={isUser ? styles.userText : styles.botText}>{item.text}</Text>
+      <View
+        style={[
+          styles.messageContainer,
+          isUser ? styles.userContainer : styles.botContainer,
+        ]}
+      >
+        <View
+          style={[styles.bubble, isUser ? styles.userBubble : styles.botBubble]}
+        >
+          <Text style={isUser ? styles.userText : styles.botText}>
+            {item.text}
+          </Text>
         </View>
       </View>
     );
@@ -162,16 +191,16 @@ export default function ChatboxScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header với nút Back */}
+        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Hỗ trợ mua sắm</Text>
+          <Text style={styles.headerTitle}>Hỗ trợ mua sắm AI</Text>
           <Ionicons name="chatbubble-ellipses" size={24} color="#333" />
         </View>
 
-        {/* Chat Messages */}
+        {/* Messages List */}
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -181,7 +210,7 @@ export default function ChatboxScreen() {
           showsVerticalScrollIndicator={false}
         />
 
-        {/* Input */}
+        {/* Input Container */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.textInput}
@@ -189,9 +218,18 @@ export default function ChatboxScreen() {
             value={inputText}
             onChangeText={setInputText}
             onSubmitEditing={sendMessage}
+            editable={!isLoading}
           />
-          <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-            <Ionicons name="send" size={20} color="white" />
+          <TouchableOpacity
+            onPress={sendMessage}
+            style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Ionicons name="send" size={20} color="white" />
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -199,9 +237,11 @@ export default function ChatboxScreen() {
   );
 }
 
-// === Cập nhật Style ===
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f8f8f8' 
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -223,10 +263,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
   },
-  messageList: { padding: 16, paddingBottom: 10 },
-  messageContainer: { marginVertical: 6 },
-  userContainer: { alignItems: 'flex-end' },
-  botContainer: { alignItems: 'flex-start' },
+  messageList: { 
+    padding: 16, 
+    paddingBottom: 10 
+  },
+  messageContainer: { 
+    marginVertical: 6 
+  },
+  userContainer: { 
+    alignItems: 'flex-end' 
+  },
+  botContainer: { 
+    alignItems: 'flex-start' 
+  },
   bubble: {
     maxWidth: '75%',
     padding: 12,
@@ -240,37 +289,96 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
   },
-  userText: { color: 'white', fontSize: 15 },
-  botText: { color: '#333', fontSize: 15 },
+  userText: { 
+    color: 'white', 
+    fontSize: 15 
+  },
+  botText: { 
+    color: '#333', 
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  
+  // Product Message Styles
+  botMessageWithProducts: {
+    maxWidth: '95%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  productsContainer: {
+    marginTop: 12,
+    gap: 12,
+  },
   productCard: {
-    marginTop: 8,
+    flexDirection: 'row',
     backgroundColor: '#f9f9f9',
     borderRadius: 12,
     padding: 12,
-    flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  productImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
   },
   productImagePlaceholder: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     borderRadius: 8,
-    backgroundColor: '#eee',
+    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  placeholderText: { fontSize: 28 },
-  productName: { fontWeight: '600', color: '#333', fontSize: 14 },
-  productPrice: { color: '#e91e63', fontWeight: 'bold', marginVertical: 4 },
-  viewButton: {
+  productInfo: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'space-between',
+  },
+  productName: {
+    fontWeight: '600',
+    color: '#333',
+    fontSize: 14,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  productPrice: {
+    color: '#e91e63',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginVertical: 4,
+  },
+  productInventory: {
+    color: '#666',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  viewButtonWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#000',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 6,
     alignSelf: 'flex-start',
-    marginTop: 4,
+    gap: 4,
   },
-  viewButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  viewButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  
+  // Input Styles
   inputContainer: {
     flexDirection: 'row',
     padding: 12,
@@ -288,11 +396,14 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   sendButton: {
-    backgroundColor: '#000000ff',
+    backgroundColor: '#000000',
     width: 44,
     height: 44,
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#666',
   },
 });

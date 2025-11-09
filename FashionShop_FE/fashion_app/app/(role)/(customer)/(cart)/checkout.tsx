@@ -1,6 +1,8 @@
 // app/(customer)/(cart)/checkout.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import * as Linking from 'expo-linking';
+
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Routes } from '@/constants';
@@ -8,6 +10,7 @@ import { useAuth } from '@/hooks/AuthContext';
 import { CartService } from '@/services/cart.service';
 import { addressService } from '@/services/address.service';
 import { OrderService } from '@/services/order.service';
+import { api } from '@/services/api';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -22,19 +25,48 @@ export default function CheckoutScreen() {
   const [note, setNote] = useState('');
   const [isPlacing, setIsPlacing] = useState(false);
 
+  // Deep Link handler cho VNPay callback
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      console.log('📱 Deep link received:', url);
+      
+      const { queryParams } = Linking.parse(url);
+      console.log('📱 VNPAY callback data:', queryParams);
+      
+      if (queryParams?.status === 'success') {
+        // Clear cart và navigate
+        router.replace(`/(role)/(customer)/(cart)/order-success`);
+      } else if (queryParams?.status === 'failed') {
+        Alert.alert('Thanh toán thất bại', 'Vui lòng thử lại', [
+          { text: 'OK', onPress: () => router.back() }
+        ]);
+      }
+    };
+
+    // Listen for deep links
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was opened via deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => subscription.remove();
+  }, [router]);
+
   const loadAddressAndCart = async (customerId: number, selectedAddressId?: number) => {
-    // load addresses
     try {
       const addrs: any = await addressService.getAddressesByCustomerId(customerId);
       let selectedAddr;
       
       if (selectedAddressId) {
-        // Nếu có selectedAddressId, tìm địa chỉ được chọn
         selectedAddr = addrs?.find((a: any) => a.addressID === selectedAddressId);
       }
       
       if (!selectedAddr) {
-        // Nếu không có địa chỉ được chọn, dùng địa chỉ mặc định
         selectedAddr = addrs?.find((a: any) => a.isDefault);
       }
 
@@ -43,12 +75,18 @@ export default function CheckoutScreen() {
         setRecipientName(selectedAddr.recipientName);
         setRecipientPhone(selectedAddr.recipientPhone);
       }
-    } catch (err) { }
+    } catch (err) {
+      console.error('Load address error:', err);
+    }
 
-    let cart = await CartService.getCartByCustomerId(customerId);
-    if (!cart) cart = await CartService.createCart(customerId);
-    const cartItems = await CartService.getCartItemsByCartId(cart.cartID);
-    setItems(cartItems);
+    try {
+      let cart = await CartService.getCartByCustomerId(customerId);
+      if (!cart) cart = await CartService.createCart(customerId);
+      const cartItems = await CartService.getCartItemsByCartId(cart.cartID);
+      setItems(cartItems);
+    } catch (err) {
+      console.error('Load cart error:', err);
+    }
   };
 
   const loadData = async () => {
@@ -64,7 +102,6 @@ export default function CheckoutScreen() {
     loadData();
   }, [user]);
 
-  // Reload data when screen is focused or selectedAddressId changes
   useFocusEffect(
     useCallback(() => {
       if (customerId) {
@@ -78,6 +115,40 @@ export default function CheckoutScreen() {
     return s + (price * (it.quantity || 0));
   }, 0);
 
+  const handleVNPayPayment = async (orderId: number, amount: number) => {
+    console.log('💳 Starting VNPay payment for order:', orderId, 'amount:', amount);
+    try {
+      // Đảm bảo endpoint đúng - kiểm tra baseURL của api service
+      const response = await api.post('/payment/create-payment', {
+        amount,
+        orderInfo: `Thanh toan don hang ${orderId}`
+      });
+
+      console.log('💳 VNPay response:', response.data);
+
+      if (response.data.paymentUrl) {
+        console.log('🔗 Opening VNPay URL:', response.data.paymentUrl);
+        
+        // Kiểm tra xem URL có thể mở được không
+        const supported = await Linking.canOpenURL(response.data.paymentUrl);
+        
+        if (supported) {
+          await Linking.openURL(response.data.paymentUrl);
+        } else {
+          console.error('❌ Cannot open URL:', response.data.paymentUrl);
+          Alert.alert('Lỗi', 'Không thể mở trang thanh toán VNPay');
+        }
+      } else {
+        console.error('❌ No payment URL received');
+        Alert.alert('Lỗi', 'Không tạo được link thanh toán VNPay');
+      }
+    } catch (err: any) {
+      console.error('❌ VNPay payment error:', err);
+      console.error('Error details:', err.response?.data);
+      Alert.alert('Lỗi', err.response?.data?.message || 'Lỗi khi tạo thanh toán VNPay');
+    }
+  };
+
   const placeOrder = async () => {
     if (!customerId) {
       Alert.alert('Lỗi', 'Không tìm thấy thông tin khách hàng.');
@@ -87,49 +158,65 @@ export default function CheckoutScreen() {
       Alert.alert('Giỏ hàng rỗng', 'Vui lòng thêm sản phẩm trước khi đặt hàng.');
       return;
     }
+    if (!defaultAddress) {
+      Alert.alert('Lỗi', 'Vui lòng thêm địa chỉ giao hàng');
+      return;
+    }
+    if (!recipientName.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập tên người nhận');
+      return;
+    }
+    if (!recipientPhone.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại người nhận');
+      return;
+    }
 
     setIsPlacing(true);
     try {
-      // Check if address exists
-      if (!defaultAddress) {
-        Alert.alert('Lỗi', 'Vui lòng thêm địa chỉ giao hàng');
-        return;
-      }
-
-      // Validate recipient information
-      if (!recipientName.trim()) {
-        Alert.alert('Lỗi', 'Vui lòng nhập tên người nhận');
-        return;
-      }
-      if (!recipientPhone.trim()) {
-        Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại người nhận');
-        return;
-      }
-
       const payload: any = {
-        items: items.map((it) => ({ variantID: (it.variant as any).variantID, quantity: it.quantity || 0 })),
+        items: items.map((it) => ({ 
+          variantID: (it.variant as any).variantID,
+          quantity: it.quantity || 0 
+        })),
         addressID: defaultAddress.addressID,
-        recipientName: recipientName.trim(),
-        recipientPhone: recipientPhone.trim(),
-        paymentMethod,
-        notes: note,
+        paymentMethod: paymentMethod === 'cod' ? 'COD' : 'VNPAY',
+        notes: note
       };
 
+      console.log('📦 Creating order with payload:', payload);
       const createdOrder: any = await OrderService.createOrder(payload);
+      console.log('✅ Order created:', createdOrder);
 
-      // clear cart items
-      for (const it of items) {
-        try {
-          await CartService.deleteCartItem(it.cartItemID);
-        } catch (err) { }
+      if (paymentMethod === 'card') {
+        // Thanh toán VNPay
+        await handleVNPayPayment(createdOrder.orderID, total);
+        
+        // Xóa cart items sau khi mở VNPay (không chờ callback)
+        for (const it of items) {
+          try {
+            await CartService.deleteCartItem(it.cartItemID);
+          } catch (err) {
+            console.error('Delete cart item error:', err);
+          }
+        }
+      } else {
+        // Thanh toán COD
+        for (const it of items) {
+          try {
+            await CartService.deleteCartItem(it.cartItemID);
+          } catch (err) {
+            console.error('Delete cart item error:', err);
+          }
+        }
+        
+        Alert.alert('Đặt hàng thành công', 'Cảm ơn bạn đã đặt hàng', [
+          { text: 'OK', onPress: () => router.replace('/(role)/(customer)/(cart)/order-success') }
+        ]);
       }
-
-      Alert.alert('Đặt hàng thành công', 'Cám ơn bạn đã đặt hàng', [
-        { text: 'OK', onPress: () => router.replace('/(role)/(customer)/(cart)/order-success') }
-      ]);
     } catch (err: any) {
-      console.error('Place order error', err);
-      Alert.alert('Lỗi', err?.message || 'Đặt hàng thất bại');
+      console.error('❌ Place order error', err);
+      console.error('Error response:', err.response?.data);
+      Alert.alert('Lỗi', err.response?.data?.message || err?.message || 'Đặt hàng thất bại');
     } finally {
       setIsPlacing(false);
     }
@@ -181,7 +268,9 @@ export default function CheckoutScreen() {
               keyboardType="phone-pad"
             />
           </View>
-        </View>        <View style={styles.section}>
+        </View>
+
+        <View style={styles.section}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }} >
             <Text style={styles.sectionTitle}>Địa chỉ giao hàng</Text>
             {!defaultAddress ? (
@@ -234,17 +323,19 @@ export default function CheckoutScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment method</Text>
-          <TouchableOpacity style={[styles.paymentRow, paymentMethod === 'card' && styles.paymentActive]} onPress={() => setPaymentMethod('card')}>
-            <Text>💳  Credit card</Text>
-            <Text style={styles.paymentNote}>Credit card</Text>
+          <TouchableOpacity 
+            style={[styles.paymentRow, paymentMethod === 'card' && styles.paymentActive]} 
+            onPress={() => setPaymentMethod('card')}
+          >
+            <Text>💳  VNPay</Text>
+            <Text style={styles.paymentNote}>Thanh toán qua VNPay</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.paymentRow, paymentMethod === 'paypal' && styles.paymentActive]} onPress={() => setPaymentMethod('paypal')}>
-            <Text>🅿️  Paypal</Text>
-            <Text style={styles.paymentNote}>Paypal</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.paymentRow, paymentMethod === 'cod' && styles.paymentActive]} onPress={() => setPaymentMethod('cod')}>
+          <TouchableOpacity 
+            style={[styles.paymentRow, paymentMethod === 'cod' && styles.paymentActive]} 
+            onPress={() => setPaymentMethod('cod')}
+          >
             <Text>📦  Cash on Delivery</Text>
-            <Text style={styles.paymentNote}>Pay on delivery</Text>
+            <Text style={styles.paymentNote}>Thanh toán khi nhận hàng</Text>
           </TouchableOpacity>
         </View>
 
@@ -264,11 +355,20 @@ export default function CheckoutScreen() {
       <View style={styles.footer}>
         <Text style={{ fontWeight: '700', marginBottom: 6 }}>Notes</Text>
         <TextInput placeholder="Take note" value={note} onChangeText={setNote} style={styles.noteInput} />
-        <TouchableOpacity style={styles.placeBtn} onPress={placeOrder}><Text style={{ color: '#fff', fontWeight: '700' }}>Place Order</Text></TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.placeBtn, isPlacing && { opacity: 0.5 }]} 
+          onPress={placeOrder}
+          disabled={isPlacing}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700' }}>
+            {isPlacing ? 'Đang xử lý...' : 'Place Order'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   editableInput: {
     borderWidth: 1,

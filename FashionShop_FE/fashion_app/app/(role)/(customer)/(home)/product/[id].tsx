@@ -21,31 +21,14 @@ import React from 'react';
 export default function ProductDetailScreen() {
   const params = useLocalSearchParams();
 
-  // Fetch reviews khi màn hình được mount và khi focus
-  useEffect(() => {
-    const interval = setInterval(() => {
+  // Fetch reviews when the screen is focused. Initial load on id change
+  // is handled by the useEffect further down (which depends on numberId).
+  useFocusEffect(
+    React.useCallback(() => {
       if (params.id) {
         fetchReviews();
       }
-    }, 1000); // Fetch mỗi giây
-
-    return () => clearInterval(interval);
-  }, [params.id]);
-  
-  // Fetch reviews mỗi khi màn hình được focus
-  useFocusEffect(
-    React.useCallback(() => {
-      // Fetch ngay khi màn hình được focus
-      fetchReviews();
-    }, [])
-  );
-  
-  // Fetch reviews mỗi khi màn hình được focus
-  useFocusEffect(
-    React.useCallback(() => {
-      // Fetch ngay khi màn hình được focus
-      fetchReviews();
-    }, [])
+    }, [params.id])
   );
 
   /* Lines 18-183 omitted */
@@ -112,25 +95,20 @@ export default function ProductDetailScreen() {
 
   async function fetchReviews() {
     try {
-      const endpoints = [
-        `/reviews/product/${numberId}`,
-        `/products/${numberId}/reviews`,
-        `/reviews?productID=${numberId}`,
-      ];
-      for (const ep of endpoints) {
-        try {
-          const res = await api.get(ep);
-          if (res?.data && Array.isArray(res.data)) {
-            setReviews(res.data.map((r: any) => ({ 
-              rating: r.rating, 
-              comment: r.comment, 
-              reviewDate: r.reviewDate || r.review_date || r.reviewDate, 
-              images: r.images || [] 
-            })));
-            return;
-          }
-        } catch (e) {}
+      // Use the canonical backend endpoint for reviews by product
+      // (the backend exposes GET /api/reviews/product/{productId}).
+      const res = await api.get(`/reviews/product/${numberId}`);
+      if (res?.data && Array.isArray(res.data)) {
+        setReviews(res.data.map((r: any) => ({ 
+          rating: r.rating, 
+          comment: r.comment, 
+          reviewDate: r.reviewDate || r.review_date || r.reviewDate, 
+          images: r.images || [] 
+        })));
+        return;
       }
+
+      // Fallback mock data when backend returns unexpected payload
       const mock = [
         { rating: 5, comment: 'Sản phẩm tuyệt vời, giao nhanh.', reviewDate: '2025-10-23T12:34:00', images: [] },
         { rating: 4, comment: 'Chất lượng ok, nhưng màu khác so với hình.', reviewDate: '2025-10-22T10:20:00', images: [] },
@@ -138,7 +116,14 @@ export default function ProductDetailScreen() {
       ];
       setReviews(mock);
     } catch (err) {
+      // Log error and use fallback mock data
       console.error('fetchReviews error', err);
+      const mock = [
+        { rating: 5, comment: 'Sản phẩm tuyệt vời, giao nhanh.', reviewDate: '2025-10-23T12:34:00', images: [] },
+        { rating: 4, comment: 'Chất lượng ok, nhưng màu khác so với hình.', reviewDate: '2025-10-22T10:20:00', images: [] },
+        { rating: 3, comment: 'Bình thường, giá hơi cao.', reviewDate: '2025-10-20T09:15:00', images: [] },
+      ];
+      setReviews(mock);
     }
   }
 

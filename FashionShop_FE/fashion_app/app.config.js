@@ -12,8 +12,18 @@ export default {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.yourcompany.fashionapp",
+      // Thêm config cho deep link
+      infoPlist: {
+        CFBundleURLTypes: [
+          {
+            CFBundleURLSchemes: ["fashionapp"]
+          }
+        ]
+      }
     },
     android: {
+      package: "com.yourcompany.fashionapp",
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/android-icon-foreground.png",
@@ -22,6 +32,20 @@ export default {
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
+      // QUAN TRỌNG: Thêm intent filter cho deep link
+      intentFilters: [
+        {
+          action: "VIEW",
+          autoVerify: true,
+          data: [
+            {
+              scheme: "fashionapp",
+              host: "payment-return"
+            }
+          ],
+          category: ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     web: {
       output: "static",
