@@ -5,8 +5,12 @@ export default {
     name: "fashion_app",
     slug: "fashion_app",
     version: "1.0.0",
+    // Add your EAS Project ID here (replace the placeholder with the real UUID)
+    // You can obtain the projectId by running `eas build` and following the prompts,
+    // or from your project page on https://expo.dev if the project is already created.
+    projectId: process.env.EAS_PROJECT_ID || "REPLACE_WITH_YOUR_EAS_PROJECT_ID",
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
+    icon: "./assets/images/fashionapp.png",
     scheme: "fashionapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -49,14 +53,14 @@ export default {
     },
     web: {
       output: "static",
-      favicon: "./assets/images/favicon.png",
+      favicon: "./assets/images/fashionapp.png",
     },
     plugins: [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          image: "./assets/images/splash-icon.png",
+          image: "./assets/images/fashionapp.png",
           imageWidth: 200,
           resizeMode: "contain",
           backgroundColor: "#ffffff",

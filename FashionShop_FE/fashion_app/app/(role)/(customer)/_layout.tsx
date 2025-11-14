@@ -4,9 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/AuthContext';
 import { DeviceEventEmitter } from 'react-native';
 import { CartService } from '@/services/cart.service';
+import { useNotification } from '@/hooks/NotificationContext';
 
 export default function CustomerLayout() {
   const { user } = useAuth();
+  const { unreadCount } = useNotification();
   const [badgeCount, setBadgeCount] = useState<number | undefined>(undefined);
   const loadBadge = async () => {
     try {
@@ -101,6 +103,7 @@ export default function CustomerLayout() {
         options={{
           title: 'Notification',
           headerShown: false,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
           tabBarIcon: ({ color }) => (
             <Ionicons name="notifications" size={25} color={color} />
           ),

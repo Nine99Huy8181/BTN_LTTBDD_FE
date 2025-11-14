@@ -12,6 +12,7 @@ export default function MenuScreen() {
       <Button title="Customers" onPress={() => router.push(Routes.CustomerHome)} />
       <Button title="Reviews" onPress={() => router.push(Routes.AdminReviews)} />
       <Button title="Profile" onPress={() => router.push(Routes.AdminProfile)} />
+        <Button title="Coupons" onPress={() => router.push('/(role)/(admin)/(more)/coupons')} />
     </View>
   );
 }

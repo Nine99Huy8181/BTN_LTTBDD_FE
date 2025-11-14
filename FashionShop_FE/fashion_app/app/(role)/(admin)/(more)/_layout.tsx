@@ -12,7 +12,6 @@ export default function MoreLayout() {
       <Stack.Screen name="add-coupon" options={{ title: 'Add Coupon' }} />
       <Stack.Screen name="edit-coupon/[id]" options={{ title: 'Edit Coupon' }} />
       <Stack.Screen name="categories" options={{ title: 'Categories' }} />
-      <Stack.Screen name="reports" options={{ title: 'Reports' }} />
       <Stack.Screen name="profile" options={{ headerShown: false }} />
     </Stack>
   );

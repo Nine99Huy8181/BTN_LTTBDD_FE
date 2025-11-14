@@ -181,3 +181,43 @@ export interface Wishlist {
   items?: WishlistItem[];
 }
 
+export interface OrderDTO {
+  orderID: number;
+  customerID: number;
+  customerName: string;
+  orderDate: string; // ← "05/04/2025 14:30"
+  totalAmount: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  paymentDate: string | null;
+  orderStatus: string;
+  shippingFee: number;
+  notes: string | null;
+  addressID: number;
+  shippingAddress: string;
+  couponCode: string | null;
+}
+
+export interface NotificationDTO {
+  notificationID: number;
+  customerID: number;
+  title: string;
+  message: string;
+  type: string; // "ORDER", "PROMOTION", "SYSTEM"...
+  isRead: boolean;
+  createdDate: string; // Tương ứng với LocalDateTime
+  readDate: string | null; // Tương ứng với LocalDateTime, có thể null
+  deepLink: string | null; // Có thể null
+  imageUrl: string | null; // Có thể null
+}
+
+export interface PaginatedResponse<T> {
+  content: T[];          // Danh sách các đối tượng (ví dụ: OrderDTO)
+  totalPages: number;    // Tổng số trang
+  totalElements: number; // Tổng số phần tử
+  size: number;          // Kích thước của trang này
+  number: number;        // Số của trang hiện tại (bắt đầu từ 0)
+  last: boolean;         // Đây có phải là trang cuối không?
+  first: boolean;        // Đây có phải là trang đầu không?
+  numberOfElements: number; // Số phần tử thực tế trên trang này
+}

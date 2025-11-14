@@ -15,22 +15,13 @@ export default function RoleLayout() {
   }
 
   // Render từng role layout riêng biệt
-  if (user?.role === 'SUPER') {
-    return <SuperLayout />;
-  } else if (user?.role === 'ADMIN') {
+  if (user?.role === 'ADMIN') {
     return <AdminLayout />;
   } else {
     return <CustomerLayout />;
   }
 }
 
-function SuperLayout() {
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(super)" options={{ headerShown: false }} />
-    </Stack>
-  );
-}
 
 function AdminLayout() {
   return (

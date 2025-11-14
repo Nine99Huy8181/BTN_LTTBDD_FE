@@ -1,8 +1,10 @@
 // app/(admin)/_layout.tsx
 import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useNotification } from '@/hooks/NotificationContext';
 
 export default function AdminLayout() {
+  const { unreadCount } = useNotification();
   return (
     <Tabs
       screenOptions={{
@@ -45,6 +47,22 @@ export default function AdminLayout() {
         }}
         listeners={() => ({
           tabPress: () => router.replace('/(role)/(admin)/(orders)'),
+        })}
+      />
+      <Tabs.Screen
+        name="notification"
+        options={{
+          title: 'Notification',
+          headerShown: false,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="notifications" size={25} color={color} />
+          ),
+        }}
+        listeners={() => ({
+          tabPress: () => {
+            router.replace('/(role)/(admin)/notification');
+          },
         })}
       />
       <Tabs.Screen
