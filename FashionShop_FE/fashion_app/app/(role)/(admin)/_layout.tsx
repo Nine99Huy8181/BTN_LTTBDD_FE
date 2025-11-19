@@ -1,58 +1,59 @@
 // app/(admin)/_layout.tsx
-import { Tabs, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useNotification } from '@/hooks/NotificationContext';
+import { useNotification } from "@/hooks/NotificationContext";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs, router } from "expo-router";
 
 export default function AdminLayout() {
   const { unreadCount } = useNotification();
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2196F3',
+        tabBarActiveTintColor: "#2196F3",
       }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Dashboard',
+          title: "Dashboard",
+          headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="stats-chart" size={24} color={color} />
           ),
         }}
         listeners={() => ({
-          tabPress: () => router.replace('/(role)/(admin)/dashboard'),
+          tabPress: () => router.replace("/(role)/(admin)/dashboard"),
         })}
       />
       <Tabs.Screen
         name="(products)"
         options={{
-          title: 'Products',
+          title: "Products",
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="cube" size={24} color={color} />
           ),
         }}
         listeners={() => ({
-          tabPress: () => router.replace('/(role)/(admin)/(products)'),
+          tabPress: () => router.replace("/(role)/(admin)/(products)"),
         })}
       />
       <Tabs.Screen
         name="(orders)"
         options={{
-          title: 'Orders',
+          title: "Orders",
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="receipt" size={24} color={color} />
           ),
         }}
         listeners={() => ({
-          tabPress: () => router.replace('/(role)/(admin)/(orders)'),
+          tabPress: () => router.replace("/(role)/(admin)/(orders)"),
         })}
       />
       <Tabs.Screen
         name="notification"
         options={{
-          title: 'Notification',
+          title: "Notification",
           headerShown: false,
           tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
           tabBarIcon: ({ color }) => (
@@ -61,21 +62,21 @@ export default function AdminLayout() {
         }}
         listeners={() => ({
           tabPress: () => {
-            router.replace('/(role)/(admin)/notification');
+            router.replace("/(role)/(admin)/notification");
           },
         })}
       />
       <Tabs.Screen
         name="(more)"
         options={{
-          title: 'More',
+          title: "More",
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="menu" size={24} color={color} />
           ),
         }}
         listeners={() => ({
-          tabPress: () => router.replace('/(role)/(admin)/(more)'),
+          tabPress: () => router.replace("/(role)/(admin)/(more)"),
         })}
       />
     </Tabs>

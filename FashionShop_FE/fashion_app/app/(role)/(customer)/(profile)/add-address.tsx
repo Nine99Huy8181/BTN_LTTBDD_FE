@@ -1,7 +1,7 @@
-import { useAuth } from '@/hooks/AuthContext';
-import { addressService } from '@/services/address.service';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useAuth } from "@/hooks/AuthContext";
+import { addressService } from "@/services/address.service";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,7 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
 export default function AddAddressScreen() {
   const router = useRouter();
@@ -21,12 +21,12 @@ export default function AddAddressScreen() {
   const customerId = user?.customerId || 1;
 
   const [form, setForm] = useState({
-    recipientName: '',
-    recipientPhone: '',
-    streetAddress: '',
-    district: '',
-    city: '',
-    country: 'Việt Nam',
+    recipientName: "",
+    recipientPhone: "",
+    streetAddress: "",
+    district: "",
+    city: "",
+    country: "Việt Nam",
     isDefault: false,
   });
 
@@ -37,8 +37,13 @@ export default function AddAddressScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!form.recipientName || !form.recipientPhone || !form.streetAddress || !form.city) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin bắt buộc!');
+    if (
+      !form.recipientName ||
+      !form.recipientPhone ||
+      !form.streetAddress ||
+      !form.city
+    ) {
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
 
@@ -47,26 +52,29 @@ export default function AddAddressScreen() {
       recipientName: form.recipientName.trim(),
       recipientPhone: form.recipientPhone.trim(),
       streetAddress: form.streetAddress.trim(),
-      district: form.district?.trim() || '',
+      district: form.district?.trim() || "",
       city: form.city.trim(),
-      country: form.country.trim() || 'Việt Nam',
+      country: form.country.trim() || "Việt Nam",
       isDefault: form.isDefault,
     };
 
     setLoading(true);
     try {
       await addressService.createAddress(newAddress);
-      Alert.alert('Thành công', 'Đã thêm địa chỉ mới!', [
-        { text: 'OK', onPress: () => router.replace('/(customer)/(profile)/address-book') },
+      Alert.alert("Thành công", "Đã thêm địa chỉ mới!", [
+        {
+          text: "OK",
+          onPress: () => router.replace("/(customer)/(profile)/address-book"),
+        },
       ]);
     } catch (error: any) {
       if (error.response?.status === 409) {
         Alert.alert(
-          'Xung đột dữ liệu',
+          "Xung đột dữ liệu",
           'Có thể đã tồn tại địa chỉ mặc định khác. Vui lòng bỏ chọn "Đặt làm mặc định" hoặc chỉnh lại địa chỉ cũ.'
         );
       } else {
-        Alert.alert('Lỗi', 'Không thể thêm địa chỉ. Vui lòng thử lại.');
+        Alert.alert("Lỗi", "Không thể thêm địa chỉ. Vui lòng thử lại.");
       }
     } finally {
       setLoading(false);
@@ -76,7 +84,7 @@ export default function AddAddressScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={styles.container}>
         {/* 🔹 Tiêu đề */}
@@ -93,7 +101,7 @@ export default function AddAddressScreen() {
             placeholder="Nhập tên người nhận"
             placeholderTextColor="#888"
             value={form.recipientName}
-            onChangeText={(text) => handleChange('recipientName', text)}
+            onChangeText={(text) => handleChange("recipientName", text)}
           />
 
           <Text style={styles.label}>Số điện thoại *</Text>
@@ -103,7 +111,7 @@ export default function AddAddressScreen() {
             placeholderTextColor="#888"
             keyboardType="phone-pad"
             value={form.recipientPhone}
-            onChangeText={(text) => handleChange('recipientPhone', text)}
+            onChangeText={(text) => handleChange("recipientPhone", text)}
           />
 
           <Text style={styles.label}>Địa chỉ *</Text>
@@ -112,7 +120,7 @@ export default function AddAddressScreen() {
             placeholder="Ví dụ: 123 Đường ABC"
             placeholderTextColor="#888"
             value={form.streetAddress}
-            onChangeText={(text) => handleChange('streetAddress', text)}
+            onChangeText={(text) => handleChange("streetAddress", text)}
           />
 
           <Text style={styles.label}>Quận / Huyện</Text>
@@ -121,7 +129,7 @@ export default function AddAddressScreen() {
             placeholder="Ví dụ: Quận 1"
             placeholderTextColor="#888"
             value={form.district}
-            onChangeText={(text) => handleChange('district', text)}
+            onChangeText={(text) => handleChange("district", text)}
           />
 
           <Text style={styles.label}>Thành phố *</Text>
@@ -130,7 +138,7 @@ export default function AddAddressScreen() {
             placeholder="Ví dụ: TP. Hồ Chí Minh"
             placeholderTextColor="#888"
             value={form.city}
-            onChangeText={(text) => handleChange('city', text)}
+            onChangeText={(text) => handleChange("city", text)}
           />
 
           <Text style={styles.label}>Quốc gia</Text>
@@ -139,7 +147,7 @@ export default function AddAddressScreen() {
             placeholder="Việt Nam"
             placeholderTextColor="#888"
             value={form.country}
-            onChangeText={(text) => handleChange('country', text)}
+            onChangeText={(text) => handleChange("country", text)}
           />
 
           {/* 🔘 Đặt làm mặc định */}
@@ -147,8 +155,8 @@ export default function AddAddressScreen() {
             <Text style={styles.switchLabel}>Đặt làm địa chỉ mặc định</Text>
             <Switch
               value={form.isDefault}
-              onValueChange={(value) => handleChange('isDefault', value)}
-              thumbColor={form.isDefault ? '#000' : '#ccc'}
+              onValueChange={(value) => handleChange("isDefault", value)}
+              thumbColor={form.isDefault ? "#000" : "#ccc"}
             />
           </View>
         </View>
@@ -160,7 +168,7 @@ export default function AddAddressScreen() {
           disabled={loading}
         >
           <Text style={styles.primaryButtonText}>
-            {loading ? 'Đang lưu...' : 'Lưu địa chỉ'}
+            {loading ? "Đang lưu..." : "Lưu địa chỉ"}
           </Text>
         </TouchableOpacity>
 
@@ -179,84 +187,84 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingTop: 40,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   header: {
     marginBottom: 25,
   },
   title: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#111',
+    fontWeight: "700",
+    color: "#111",
   },
   titleLine: {
     width: 40,
     height: 3,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     borderRadius: 2,
     marginTop: 6,
   },
   formCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 14,
     padding: 16,
     marginBottom: 30,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
   },
   label: {
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 6,
-    color: '#333',
+    color: "#333",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 10,
     padding: 10,
     marginBottom: 15,
     fontSize: 15,
-    backgroundColor: '#f7f7f7', // 🌿 Nền xám nhẹ cho dịu mắt
+    backgroundColor: "#f7f7f7", // 🌿 Nền xám nhẹ cho dịu mắt
   },
   switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 8,
   },
   switchLabel: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   primaryButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     paddingVertical: 14,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 10,
   },
   primaryButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 16,
   },
   secondaryButton: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingVertical: 14,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     marginBottom: 40,
   },
   secondaryButtonText: {
-    color: '#000',
-    fontWeight: '600',
+    color: "#000",
+    fontWeight: "600",
     fontSize: 16,
   },
 });
