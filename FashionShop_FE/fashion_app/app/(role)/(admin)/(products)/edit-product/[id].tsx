@@ -13,6 +13,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -30,6 +31,9 @@ export default function EditProductScreen() {
   const [product, setProduct] = useState<ProductResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false); // ✅ Thêm state
+  const [selectingFromAlbum, setSelectingFromAlbum] = useState(false);
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerImage, setViewerImage] = useState("");
 
   useEffect(() => {
     fetchProduct();
@@ -49,9 +53,11 @@ export default function EditProductScreen() {
 
   const pickImage = async () => {
     try {
+      setSelectingFromAlbum(true);
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
+        setSelectingFromAlbum(false);
         Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
         return;
       }
@@ -66,27 +72,20 @@ export default function EditProductScreen() {
         const uri = result.assets[0].uri;
 
         if (!isValidImageUri(uri)) {
+          setSelectingFromAlbum(false);
           Alert.alert("Lỗi", "URI ảnh không hợp lệ");
           return;
         }
 
-        setUploadingImage(true);
-
-        try {
-          const cloudinaryUrl = await uploadProductImage(uri);
-          handleChange("image", cloudinaryUrl);
-          Alert.alert("Thành công", "Đã tải ảnh lên Cloudinary");
-        } catch (error) {
-          console.error("Upload error:", error);
-          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
-        } finally {
-          setUploadingImage(false);
-        }
+        // Don't upload yet; keep local URI in product.image
+        handleChange("image", uri);
       }
     } catch (error) {
       console.error("Pick image error:", error);
       Alert.alert("Lỗi", "Không thể chọn ảnh");
-      setUploadingImage(false);
+      setSelectingFromAlbum(false);
+    } finally {
+      setSelectingFromAlbum(false);
     }
   };
 
@@ -100,6 +99,21 @@ export default function EditProductScreen() {
     }
 
     try {
+      // If image is local URI (not yet uploaded) -> upload
+      if (product?.image && !/^https?:\/\//i.test(String(product.image))) {
+        try {
+          setUploadingImage(true);
+          const uploaded = await uploadProductImage(String(product.image));
+          handleChange("image", uploaded);
+        } catch (e) {
+          console.error("Upload error:", e);
+          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+          setUploadingImage(false);
+          return;
+        } finally {
+          setUploadingImage(false);
+        }
+      }
       const payload: UpdateProductRequest = {
         name: product.name,
         basePrice: product.basePrice,
@@ -225,13 +239,31 @@ export default function EditProductScreen() {
             </View>
           )}
 
+          {/* trạng thái khi chọn ảnh từ album */}
+          {selectingFromAlbum && (
+            <View style={styles.uploadingContainer}>
+              <ActivityIndicator color="#000" size="small" />
+              <Text style={{ marginLeft: 10, color: "#666" }}>
+                Đang tải ảnh từ album...
+              </Text>
+            </View>
+          )}
+
           {product?.image && (
             <View style={styles.imagePreviewContainer}>
-              <Image
-                source={{ uri: product.image }}
-                style={styles.imagePreview}
-                resizeMode="cover"
-              />
+              <TouchableOpacity
+                style={{ width: "100%" }}
+                onPress={() => {
+                  setViewerImage(String(product.image));
+                  setViewerVisible(true);
+                }}
+              >
+                <Image
+                  source={{ uri: product.image }}
+                  style={styles.imagePreview}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.removeImageButton}
                 onPress={() => handleChange("image", "")}
@@ -241,16 +273,44 @@ export default function EditProductScreen() {
             </View>
           )}
 
+          <Modal
+            visible={viewerVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setViewerVisible(false)}
+          >
+            <TouchableOpacity
+              style={styles.viewerOverlay}
+              activeOpacity={1}
+              onPress={() => setViewerVisible(false)}
+            >
+              <View style={styles.viewerContainer}>
+                <Image
+                  source={{ uri: viewerImage }}
+                  style={styles.viewerImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
+
           <TouchableOpacity
             style={[
               styles.uploadButton,
-              uploadingImage && { opacity: 0.5, backgroundColor: "#f5f5f5" },
+              (uploadingImage || selectingFromAlbum) && {
+                opacity: 0.5,
+                backgroundColor: "#f5f5f5",
+              },
             ]}
             onPress={pickImage}
-            disabled={uploadingImage}
+            disabled={uploadingImage || selectingFromAlbum}
           >
             <Text style={styles.uploadButtonText}>
-              {uploadingImage ? "⏳ Đang tải..." : "📂 Tải ảnh từ thư viện"}
+              {selectingFromAlbum
+                ? "⏳ Đang chọn ảnh..."
+                : uploadingImage
+                  ? "⏳ Đang tải..."
+                  : "📂 Tải ảnh từ thư viện"}
             </Text>
           </TouchableOpacity>
 
@@ -502,6 +562,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#e0e0e0",
+  },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerContainer: {
+    width: "100%",
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerImage: {
+    width: "100%",
+    height: 400,
   },
   imagePreviewContainer: {
     marginBottom: 15,

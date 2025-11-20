@@ -12,6 +12,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -28,6 +29,9 @@ export default function EditVariantScreen() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true); // State riêng cho việc load dữ liệu ban đầu
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerImage, setViewerImage] = useState("");
+  const [selectingFromAlbum, setSelectingFromAlbum] = useState(false);
 
   // Form state
   const [productID, setProductID] = useState<number>(0);
@@ -82,50 +86,38 @@ export default function EditVariantScreen() {
 
   const pickImage = async () => {
     try {
+      setSelectingFromAlbum(true);
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
+        setSelectingFromAlbum(false);
         Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
         return;
       }
 
+      // Allow multi-select but do not upload now — just collect URIs
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.7,
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: true,
       });
 
       if (!result.canceled && result.assets?.length > 0) {
-        const uri = result.assets[0].uri;
-
-        // Validate URI
-        if (!isValidImageUri(uri)) {
+        const uris = result.assets.map((a) => a.uri).filter(Boolean);
+        const validUris = uris.filter((uri) => isValidImageUri(uri));
+        if (validUris.length === 0) {
           Alert.alert("Lỗi", "URI ảnh không hợp lệ");
           return;
         }
-
-        // Show loading
-        setUploadingImages(true);
-
-        try {
-          // Upload lên Cloudinary
-          const cloudinaryUrl = await uploadVariantImage(uri);
-
-          // Thêm URL vào state
-          setImages((prev) => [...prev, cloudinaryUrl]);
-
-          Alert.alert("Thành công", "Đã tải ảnh lên Cloudinary");
-        } catch (error) {
-          console.error("Upload error:", error);
-          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
-        } finally {
-          setUploadingImages(false);
-        }
+        setImages((prev) => [...prev, ...validUris]);
       }
     } catch (error) {
       console.error("Pick image error:", error);
       Alert.alert("Lỗi", "Không thể chọn ảnh");
+      setSelectingFromAlbum(false);
       setUploadingImages(false);
+    } finally {
+      setSelectingFromAlbum(false);
     }
   };
 
@@ -148,13 +140,37 @@ export default function EditVariantScreen() {
     try {
       setLoading(true);
 
+      // Upload any local URIs first
+      const needUpload = images.filter((u) => !/^https?:\/\//i.test(u));
+      let finalImages = images.slice();
+      if (needUpload.length > 0) {
+        try {
+          setUploadingImages(true);
+          const uploaded = await Promise.all(
+            needUpload.map((uri) => uploadVariantImage(uri))
+          );
+          let idx = 0;
+          finalImages = finalImages.map((u) =>
+            !/^https?:\/\//i.test(u) ? uploaded[idx++] : u
+          );
+        } catch (e) {
+          console.error("Upload error:", e);
+          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+          setUploadingImages(false);
+          setLoading(false);
+          return;
+        } finally {
+          setUploadingImages(false);
+        }
+      }
+
       const payload: any = {
         productID: productID,
         sku: sku.trim(),
         size: size.trim(),
         color: color.trim(),
         priceAdjustment: priceAdj,
-        images: images,
+        images: finalImages,
         status,
         validQuantity: Math.max(0, totalQuantity - reservedQuantity),
         reservedQuantity: reservedQuantity,
@@ -286,6 +302,16 @@ export default function EditVariantScreen() {
             </View>
           )}
 
+          {/* Hiển thị trạng thái khi đang mở album / chọn ảnh */}
+          {selectingFromAlbum && (
+            <View style={styles.uploadingContainer}>
+              <ActivityIndicator color="#000" size="small" />
+              <Text style={{ marginLeft: 10, color: "#666" }}>
+                Đang tải ảnh từ album...
+              </Text>
+            </View>
+          )}
+
           <View style={styles.imageInputContainer}>
             <TextInput
               style={[styles.input, { flex: 1, marginBottom: 0 }]}
@@ -298,14 +324,25 @@ export default function EditVariantScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.uploadBtn} onPress={pickImage}>
+          <TouchableOpacity
+            style={styles.uploadBtn}
+            onPress={pickImage}
+            disabled={selectingFromAlbum}
+          >
             <Text style={styles.uploadBtnText}>📂 Chọn ảnh từ thư viện</Text>
           </TouchableOpacity>
 
           <View style={styles.imagesRow}>
             {images.map((img, idx) => (
               <View key={idx} style={styles.imageWrapper}>
-                <Image source={{ uri: img }} style={styles.imageThumb} />
+                <TouchableOpacity
+                  onPress={() => {
+                    setViewerImage(img);
+                    setViewerVisible(true);
+                  }}
+                >
+                  <Image source={{ uri: img }} style={styles.imageThumb} />
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.removeImageBtn}
                   onPress={() => removeImageAt(idx)}
@@ -315,6 +352,27 @@ export default function EditVariantScreen() {
               </View>
             ))}
           </View>
+
+          <Modal
+            visible={viewerVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setViewerVisible(false)}
+          >
+            <TouchableOpacity
+              style={styles.viewerOverlay}
+              activeOpacity={1}
+              onPress={() => setViewerVisible(false)}
+            >
+              <View style={styles.viewerContainer}>
+                <Image
+                  source={{ uri: viewerImage }}
+                  style={styles.viewerImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
 
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
@@ -548,5 +606,21 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#e0e0e0",
+  },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerContainer: {
+    width: "100%",
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerImage: {
+    width: "100%",
+    height: 400,
   },
 });

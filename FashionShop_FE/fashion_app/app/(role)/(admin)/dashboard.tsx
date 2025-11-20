@@ -8,6 +8,8 @@ import {
   RevenueChart,
 } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,6 +24,11 @@ import {
 } from "react-native";
 import { BarChart, LineChart } from "react-native-chart-kit";
 import Toast from "react-native-toast-message";
+// NOTE: `xlsx` was removed as a static import because Metro bundler
+// failed when the package wasn't installed on some setups.
+// We fallback to CSV export here which Excel can open. If you prefer
+// a real .xlsx output, install the `xlsx` package in the project
+// (`npm install xlsx` or `yarn add xlsx`) and we can switch back.
 
 const { width } = Dimensions.get("window");
 const CARD_PADDING = 16;
@@ -33,6 +40,7 @@ type ChartPeriod = "daily" | "weekly" | "monthly" | "yearly";
 export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [revenueChart, setRevenueChart] = useState<RevenueChart | null>(null);
   const [bestProducts, setBestProducts] = useState<BestSellingProduct[]>([]);
@@ -72,6 +80,156 @@ export default function DashboardScreen() {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  const exportDashboardToExcel = async () => {
+    if (!stats) {
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không có dữ liệu để xuất",
+      });
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const rowsToCsv = (rows: any[], headers?: string[]) => {
+        if (!rows || rows.length === 0) return "";
+        const cols = headers ?? Object.keys(rows[0]);
+        const escape = (v: any) => {
+          if (v === null || v === undefined) return "";
+          const s = String(v);
+          if (s.includes(",") || s.includes("\n") || s.includes('"')) {
+            return '"' + s.replace(/"/g, '""') + '"';
+          }
+          return s;
+        };
+        const lines = [cols.join(",")];
+        for (const r of rows) {
+          lines.push(cols.map((c) => escape(r[c])).join(","));
+        }
+        return lines.join("\n");
+      };
+
+      // Build sections
+      const parts: string[] = [];
+
+      // Stats
+      const statsData = Object.entries(stats).map(([k, v]) => ({
+        Key: k,
+        Value: v,
+      }));
+      if (statsData.length) {
+        parts.push("Stats");
+        parts.push(rowsToCsv(statsData, ["Key", "Value"]));
+      }
+
+      // Revenue
+      const revenueRows = (revenueChart?.[chartPeriod] || []).map((d) => ({
+        Period: d.label,
+        Revenue: d.revenue,
+        Orders: d.orderCount,
+      }));
+      if (revenueRows.length) {
+        parts.push("");
+        parts.push(`Revenue_${chartPeriod}`);
+        parts.push(rowsToCsv(revenueRows, ["Period", "Revenue", "Orders"]));
+      }
+
+      // Best products
+      const bestRows = bestProducts.map((p) => ({
+        ProductID: p.productId,
+        Name: p.productName,
+        Sold: p.totalSold,
+        Revenue: p.totalRevenue,
+      }));
+      if (bestRows.length) {
+        parts.push("");
+        parts.push("BestProducts");
+        parts.push(
+          rowsToCsv(bestRows, ["ProductID", "Name", "Sold", "Revenue"])
+        );
+      }
+
+      // Recent orders
+      const orderRows = recentOrders.map((o) => ({
+        OrderNo: o.orderNumber,
+        Customer: o.customerName,
+        Date: new Date(o.orderDate).toLocaleString(),
+        Total: o.totalAmount,
+        Status: o.status,
+      }));
+      if (orderRows.length) {
+        parts.push("");
+        parts.push("RecentOrders");
+        parts.push(
+          rowsToCsv(orderRows, [
+            "OrderNo",
+            "Customer",
+            "Date",
+            "Total",
+            "Status",
+          ])
+        );
+      }
+
+      // Recent reviews
+      const reviewRows = recentReviews.map((r) => ({
+        Customer: r.customerName,
+        Product: r.productName,
+        Rating: r.rating,
+        Comment: r.comment || "",
+      }));
+      if (reviewRows.length) {
+        parts.push("");
+        parts.push("RecentReviews");
+        parts.push(
+          rowsToCsv(reviewRows, ["Customer", "Product", "Rating", "Comment"])
+        );
+      }
+
+      const csvContent = parts.join("\n\n");
+
+      // SỬ DỤNG API MỚI CỦA EXPO SDK 54+
+      const fileName = `admin-dashboard-export-${Date.now()}.csv`;
+
+      // Tạo File object sử dụng API mới
+      const file = new File(Paths.cache, fileName);
+
+      // Ghi nội dung vào file
+      await file.write(csvContent);
+
+      // Kiểm tra xem file sharing có available không
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(file.uri, {
+          mimeType: "text/csv",
+          dialogTitle: "Xuất file Dashboard",
+        });
+
+        Toast.show({
+          type: "success",
+          text1: "Thành công",
+          text2: "File đã được xuất",
+        });
+      } else {
+        Toast.show({
+          type: "success",
+          text1: "Thành công",
+          text2: `File đã được lưu tại: ${file.uri}`,
+        });
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: error instanceof Error ? error.message : "Không thể xuất file",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -160,7 +318,20 @@ export default function DashboardScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Dashboard</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Dashboard</Text>
+          <TouchableOpacity
+            style={styles.exportButton}
+            onPress={exportDashboardToExcel}
+            disabled={exporting}
+          >
+            {exporting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.exportButtonText}>Xuất Excel</Text>
+            )}
+          </TouchableOpacity>
+        </View>
         <View style={styles.titleLine} />
         <Text style={styles.headerSubtitle}>Tổng quan hệ thống</Text>
       </View>
@@ -307,10 +478,10 @@ export default function DashboardScreen() {
                     {period === "daily"
                       ? "Ngày"
                       : period === "weekly"
-                      ? "Tuần"
-                      : period === "monthly"
-                      ? "Tháng"
-                      : "Năm"}
+                        ? "Tuần"
+                        : period === "monthly"
+                          ? "Tháng"
+                          : "Năm"}
                   </Text>
                 </TouchableOpacity>
               )
@@ -531,6 +702,21 @@ const styles = StyleSheet.create({
   header: {
     marginTop: 50,
     marginBottom: 20,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  exportButton: {
+    backgroundColor: "#000",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  exportButtonText: {
+    color: "#fff",
+    fontWeight: "600",
   },
   headerTitle: {
     fontSize: 26,

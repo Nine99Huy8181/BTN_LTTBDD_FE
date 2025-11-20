@@ -13,6 +13,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -27,6 +28,9 @@ export default function AddProductScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false); // ✅ Thêm state
+  const [selectingFromAlbum, setSelectingFromAlbum] = useState(false);
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerImage, setViewerImage] = useState("");
 
   const [form, setForm] = useState<Partial<Product>>({
     name: "",
@@ -49,9 +53,11 @@ export default function AddProductScreen() {
   // ✅ THÊM hàm pickImage
   const pickImage = async () => {
     try {
+      setSelectingFromAlbum(true);
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
+        setSelectingFromAlbum(false);
         Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
         return;
       }
@@ -66,27 +72,20 @@ export default function AddProductScreen() {
         const uri = result.assets[0].uri;
 
         if (!isValidImageUri(uri)) {
+          setSelectingFromAlbum(false);
           Alert.alert("Lỗi", "URI ảnh không hợp lệ");
           return;
         }
 
-        setUploadingImage(true);
-
-        try {
-          const cloudinaryUrl = await uploadProductImage(uri);
-          handleChange("image", cloudinaryUrl);
-          Alert.alert("Thành công", "Đã tải ảnh lên Cloudinary");
-        } catch (error) {
-          console.error("Upload error:", error);
-          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
-        } finally {
-          setUploadingImage(false);
-        }
+        // Do not upload yet - keep local URI in form.image
+        handleChange("image", uri);
       }
     } catch (error) {
       console.error("Pick image error:", error);
       Alert.alert("Lỗi", "Không thể chọn ảnh");
-      setUploadingImage(false);
+      setSelectingFromAlbum(false);
+    } finally {
+      setSelectingFromAlbum(false);
     }
   };
 
@@ -106,6 +105,22 @@ export default function AddProductScreen() {
 
     setLoading(true);
     try {
+      // If image is a local URI (not yet uploaded), upload now
+      if (form.image && !/^https?:\/\//i.test(String(form.image))) {
+        try {
+          setUploadingImage(true);
+          const uploaded = await uploadProductImage(String(form.image));
+          handleChange("image", uploaded);
+        } catch (e) {
+          console.error("Upload error:", e);
+          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+          setUploadingImage(false);
+          setLoading(false);
+          return;
+        } finally {
+          setUploadingImage(false);
+        }
+      }
       await productService.createProduct(form as Product);
       Alert.alert("Thành công", "Sản phẩm đã được thêm!", [
         {
@@ -231,11 +246,19 @@ export default function AddProductScreen() {
           {/* ✅ Preview ảnh nếu có */}
           {form.image && (
             <View style={styles.imagePreviewContainer}>
-              <Image
-                source={{ uri: form.image }}
-                style={styles.imagePreview}
-                resizeMode="cover"
-              />
+              <TouchableOpacity
+                style={{ width: "100%" }}
+                onPress={() => {
+                  setViewerImage(String(form.image));
+                  setViewerVisible(true);
+                }}
+              >
+                <Image
+                  source={{ uri: String(form.image) }}
+                  style={styles.imagePreview}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.removeImageButton}
                 onPress={() => handleChange("image", "")}
@@ -245,19 +268,57 @@ export default function AddProductScreen() {
             </View>
           )}
 
+          <Modal
+            visible={viewerVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setViewerVisible(false)}
+          >
+            <TouchableOpacity
+              style={styles.viewerOverlay}
+              activeOpacity={1}
+              onPress={() => setViewerVisible(false)}
+            >
+              <View style={styles.viewerContainer}>
+                <Image
+                  source={{ uri: viewerImage }}
+                  style={styles.viewerImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
+
           {/* ✅ Nút tải ảnh từ thư viện */}
           <TouchableOpacity
             style={[
               styles.uploadButton,
-              uploadingImage && { opacity: 0.5, backgroundColor: "#f5f5f5" },
+              (uploadingImage || selectingFromAlbum) && {
+                opacity: 0.5,
+                backgroundColor: "#f5f5f5",
+              },
             ]}
             onPress={pickImage}
-            disabled={uploadingImage}
+            disabled={uploadingImage || selectingFromAlbum}
           >
             <Text style={styles.uploadButtonText}>
-              {uploadingImage ? "⏳ Đang tải..." : "📂 Tải ảnh từ thư viện"}
+              {selectingFromAlbum
+                ? "⏳ Đang chọn ảnh..."
+                : uploadingImage
+                  ? "⏳ Đang tải..."
+                  : "📂 Tải ảnh từ thư viện"}
             </Text>
           </TouchableOpacity>
+
+          {/* Hiển thị trạng thái khi đang chọn từ album */}
+          {selectingFromAlbum && (
+            <View style={styles.uploadingContainer}>
+              <ActivityIndicator color="#000" size="small" />
+              <Text style={{ marginLeft: 10, color: "#666" }}>
+                Đang tải ảnh từ album...
+              </Text>
+            </View>
+          )}
 
           {/* ✅ Input URL (backup option) */}
           <Text style={styles.label}>Hoặc nhập URL hình ảnh</Text>
@@ -521,6 +582,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#e0e0e0",
+  },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerContainer: {
+    width: "100%",
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerImage: {
+    width: "100%",
+    height: 400,
   },
   imagePreviewContainer: {
     marginBottom: 15,
