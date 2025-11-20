@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   Image,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Product = {
   id: number;
@@ -47,10 +49,30 @@ export default function ChatboxScreen() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<any>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const lastMessageCountRef = useRef(2); // Track to know when new message arrives
+  const isAutoScrollEnabledRef = useRef(true); // control whether auto-scroll should happen
+
+  useEffect(() => {
+    // Only scroll when new messages are added
+    if (messages.length > lastMessageCountRef.current) {
+      // Scroll to top of inverted list (offset 0) so newest message is visible
+      // Only auto-scroll when auto-scroll is enabled (user not browsing history)
+      if (isAutoScrollEnabledRef.current) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        }, 120);
+      }
+      lastMessageCountRef.current = messages.length;
+    }
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
+
+    // when user sends a message, re-enable auto-scroll so the new message + response are shown
+    isAutoScrollEnabledRef.current = true;
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -64,8 +86,17 @@ export default function ChatboxScreen() {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/chat', { message: currentInput });
+      const payload: any = { message: currentInput };
+      if (sessionId) payload.sessionId = sessionId;
+
+      const response = await api.post('/chat', payload);
       const data = response.data;
+
+      // persist session id returned by server
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+        await AsyncStorage.setItem('CHAT_SESSION_ID', data.sessionId);
+      }
 
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -74,7 +105,11 @@ export default function ChatboxScreen() {
         products: data.type === 'products' ? data.products : undefined,
       };
 
-      setMessages((prev) => [...prev, botMsg]);
+      setMessages((prev) => {
+        const updated = [...prev, botMsg];
+        console.log('Bot message added, total messages:', updated.length);
+        return updated;
+      });
     } catch (error) {
       console.error('Error:', error);
       const errorMsg: Message = {
@@ -85,9 +120,6 @@ export default function ChatboxScreen() {
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
     }
   };
 
@@ -99,6 +131,48 @@ export default function ChatboxScreen() {
     // Navigate to product detail screen
     router.push(`/product/${productId}`);
   };
+
+  // Load sessionId and history on mount
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const sid = await AsyncStorage.getItem('CHAT_SESSION_ID');
+        if (sid) {
+          setSessionId(sid);
+          // Lấy lịch sử chat từ server (nếu session chưa hết hạn)
+          const resp = await api.get(`/chat/${sid}`);
+          const items: any[] = resp.data || [];
+          const restored: Message[] = items.map((it, index) => {
+            const msg: Message = {
+              id: `restored_${sid}_${index}`, // Đảm bảo ID unique cho khôi phục lịch sử
+              text: it.content,
+              sender: it.sender === 'user' ? 'user' : 'bot',
+            };
+
+            // Nếu là tin nhắn sản phẩm, lấy danh sách sản phẩm
+            if (it.type === 'products' && it.products) {
+              msg.products = it.products;
+            }
+            return msg;
+          });
+
+          if (mounted && restored.length > 0) {
+            setMessages((prev) => {
+              const updated = [...prev, ...restored];
+              return updated;
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Không thể khôi phục lịch sử chat', e);
+        // Session có thể đã hết hạn hoặc không tồn tại, không cần lỗi
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -118,11 +192,16 @@ export default function ChatboxScreen() {
             {/* Message text */}
             <Text style={styles.botText}>{item.text}</Text>
             
-            {/* Product cards */}
-            <View style={styles.productsContainer}>
+            {/* Product cards - Horizontal ScrollView */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.productsContainer}
+              contentContainerStyle={{ gap: 12, paddingRight: 8 }}
+            >
               {item.products.map((product) => (
                 <TouchableOpacity
-                  key={product.id}
+                  key={`${item.id}_product_${product.id}`}
                   style={styles.productCard}
                   onPress={() => handleProductPress(product.id)}
                   activeOpacity={0.7}
@@ -148,19 +227,10 @@ export default function ChatboxScreen() {
                     <Text style={styles.productPrice}>
                       {formatPrice(product.price)}
                     </Text>
-                    <Text style={styles.productInventory}>
-                      Còn: {product.inventory} sản phẩm
-                    </Text>
-
-                    {/* View Detail Button */}
-                    <View style={styles.viewButtonWrapper}>
-                      <Text style={styles.viewButtonText}>Xem chi tiết</Text>
-                      <Ionicons name="arrow-forward" size={14} color="#FFF" />
-                    </View>
                   </View>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
         </View>
       );
@@ -203,11 +273,38 @@ export default function ChatboxScreen() {
         {/* Messages List */}
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={[...messages].reverse()}
+          inverted={true}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          scrollEnabled={true}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() => {
+            if (isAutoScrollEnabledRef.current) {
+              flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+            }
+          }}
+          onLayout={() => {
+            if (isAutoScrollEnabledRef.current) {
+              flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+            }
+          }}
+          // track user scroll to disable auto-scroll when user is browsing history
+          onScroll={(e) => {
+            const offsetY = e.nativeEvent.contentOffset.y || 0;
+            // For inverted list: offset 0 means newest (top). If user scrolls away (offset > threshold), disable auto-scroll
+            const THRESHOLD = 20;
+            if (offsetY > THRESHOLD) {
+              isAutoScrollEnabledRef.current = false;
+            } else {
+              isAutoScrollEnabledRef.current = true;
+            }
+          }}
+          scrollEventThrottle={16}
+          initialNumToRender={20}
         />
 
         {/* Input Container */}
@@ -264,8 +361,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   messageList: { 
-    padding: 16, 
-    paddingBottom: 10 
+    padding: 16,
+    paddingBottom: 120,
   },
   messageContainer: { 
     marginVertical: 6 
@@ -304,19 +401,19 @@ const styles = StyleSheet.create({
     maxWidth: '95%',
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#ddd',
   },
   productsContainer: {
-    marginTop: 12,
-    gap: 12,
+    marginTop: 10,
+    maxHeight: 180,
   },
   productCard: {
-    flexDirection: 'row',
+    width: 130, // Fixed width
     backgroundColor: '#f9f9f9',
     borderRadius: 12,
-    padding: 12,
+    padding: 8,
     borderWidth: 1,
     borderColor: '#eee',
     shadowColor: '#000',
@@ -326,56 +423,35 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   productImage: {
-    width: 80,
-    height: 80,
+    width: '100%',
+    height: 100,
     borderRadius: 8,
     backgroundColor: '#f0f0f0',
+    marginBottom: 6,
   },
   productImagePlaceholder: {
-    width: 80,
-    height: 80,
+    width: '100%',
+    height: 100,
     borderRadius: 8,
     backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 6,
   },
   productInfo: {
     flex: 1,
-    marginLeft: 12,
-    justifyContent: 'space-between',
   },
   productName: {
     fontWeight: '600',
     color: '#333',
-    fontSize: 14,
-    lineHeight: 18,
-    marginBottom: 4,
+    fontSize: 11,
+    lineHeight: 13,
+    marginBottom: 3,
   },
   productPrice: {
     color: '#e91e63',
     fontWeight: 'bold',
-    fontSize: 16,
-    marginVertical: 4,
-  },
-  productInventory: {
-    color: '#666',
     fontSize: 12,
-    marginBottom: 8,
-  },
-  viewButtonWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    gap: 4,
-  },
-  viewButtonText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
   },
   
   // Input Styles
