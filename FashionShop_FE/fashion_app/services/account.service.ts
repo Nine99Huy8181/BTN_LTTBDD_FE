@@ -29,12 +29,28 @@ export const accountService = {
       });
 
       console.log('✅ Status code:', res.status);
-      console.log('📦 Response data từ backend:', res.data);
+      console.log('📦 Response data từ backend:', res.data); 
 
       return res.data;
     } catch (error: any) {
       if (error.response) {
         console.error('❌ Lỗi khi gọi API getAccountByEmail:');
+        console.error('Status code:', error.response.status);
+        console.error('Response data:', error.response.data);
+      } else {
+        console.error('⚠️ Lỗi không có response:', error.message);
+      }
+      throw error;
+    }
+  },
+  // Cập nhật account (dùng để cập nhật avatar hoặc các trường khác)
+  async updateAccount(accountID: number, payload: Partial<Account>): Promise<Account> {
+    try {
+      const res = await api.put(`/accounts/${accountID}`, payload);
+      return res.data;
+    } catch (error: any) {
+      if (error.response) {
+        console.error('❌ Lỗi khi gọi API updateAccount:');
         console.error('Status code:', error.response.status);
         console.error('Response data:', error.response.data);
       } else {

@@ -30,7 +30,7 @@ export default function EditProductScreen() {
   const router = useRouter();
   const [product, setProduct] = useState<ProductResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false); // ✅ Thêm state
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [selectingFromAlbum, setSelectingFromAlbum] = useState(false);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerImage, setViewerImage] = useState("");
@@ -77,7 +77,6 @@ export default function EditProductScreen() {
           return;
         }
 
-        // Don't upload yet; keep local URI in product.image
         handleChange("image", uri);
       }
     } catch (error) {
@@ -98,12 +97,20 @@ export default function EditProductScreen() {
       return;
     }
 
+    // 1. Khởi tạo biến cục bộ với ảnh hiện tại
+    let finalImageUrl = product.image;
+
     try {
-      // If image is local URI (not yet uploaded) -> upload
+      // 2. Kiểm tra nếu là ảnh local (chưa upload) thì upload và cập nhật biến cục bộ
       if (product?.image && !/^https?:\/\//i.test(String(product.image))) {
         try {
           setUploadingImage(true);
           const uploaded = await uploadProductImage(String(product.image));
+
+          // Cập nhật biến cục bộ (QUAN TRỌNG)
+          finalImageUrl = uploaded;
+
+          // Cập nhật state (để UI hiển thị đúng, nhưng không dùng cho payload bên dưới ngay được)
           handleChange("image", uploaded);
         } catch (e) {
           console.error("Upload error:", e);
@@ -114,6 +121,8 @@ export default function EditProductScreen() {
           setUploadingImage(false);
         }
       }
+
+      // 3. Dùng biến finalImageUrl để tạo payload
       const payload: UpdateProductRequest = {
         name: product.name,
         basePrice: product.basePrice,
@@ -121,7 +130,7 @@ export default function EditProductScreen() {
         brand: product.brand,
         description: product.description,
         material: product.material,
-        image: product.image,
+        image: finalImageUrl, // <-- Dùng biến cục bộ ở đây, KHÔNG dùng product.image
         status: product.status,
         isFeatured: product.isFeatured,
       };
@@ -134,17 +143,24 @@ export default function EditProductScreen() {
     }
   };
 
+  const handleChange = (key: string, value: string | number | boolean) => {
+    // Nếu product null thì không làm gì (hoặc return)
+    if (!product) return;
+    setProduct({ ...product, [key]: value });
+  };
+
   if (!product) {
     return (
       <View style={styles.container}>
-        <Text>Đang tải...</Text>
+        <ActivityIndicator
+          size="large"
+          color="#000"
+          style={{ marginTop: 50 }}
+        />
+        <Text style={{ textAlign: "center", marginTop: 10 }}>Đang tải...</Text>
       </View>
     );
   }
-
-  const handleChange = (key: string, value: string | number | boolean) => {
-    setProduct({ ...product, [key]: value });
-  };
 
   return (
     <KeyboardAvoidingView
@@ -239,7 +255,6 @@ export default function EditProductScreen() {
             </View>
           )}
 
-          {/* trạng thái khi chọn ảnh từ album */}
           {selectingFromAlbum && (
             <View style={styles.uploadingContainer}>
               <ActivityIndicator color="#000" size="small" />

@@ -304,3 +304,98 @@ export type UpdateProductRequest = {
   status: string;
   isFeatured: boolean;
 };
+//hung review
+export interface ReviewDTO {
+  reviewID: number;
+  productID: number;
+  customerID: number;
+  customerName: string;
+  customerAvatar: string;
+  rating: number;
+  comment: string;
+  reviewDate: string;
+  images: string[];
+  status: string;
+}
+
+export interface ReviewResponse {
+  responseID: number;
+  reviewID: number;
+  adminID: number;
+  responseContent: string;
+  responseDate: string;
+  status: string;
+}
+
+export interface ReviewWithResponse extends ReviewDTO {
+  response?: ReviewResponse;
+}
+
+export interface CreateReviewResponsePayload {
+  review: {
+    reviewID: number;
+  };
+  admin: {
+    adminID: number;
+  };
+  responseContent: string;
+  responseDate: string;
+  status: string;
+}
+
+export interface UpdateReviewResponsePayload {
+  responseContent: string;
+  responseDate: string;
+  status: string;
+}
+export interface Account {
+  accountID: number;
+  email: string;
+  password?: string;
+  role: string;
+  registrationDate: string;
+  accountStatus: string;
+  avatar?: string;
+}
+
+export interface Admin {
+  adminID: number;
+  account: Account;
+  fullName: string;
+  department: string;
+  position: string;
+  hireDate: string;
+}
+
+export interface CreateAdminRequest {
+  account: {
+    accountID: number;
+  };
+  fullName: string;
+  department: string;
+  position: string;
+  hireDate: string;
+}
+
+export interface UpdateAdminRequest {
+  account: {
+    accountID: number;
+  };
+  fullName: string;
+  department: string;
+  position: string;
+  hireDate: string;
+}
+export interface Coupon {
+  couponID?: number;
+  code: string;
+  description: string;
+  discountValue: number;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  startDate: string; // ISO date string (YYYY-MM-DD)
+  endDate: string;
+  maxUses?: number;
+  usedCount?: number;
+  conditions?: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+}
