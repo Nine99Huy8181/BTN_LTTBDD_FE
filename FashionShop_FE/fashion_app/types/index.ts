@@ -165,6 +165,7 @@ export interface Customer {
   gender: string;
   email: string;
   loyaltyPoints: number;
+  account?: Account;
 }
 
 export interface WishlistItem {

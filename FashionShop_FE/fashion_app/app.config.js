@@ -8,7 +8,7 @@ export default {
     // Add your EAS Project ID here (replace the placeholder with the real UUID)
     // You can obtain the projectId by running `eas build` and following the prompts,
     // or from your project page on https://expo.dev if the project is already created.
-    projectId: process.env.EAS_PROJECT_ID || "REPLACE_WITH_YOUR_EAS_PROJECT_ID",
+    projectId: "fcdd3db2-7bf7-4e68-9f00-0b63e24adb9e",
     orientation: "portrait",
     icon: "./assets/images/fashionapp.png",
     scheme: "fashionapp",
@@ -71,6 +71,14 @@ export default {
       ],
       "expo-secure-store",
       "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/images/fashionapp.png",
+          color: "#000000",
+          modes: ["production"],
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,
@@ -78,6 +86,9 @@ export default {
     },
     extra: {
       apiUrl: getApiUrl() || process.env.API_URL,
+      eas: {
+        projectId: "fcdd3db2-7bf7-4e68-9f00-0b63e24adb9e"
+      }
     },
   },
 };

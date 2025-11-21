@@ -10,10 +10,18 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import * as Linking from 'expo-linking'; // THÊM
 import { NotificationProvider } from '@/hooks/NotificationContext';
+import { initializeBackgroundNotifications } from '@/scripts/backgroundNotifications';
 
 function RootLayoutContent() {
   const router = useRouter();
   const { user, isInitializing } = useAuth();
+
+  // Initialize background notification handler ONCE at app startup
+  useEffect(() => {
+    initializeBackgroundNotifications().catch(e => 
+      console.error('Failed to initialize background notifications:', e)
+    );
+  }, []);
 
   // CẤU HÌNH NOTIFICATION HANDLER (SDK MỚI)
   useEffect(() => {

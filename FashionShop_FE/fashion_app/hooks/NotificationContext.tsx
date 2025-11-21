@@ -178,11 +178,28 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Kết nối WebSocket
   const userId = user.role === 'CUSTOMER' && user.customerId ? user.customerId.toString() : 'admin';
     (async () => {
-      try {
-        await connectWebSocket(userId, user.role as 'ADMIN' | 'CUSTOMER', handleNotification);
-      } catch (e) {
-        console.error('Failed to connect websocket', e);
-      }
+      let retries = 0;
+      const maxRetries = 3;
+      const retryDelay = (attempt: number) => Math.min(1000 * Math.pow(2, attempt), 30000); // exponential backoff, max 30s
+
+      const attemptConnect = async () => {
+        try {
+          await connectWebSocket(userId, user.role as 'ADMIN' | 'CUSTOMER', handleNotification);
+          console.log('[NotificationContext] WebSocket connected successfully');
+        } catch (e) {
+          if (retries < maxRetries) {
+            retries++;
+            const delay = retryDelay(retries - 1);
+            console.warn(`[NotificationContext] Connection failed, retrying in ${delay}ms (attempt ${retries}/${maxRetries})`);
+            setTimeout(attemptConnect, delay);
+          } else {
+            console.error('[NotificationContext] Failed to connect WebSocket after max retries', e);
+            // Don't crash the app, just warn user in console
+          }
+        }
+      };
+
+      attemptConnect();
     })();
 
     return () => {
