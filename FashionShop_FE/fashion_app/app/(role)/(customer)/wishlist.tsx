@@ -1,24 +1,24 @@
 // WishlistScreen.tsx
-import React, { useState, useMemo, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-  Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Routes, Colors } from '@/constants';
+import ProductItem from '@/components/ProductItem';
+import { Colors, Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { useWishlist } from '@/hooks/WishlistContext';
-import ProductItem from '@/components/ProductItem';
 import { wishlistService } from '@/services/wishlist.service';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -128,24 +128,24 @@ export default function WishlistScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-            <View style={styles.searchContainer}>
-              <View style={styles.searchBar}>
-                <Ionicons name="search" size={20} color="#999999" style={styles.searchIcon} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="What are you looking for... ?"
-                  placeholderTextColor="#CCCCCC"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  returnKeyType="search"
-                />
-                {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchQuery('')}>
-                    <Ionicons name="close-circle" size={20} color="#999999" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color="#999999" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Bạn đang muốn mua gì... ?"
+              placeholderTextColor="#CCCCCC"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#999999" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Danh sách yêu thích</Text>
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  container: { flex: 1, backgroundColor: '#fff', paddingTop: 10},
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: 10 },
   header: { paddingHorizontal: 16, marginBottom: 8 },
   headerTitle: { fontSize: 20, fontWeight: 'bold' },
   headerSubtitle: { color: '#666', marginTop: 4 },
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: Colors.brand?.primary || '#0066CC',
+    backgroundColor: '#000',
     borderRadius: 8,
   },
   shopButtonText: { color: '#fff', fontWeight: '600' },

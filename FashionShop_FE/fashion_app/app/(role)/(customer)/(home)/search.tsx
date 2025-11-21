@@ -1,11 +1,11 @@
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, ActivityIndicator, Dimensions} from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useState, useEffect } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { productService } from '@/services/product.service';
-import { ProductResponse} from '@/types';
-import ProductItem from '@/components/ProductItem';
 import FilterModal from '@/components/FilterModal';
+import ProductItem from '@/components/ProductItem';
+import { productService } from '@/services/product.service';
+import { ProductResponse } from '@/types';
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -24,19 +24,19 @@ type SortType = 'default' | 'price-asc' | 'price-desc' | 'rating-desc';
 export default function SearchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  
+
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [sortModalVisible, setSortModalVisible] = useState(false);
-  
+
   // Filter states
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
   const [maxRating, setMaxRating] = useState('');
-  
+
   // Sort state
   const [sortType, setSortType] = useState<SortType>('default');
 
@@ -46,7 +46,7 @@ export default function SearchScreen() {
   // Load params from route only once
   useEffect(() => {
     const initialParams: ProductSearchParams = {};
-    
+
     if (params.keyword) {
       const keyword = decodeURIComponent(params.keyword as string);
       setSearchQuery(keyword);
@@ -86,14 +86,14 @@ export default function SearchScreen() {
     setLoading(true);
     try {
       let result: ProductResponse[];
-      
+
       // Nếu có categoryId, ưu tiên lấy theo category
       if (searchParams.categoryId) {
         result = await productService.getProductsByCategoryId(searchParams.categoryId);
-        
+
         // Áp dụng các filter khác nếu có
         if (searchParams.keyword) {
-          result = result.filter(p => 
+          result = result.filter(p =>
             p.name.toLowerCase().includes(searchParams.keyword!.toLowerCase())
           );
         }
@@ -113,7 +113,7 @@ export default function SearchScreen() {
         // Không có categoryId, dùng searchProducts bình thường
         result = await productService.searchProducts(searchParams);
       }
-      
+
       setProducts(result);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -126,16 +126,16 @@ export default function SearchScreen() {
   // Handle search - update internal state only
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
-    
+
     const newParams: ProductSearchParams = {
       keyword: searchQuery.trim(),
     };
-    
+
     // Keep categoryId if exists
     if (params.categoryId) {
       newParams.categoryId = Number(params.categoryId);
     }
-    
+
     // Keep existing filters
     if (minPrice) newParams.minPrice = Number(minPrice);
     if (maxPrice) newParams.maxPrice = Number(maxPrice);
@@ -153,12 +153,12 @@ export default function SearchScreen() {
     if (searchQuery.trim()) {
       newParams.keyword = searchQuery.trim();
     }
-    
+
     // Keep categoryId if exists
     if (params.categoryId) {
       newParams.categoryId = Number(params.categoryId);
     }
-    
+
     if (minPrice.trim()) {
       newParams.minPrice = Number(minPrice);
     }
@@ -187,7 +187,7 @@ export default function SearchScreen() {
   // Sort products
   const getSortedProducts = () => {
     const sorted = [...products];
-    
+
     switch (sortType) {
       case 'price-asc':
         return sorted.sort((a, b) => a.discountPrice - b.discountPrice);
@@ -216,7 +216,7 @@ export default function SearchScreen() {
           <Ionicons name="search-outline" size={20} color="#9CA3AF" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="What are you looking for...?"
+            placeholder="Bạn đang muốn mua gì...?"
             placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -233,17 +233,17 @@ export default function SearchScreen() {
 
       {/* Toolbar: Filter & Sort */}
       <View style={styles.toolbar}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.toolbarButton,
             (minPrice || maxPrice || minRating || maxRating) && styles.toolbarButtonActive
-          ]} 
+          ]}
           onPress={() => setFilterModalVisible(true)}
         >
-          <Ionicons 
-            name="options-outline" 
-            size={18} 
-            color={(minPrice || maxPrice || minRating || maxRating) ? "#1A1A1A" : "#6B7280"} 
+          <Ionicons
+            name="options-outline"
+            size={18}
+            color={(minPrice || maxPrice || minRating || maxRating) ? "#1A1A1A" : "#6B7280"}
           />
           <Text style={[
             styles.toolbarButtonText,
@@ -254,17 +254,17 @@ export default function SearchScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.toolbarButton,
             sortType !== 'default' && styles.toolbarButtonActive
-          ]} 
+          ]}
           onPress={() => setSortModalVisible(true)}
         >
-          <Ionicons 
-            name="swap-vertical-outline" 
-            size={18} 
-            color={sortType !== 'default' ? "#1A1A1A" : "#6B7280"} 
+          <Ionicons
+            name="swap-vertical-outline"
+            size={18}
+            color={sortType !== 'default' ? "#1A1A1A" : "#6B7280"}
           />
           <Text style={[
             styles.toolbarButtonText,
@@ -349,7 +349,7 @@ export default function SearchScreen() {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Sort By</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setSortModalVisible(false)}
                   style={styles.closeButton}
                 >

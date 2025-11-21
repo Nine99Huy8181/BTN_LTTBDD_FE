@@ -1,11 +1,11 @@
 // app/(customer)/(cart)/index.tsx
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, Button, Image, TouchableOpacity, StyleSheet, FlatList, Alert, Animated } from 'react-native';
+import { formatCurrencyVND, Routes } from '@/constants';
+import { useAuth } from '@/hooks/AuthContext';
+import { CartItem, CartService } from '@/services/cart.service';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { Routes } from '@/constants';
-import { useAuth } from '@/hooks/AuthContext';
-import { CartService, CartItem } from '@/services/cart.service';
+import React, { useCallback, useState } from 'react';
+import { Alert, Animated, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -73,54 +73,54 @@ export default function CartScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-      <Text
-        style={styles.titleCart}
-      >Giỏ hàng của bạn</Text>
-      <FlatList
-        data={items}
-        keyExtractor={(i) => String(i.cartItemID)}
-        renderItem={({ item }) => {
-          const rightAction = (progress: any, dragX: any) => {
-            const trans = dragX.interpolate({ inputRange: [-100, 0], outputRange: [0, 100], extrapolate: 'clamp' });
-            return (
-              <TouchableOpacity onPress={() => deleteItem(item)} style={styles.rightAction}>
-                <Animated.Text style={[styles.rightActionText, { transform: [{ translateX: trans }] }]}>🗑 Delete</Animated.Text>
-              </TouchableOpacity>
-            );
-          };
-
-          return (
-            <Swipeable renderRightActions={rightAction} overshootRight={false}>
-              <View style={styles.itemRow}>
-                <Image source={{ uri: (item.variant as any)?.product?.image || '' }} style={styles.image} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.title}>{(item.variant as any)?.product?.name}</Text>
-                  <Text style={styles.size}>size:{(item.variant as any)?.size}</Text>
-                  <View style={styles.qtyRow}>
-                    <TouchableOpacity onPress={() => changeQuantity(item, -1)} style={styles.qtyBtn}><Text>-</Text></TouchableOpacity>
-                    <Text style={styles.qtyText}>{item.quantity}</Text>
-                    <TouchableOpacity onPress={() => changeQuantity(item, 1)} style={styles.qtyBtn}><Text>+</Text></TouchableOpacity>
-                    <Text style={styles.price}>${((item.variant as any)?.product?.discountPrice ?? (item.variant as any)?.product?.basePrice ?? 0).toFixed(2)}</Text>
-                  </View>
-                </View>
-                <TouchableOpacity onPress={() => deleteItem(item)} style={styles.trashBtn}>
-                  <Text style={{ color: '#900', fontWeight: '700' }}>🗑</Text>
+        <Text
+          style={styles.titleCart}
+        >Giỏ hàng của bạn</Text>
+        <FlatList
+          data={items}
+          keyExtractor={(i) => String(i.cartItemID)}
+          renderItem={({ item }) => {
+            const rightAction = (progress: any, dragX: any) => {
+              const trans = dragX.interpolate({ inputRange: [-50, 0], outputRange: [0, 100], extrapolate: 'clamp' });
+              return (
+                <TouchableOpacity onPress={() => deleteItem(item)} style={styles.rightAction}>
+                  <Animated.Text style={[styles.rightActionText, { transform: [{ translateX: trans }] }]}>Xóa</Animated.Text>
                 </TouchableOpacity>
-              </View>
-            </Swipeable>
-          );
-        }}
-        ListEmptyComponent={() => <Text style={{ padding: 16 }}>Giỏ hàng trống</Text>}
-      />
+              );
+            };
 
-      <View style={styles.summary}>
-        <Text style={styles.summaryText}>Total</Text>
-        <Text style={styles.summaryAmount}>${total.toFixed(2)}</Text>
-      </View>
+            return (
+              <Swipeable renderRightActions={rightAction} overshootRight={false}>
+                <View style={styles.itemRow}>
+                  <Image source={{ uri: (item.variant as any)?.product?.image || '' }} style={styles.image} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.title}>{(item.variant as any)?.product?.name}</Text>
+                    <Text style={styles.size}>size:{(item.variant as any)?.size}</Text>
+                    <View style={styles.qtyRow}>
+                      <TouchableOpacity onPress={() => changeQuantity(item, -1)} style={styles.qtyBtn}><Text>-</Text></TouchableOpacity>
+                      <Text style={styles.qtyText}>{item.quantity}</Text>
+                      <TouchableOpacity onPress={() => changeQuantity(item, 1)} style={styles.qtyBtn}><Text>+</Text></TouchableOpacity>
+                      <Text style={styles.price}>{formatCurrencyVND((item.variant as any)?.product?.discountPrice ?? (item.variant as any)?.product?.basePrice ?? 0)}</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => deleteItem(item)} style={styles.trashBtn}>
+                    <Text style={{ color: '#900', fontWeight: '700' }}>🗑</Text>
+                  </TouchableOpacity>
+                </View>
+              </Swipeable>
+            );
+          }}
+          ListEmptyComponent={() => <Text style={{ padding: 16 }}>Giỏ hàng trống</Text>}
+        />
 
-      <TouchableOpacity style={styles.checkoutBtn} onPress={() => router.push(Routes.CustomerCheckout)}>
-        <Text style={{ color: '#fff', fontWeight: '600' }}>Checkout</Text>
-      </TouchableOpacity>
+        <View style={styles.summary}>
+          <Text style={styles.summaryText}>Tổng</Text>
+          <Text style={styles.summaryAmount}>{formatCurrencyVND(total)}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.checkoutBtn} onPress={() => router.push(Routes.CustomerCheckout)}>
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Thanh toán</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  container: { flex: 1},
+  container: { flex: 1 },
   titleCart: {
     fontWeight: 'bold',
     fontSize: 20,
@@ -146,9 +146,9 @@ const styles = StyleSheet.create({
   price: { marginLeft: 'auto', fontWeight: '600' },
   trashBtn: { padding: 8, marginLeft: 8 },
   summary: { flexDirection: 'row', justifyContent: 'space-between', padding: 12 },
-  summaryText: { fontSize: 16 },
-  summaryAmount: { fontSize: 18, fontWeight: '700' },
+  summaryText: { fontSize: 18 },
+  summaryAmount: { fontSize: 18, fontWeight: '700', color: 'red' },
   checkoutBtn: { backgroundColor: '#000', padding: 14, margin: 12, borderRadius: 8, alignItems: 'center' },
-  rightAction: { backgroundColor: '#ffdddd', justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 20 },
-  rightActionText: { color: '#900', fontWeight: '700' },
+  rightAction: { backgroundColor: '#f51818ff', justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 20 },
+  rightActionText: { color: '#fff', fontWeight: '700' },
 });

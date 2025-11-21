@@ -2,7 +2,7 @@
 import { Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { addressService } from '@/services/address.service';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,7 +26,7 @@ export default function AddressBookScreen() {
   const fetchAddresses = async () => {
     try {
       const data = await addressService.getAddressesByCustomerId(Number(customerId));
-       const sorted = (data as any[]).sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+      const sorted = (data as any[]).sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
       setAddresses(sorted);
     } catch (error) {
       Alert.alert('Lỗi', 'Không thể tải danh sách địa chỉ');
