@@ -1,16 +1,16 @@
 // app/(customer)/(cart)/checkout.tsx
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import * as Linking from 'expo-linking';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import { Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
-import { CartService } from '@/services/cart.service';
 import { addressService } from '@/services/address.service';
-import { OrderService } from '@/services/order.service';
 import { api } from '@/services/api';
+import { CartService } from '@/services/cart.service';
+import { OrderService } from '@/services/order.service';
+import { useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -30,10 +30,10 @@ export default function CheckoutScreen() {
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
       console.log('📱 Deep link received:', url);
-      
+
       const { queryParams } = Linking.parse(url);
       console.log('📱 VNPAY callback data:', queryParams);
-      
+
       if (queryParams?.status === 'success') {
         // Clear cart và navigate
         router.replace(`/(role)/(customer)/(cart)/order-success`);
@@ -61,11 +61,11 @@ export default function CheckoutScreen() {
     try {
       const addrs: any = await addressService.getAddressesByCustomerId(customerId);
       let selectedAddr;
-      
+
       if (selectedAddressId) {
         selectedAddr = addrs?.find((a: any) => a.addressID === selectedAddressId);
       }
-      
+
       if (!selectedAddr) {
         selectedAddr = addrs?.find((a: any) => a.isDefault);
       }
@@ -128,10 +128,10 @@ export default function CheckoutScreen() {
 
       if (response.data.paymentUrl) {
         console.log('🔗 Opening VNPay URL:', response.data.paymentUrl);
-        
+
         // Kiểm tra xem URL có thể mở được không
         const supported = await Linking.canOpenURL(response.data.paymentUrl);
-        
+
         if (supported) {
           await Linking.openURL(response.data.paymentUrl);
         } else {
@@ -174,9 +174,9 @@ export default function CheckoutScreen() {
     setIsPlacing(true);
     try {
       const payload: any = {
-        items: items.map((it) => ({ 
+        items: items.map((it) => ({
           variantID: (it.variant as any).variantID,
-          quantity: it.quantity || 0 
+          quantity: it.quantity || 0
         })),
         addressID: defaultAddress.addressID,
         paymentMethod: paymentMethod === 'cod' ? 'COD' : 'VNPAY',
@@ -190,7 +190,7 @@ export default function CheckoutScreen() {
       if (paymentMethod === 'card') {
         // Thanh toán VNPay
         await handleVNPayPayment(createdOrder.orderID, total);
-        
+
         // Xóa cart items sau khi mở VNPay (không chờ callback)
         for (const it of items) {
           try {
@@ -208,7 +208,7 @@ export default function CheckoutScreen() {
             console.error('Delete cart item error:', err);
           }
         }
-        
+
         Alert.alert('Đặt hàng thành công', 'Cảm ơn bạn đã đặt hàng', [
           { text: 'OK', onPress: () => router.replace('/(role)/(customer)/(cart)/order-success') }
         ]);
@@ -275,7 +275,7 @@ export default function CheckoutScreen() {
             <Text style={styles.sectionTitle}>Địa chỉ giao hàng</Text>
             {!defaultAddress ? (
               <TouchableOpacity
-                onPress={() => router.push({ 
+                onPress={() => router.push({
                   pathname: Routes.CustomerAddressBook as any,
                   params: { fromCheckout: '1' }
                 })}
@@ -284,7 +284,7 @@ export default function CheckoutScreen() {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                onPress={() => router.push({ 
+                onPress={() => router.push({
                   pathname: Routes.CustomerAddressBook as any,
                   params: { fromCheckout: '1' }
                 })}
@@ -297,15 +297,6 @@ export default function CheckoutScreen() {
           {!defaultAddress ? (
             <View style={styles.emptyAddress}>
               <Text style={{ color: '#666', marginBottom: 10 }}>Bạn chưa có địa chỉ nào</Text>
-              <TouchableOpacity
-                style={[styles.primaryButton, { paddingHorizontal: 20 }]}
-                onPress={() => router.push({ 
-                  pathname: Routes.CustomerAddressBook as any,
-                  params: { fromCheckout: '1' }
-                })}
-              >
-                <Text style={styles.primaryButtonText}>Thêm địa chỉ mới</Text>
-              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.addressCard}>
@@ -323,15 +314,15 @@ export default function CheckoutScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment method</Text>
-          <TouchableOpacity 
-            style={[styles.paymentRow, paymentMethod === 'card' && styles.paymentActive]} 
+          <TouchableOpacity
+            style={[styles.paymentRow, paymentMethod === 'card' && styles.paymentActive]}
             onPress={() => setPaymentMethod('card')}
           >
             <Text>💳  VNPay</Text>
             <Text style={styles.paymentNote}>Thanh toán qua VNPay</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.paymentRow, paymentMethod === 'cod' && styles.paymentActive]} 
+          <TouchableOpacity
+            style={[styles.paymentRow, paymentMethod === 'cod' && styles.paymentActive]}
             onPress={() => setPaymentMethod('cod')}
           >
             <Text>📦  Cash on Delivery</Text>
@@ -355,8 +346,8 @@ export default function CheckoutScreen() {
       <View style={styles.footer}>
         <Text style={{ fontWeight: '700', marginBottom: 6 }}>Notes</Text>
         <TextInput placeholder="Take note" value={note} onChangeText={setNote} style={styles.noteInput} />
-        <TouchableOpacity 
-          style={[styles.placeBtn, isPlacing && { opacity: 0.5 }]} 
+        <TouchableOpacity
+          style={[styles.placeBtn, isPlacing && { opacity: 0.5 }]}
           onPress={placeOrder}
           disabled={isPlacing}
         >
