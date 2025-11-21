@@ -1,5 +1,5 @@
 // services/product.service.ts
-import {Product, ProductResponse, ProductSearchParams } from '@/types';
+import { Product, ProductResponse, ProductSearchParams, UpdateProductRequest } from '@/types';
 import { api } from './api';
 
 export const productService = {
@@ -34,15 +34,16 @@ export const productService = {
   },
 
   // Cập nhật sản phẩm
-  updateProduct: async (id: number, productDetails: Product): Promise<ProductResponse> => {
-    const response = await api.put(`/products/${id}`, productDetails);
+  updateProduct: async (id: number, payload: UpdateProductRequest): Promise<ProductResponse> => {
+    const response = await api.put(`/products/${id}`, payload);
     return response.data;
-  },
+},
+
 
   // // Xóa sản phẩm
-  // deleteProduct: async (id: number): Promise<void> => {
-  //   await api.delete(`/products/${id}`);
-  // },
+  deleteProduct: async (id: number): Promise<void> => {
+    await api.delete(`/products/${id}`);
+  },
 
   searchProducts: async (params: ProductSearchParams): Promise<ProductResponse[]> => {
     // Axios sẽ tự động chuyển đối tượng `params` thành query string

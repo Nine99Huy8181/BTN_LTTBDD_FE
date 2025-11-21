@@ -26,13 +26,16 @@ export const Routes: Record<string, string> = {
   AdminReports: '/(role)/(admin)/(more)/reports',
   AdminReviews: '/(role)/(admin)/(more)/reviews',
   AdminEditCoupon: '/(role)/(admin)/(more)/edit-coupon/',
-  AdminRespondReview: '/(role)/(admin)/(more)/respond-review/',
+  AdminRespondReview: '/(role)/(admin)/(more)/respond-review',
   AdminProfile: '/(role)/(admin)/(more)/profile',
   AdminEditProfile: '/(role)/(admin)/(more)/profile/edit-profile',
   AdminChangePassword: '/(role)/(admin)/(more)/profile/change-password',
   AdminReferral: '/(role)/(admin)/(more)/profile/referral',
   AdminSettings: '/(role)/(admin)/(more)/profile/settings',
-
+  
+AdminCoupons: '/(role)/(admin)/(more)/coupons',
+  AdminAddCoupon: '/(role)/(admin)/(more)/add-coupon',
+  AdminEditCoupon: '/(role)/(admin)/(more)/edit-coupon/',
 
   // Customer Area
   CustomerHome: '/(role)/(customer)/(home)',

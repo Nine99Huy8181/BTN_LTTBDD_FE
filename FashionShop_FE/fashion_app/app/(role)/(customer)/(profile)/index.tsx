@@ -1,10 +1,11 @@
-import { Routes } from '@/constants';
-import { useAuth } from '@/hooks/AuthContext';
-import { accountService } from '@/services/account.service';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+// app/(role)/(customer)/(profile)/index.tsx
+import { Routes } from "@/constants";
+import { useAuth } from "@/hooks/AuthContext";
+import { accountService } from "@/services/account.service";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -12,23 +13,26 @@ export default function ProfileScreen() {
   const [account, setAccount] = useState<any>(null);
   const [avatarError, setAvatarError] = useState(false);
 
+  // Kiểm tra role Admin (Tuỳ thuộc vào cấu trúc user của bạn là mảng hay chuỗi)
+  const isAdmin = user?.role === "ADMIN";
+
   useEffect(() => {
     if (user?.userName) {
       accountService
-        .getAccountByEmail(user.userName) // 🧩 userName chứa email
+        .getAccountByEmail(user.userName)
         .then((res) => setAccount(res))
-        .catch((err) => console.error('Lỗi khi lấy account:', err));
+        .catch((err) => console.error("Lỗi khi lấy account:", err));
     }
   }, [user]);
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/(auth)/login');
+    router.replace("/(auth)/login");
   };
 
   const avatarUri =
     avatarError || !account?.avatar
-      ? 'https://cdn-icons-png.flaticon.com/512/847/847969.png'
+      ? "https://cdn-icons-png.flaticon.com/512/847/847969.png"
       : account.avatar;
 
   return (
@@ -45,29 +49,57 @@ export default function ProfileScreen() {
             account?.fullName ||
             account?.email ||
             user?.userName ||
-            'Đang tải...'}
+            "Khách hàng"}
         </Text>
-
+        {/* Hiển thị label nhỏ nếu là Admin */}
+        {isAdmin && <Text style={styles.adminLabel}>Admin Account</Text>}
       </View>
 
       {/* Các mục chức năng */}
       <View style={styles.section}>
-        <TouchableOpacity style={styles.item} onPress={() => router.push(Routes.CustomerEditProfile)}>
+        {/* 🟢 CHỨC NĂNG CHUYỂN ĐỔI (Chỉ hiện nếu là Admin) */}
+        {isAdmin && (
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => router.push("/(role)/(admin)/dashboard")} // Điều hướng về Dashboard Admin
+          >
+            <Ionicons name="business-outline" size={22} color="#007AFF" />
+            <Text
+              style={[styles.itemText, { color: "#007AFF", fontWeight: "600" }]}
+            >
+              Chuyển qua giao diện Admin
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => router.push(Routes.CustomerEditProfile)}
+        >
           <Ionicons name="person-circle-outline" size={22} color="#333" />
           <Text style={styles.itemText}>Chỉnh sửa hồ sơ</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.item} onPress={() => router.push(Routes.CustomerAddressBook)}>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => router.push(Routes.CustomerAddressBook)}
+        >
           <Ionicons name="location-outline" size={22} color="#333" />
           <Text style={styles.itemText}>Sổ địa chỉ</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.item} onPress={() => router.push(Routes.CustomerOrders)}>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => router.push(Routes.CustomerOrders)}
+        >
           <Ionicons name="receipt-outline" size={22} color="#333" />
           <Text style={styles.itemText}>Đơn hàng của tôi</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.item} onPress={() => router.push(Routes.CustomerCoupon)}>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => router.push(Routes.CustomerCoupon)}
+        >
           <Ionicons name="pricetag-outline" size={22} color="#333" />
           <Text style={styles.itemText}>Mã giảm giá</Text>
         </TouchableOpacity>
@@ -84,12 +116,12 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
+    backgroundColor: "#fafafa",
     paddingHorizontal: 24,
     paddingTop: 70,
   },
   profileHeader: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   avatar: {
@@ -98,49 +130,59 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   name: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
+  },
+  adminLabel: {
+    fontSize: 12,
+    color: "#007AFF",
+    marginTop: 4,
+    fontWeight: "600",
+    backgroundColor: "#e3f2fd",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     paddingVertical: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 3,
     marginBottom: 30,
   },
   item: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   itemText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     marginLeft: 10,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   logoutButton: {
-    flexDirection: 'row',
-    backgroundColor: '#ff4444',
+    flexDirection: "row",
+    backgroundColor: "#ff4444",
     borderRadius: 10,
     paddingVertical: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 6,
   },
   logoutText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

@@ -71,6 +71,11 @@ export interface ProductVariantPayload {
   color: string;
   priceAdjustment: number;
   images: string[];
+  // Inventory object: frontend sends total quantity and reserved quantity
+  inventory?: {
+    quantity?: number;
+    reservedQuantity?: number;
+  };
   status: string;
 }
 
@@ -220,4 +225,177 @@ export interface PaginatedResponse<T> {
   last: boolean;         // Đây có phải là trang cuối không?
   first: boolean;        // Đây có phải là trang đầu không?
   numberOfElements: number; // Số phần tử thực tế trên trang này
+}
+
+//dasboard types, hung
+export interface DashboardStats {
+  totalRevenue: number;
+  todayRevenue: number;
+  monthRevenue: number;
+  yearRevenue: number;
+  totalOrders: number;
+  newOrdersToday: number;
+  pendingOrders: number;
+  completedOrders: number;
+  totalProducts: number;
+  lowStockProducts: number;
+  totalCustomers: number;
+  newCustomersThisMonth: number;
+  averageOrderValue: number;
+  averageRating: number;
+}
+
+export interface ChartDataPoint {
+  label: string;
+  revenue: number;
+  orderCount: number;
+}
+
+export interface RevenueChart {
+  daily: ChartDataPoint[];
+  weekly: ChartDataPoint[];
+  monthly: ChartDataPoint[];
+  yearly: ChartDataPoint[];
+}
+
+export interface BestSellingProduct {
+  productId: number;
+  productName: string;
+  imageUrl: string;
+  totalSold: number;
+  totalRevenue: number;
+  averageRating: number;
+  stockQuantity: number;
+}
+
+export interface RecentOrder {
+  orderId: number;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  totalAmount: number;
+  status: string;
+  paymentMethod: string;
+  orderDate: string;
+  itemCount: number;
+}
+
+export interface RecentReview {
+  reviewId: number;
+  productId: number;
+  productName: string;
+  productImage: string;
+  customerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  hasResponse: boolean;
+}
+
+//hung
+export type UpdateProductRequest = {
+  name: string;
+  basePrice: number;
+  discountPrice: number;
+  brand: string;
+  description: string;
+  material: string;
+  image: string;
+  status: string;
+  isFeatured: boolean;
+};
+//hung review
+export interface ReviewDTO {
+  reviewID: number;
+  productID: number;
+  customerID: number;
+  customerName: string;
+  customerAvatar: string;
+  rating: number;
+  comment: string;
+  reviewDate: string;
+  images: string[];
+  status: string;
+}
+
+export interface ReviewResponse {
+  responseID: number;
+  reviewID: number;
+  adminID: number;
+  responseContent: string;
+  responseDate: string;
+  status: string;
+}
+
+export interface ReviewWithResponse extends ReviewDTO {
+  response?: ReviewResponse;
+}
+
+export interface CreateReviewResponsePayload {
+  review: {
+    reviewID: number;
+  };
+  admin: {
+    adminID: number;
+  };
+  responseContent: string;
+  responseDate: string;
+  status: string;
+}
+
+export interface UpdateReviewResponsePayload {
+  responseContent: string;
+  responseDate: string;
+  status: string;
+}
+export interface Account {
+  accountID: number;
+  email: string;
+  password?: string;
+  role: string;
+  registrationDate: string;
+  accountStatus: string;
+  avatar?: string;
+}
+
+export interface Admin {
+  adminID: number;
+  account: Account;
+  fullName: string;
+  department: string;
+  position: string;
+  hireDate: string;
+}
+
+export interface CreateAdminRequest {
+  account: {
+    accountID: number;
+  };
+  fullName: string;
+  department: string;
+  position: string;
+  hireDate: string;
+}
+
+export interface UpdateAdminRequest {
+  account: {
+    accountID: number;
+  };
+  fullName: string;
+  department: string;
+  position: string;
+  hireDate: string;
+}
+export interface Coupon {
+  couponID?: number;
+  code: string;
+  description: string;
+  discountValue: number;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  startDate: string; // ISO date string (YYYY-MM-DD)
+  endDate: string;
+  maxUses?: number;
+  usedCount?: number;
+  conditions?: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
 }
