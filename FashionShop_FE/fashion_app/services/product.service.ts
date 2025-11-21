@@ -1,5 +1,5 @@
 // services/product.service.ts
-import { Product, ProductResponse, ProductSearchParams, UpdateProductRequest } from '@/types';
+import { PaginatedResponse, Product, ProductResponse, ProductSearchParams, UpdateProductRequest } from '@/types';
 import { api } from './api';
 
 export const productService = {
@@ -50,6 +50,27 @@ export const productService = {
     // ví dụ: /products/search?keyword=áo&minPrice=100000
     // Nếu một giá trị trong `params` là undefined, Axios sẽ tự động bỏ qua nó.
     const response = await api.get('/products/search', { params: params });
+    return response.data;
+  },
+
+  getTopSellingProducts: async (
+    page = 0,
+    size = 10
+  ): Promise<PaginatedResponse<ProductResponse>> => {
+    const response = await api.get('/products/top-selling', {
+      params: { page, size },
+    });
+    return response.data; // Spring trả đúng kiểu Page → khớp với PaginatedResponse
+  },
+
+  // Sản phẩm gợi ý ngẫu nhiên (active)
+  getRandomProducts: async (
+    page = 0,
+    size = 10
+  ): Promise<PaginatedResponse<ProductResponse>> => {
+    const response = await api.get('/products/random', {
+      params: { page, size },
+    });
     return response.data;
   },
 };

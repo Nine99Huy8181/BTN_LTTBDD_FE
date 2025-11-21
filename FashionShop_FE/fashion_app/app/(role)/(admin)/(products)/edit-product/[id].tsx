@@ -449,7 +449,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 2,
   },
   sectionTitle: {
     fontSize: 16,
@@ -534,7 +533,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 3,
   },
   primaryButtonText: {
     color: "#fff",

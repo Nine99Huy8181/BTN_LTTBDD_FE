@@ -8,13 +8,13 @@ export default function AdminLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#2196F3",
+        tabBarActiveTintColor: "#000000ff",
       }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: "Dashboard",
+          title: "Thống kê",
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="stats-chart" size={24} color={color} />
@@ -27,7 +27,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="(products)"
         options={{
-          title: "Products",
+          title: "Sản phẩm",
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="cube" size={24} color={color} />
@@ -40,7 +40,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="(orders)"
         options={{
-          title: "Orders",
+          title: "Đơn hàng",
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="receipt" size={24} color={color} />
@@ -53,7 +53,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="notification"
         options={{
-          title: "Notification",
+          title: "Thông báo",
           headerShown: false,
           tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
           tabBarIcon: ({ color }) => (
@@ -69,7 +69,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="(more)"
         options={{
-          title: "More",
+          title: "Thêm",
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="menu" size={24} color={color} />

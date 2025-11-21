@@ -1,6 +1,16 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { OrderService } from '@/services/order.service';
 import { OrderDTO } from '@/types';
 import Toast from 'react-native-toast-message';
@@ -9,15 +19,16 @@ import { safeDate } from '@/scripts/safeDate';
 interface FilterTab {
   label: string;
   status: string | null;
+  icon: keyof typeof Ionicons.glyphMap;
 }
 
 const FILTERS: FilterTab[] = [
-  { label: 'Tất cả', status: null },
-  { label: 'Chờ duyệt', status: 'PENDING' },
-  { label: 'Đã duyệt', status: 'APPROVED' },
-  { label: 'Đang giao', status: 'SHIPPED' },
-  { label: 'Hoàn thành', status: 'DELIVERED' },
-  { label: 'Đã hủy', status: 'CANCELLED' },
+  { label: 'Tất cả', status: null, icon: 'list-outline' },
+  { label: 'Chờ duyệt', status: 'PENDING', icon: 'time-outline' },
+  { label: 'Đã duyệt', status: 'APPROVED', icon: 'checkmark-outline' },
+  { label: 'Đang giao', status: 'SHIPPED', icon: 'car-outline' },
+  { label: 'Hoàn thành', status: 'DELIVERED', icon: 'gift-outline' },
+  { label: 'Đã hủy', status: 'CANCELLED', icon: 'close-outline' },
 ];
 
 const PAGE_SIZE = 20;
@@ -31,13 +42,12 @@ export default function AdminOrdersScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Theo dõi hướng cuộn
   const lastScrollY = useRef(0);
   const [isScrollingDown, setIsScrollingDown] = useState(true);
 
   const router = useRouter();
 
-  const loadOrders = useCallback(async (page: number, filter: string | null, isRefresh: boolean = false) => {
+  const loadOrders = useCallback(async (page: number, filter: string | null, isRefresh = false) => {
     let shouldSetLoading = false;
 
     if (isRefresh) {
@@ -52,18 +62,12 @@ export default function AdminOrdersScreen() {
 
     try {
       const response = await OrderService.getAllOrdersPaginated(page, PAGE_SIZE, filter);
-
       setOrders(prev => (page === 0 ? response.content : [...prev, ...response.content]));
       setHasMore(!response.last);
       setCurrentPage(page);
-
     } catch (error) {
       console.error('Load orders error:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Lỗi',
-        text2: 'Không thể tải đơn hàng',
-      });
+      Toast.show({ type: 'error', text1: 'Lỗi', text2: 'Không thể tải đơn hàng' });
     } finally {
       if (isRefresh) setRefreshing(false);
       if (shouldSetLoading) setLoading(false);
@@ -71,121 +75,151 @@ export default function AdminOrdersScreen() {
     }
   }, [hasMore, loadingMore]);
 
-  // Tải lần đầu + khi đổi filter
   useEffect(() => {
     loadOrders(0, activeFilter);
   }, [loadOrders, activeFilter]);
 
-  // Đổi filter
   const handleFilterPress = (status: string | null) => {
     if (status === activeFilter) return;
     setActiveFilter(status);
     setOrders([]);
     setCurrentPage(0);
     setHasMore(true);
-    // loadOrders sẽ tự chạy nhờ useEffect
   };
 
-  // Pull to refresh
-  const onRefresh = () => {
-    loadOrders(0, activeFilter, true);
-  };
+  const onRefresh = () => loadOrders(0, activeFilter, true);
 
-  // Theo dõi cuộn
   const handleScroll = (event: any) => {
     const currentY = event.nativeEvent.contentOffset.y;
     const diff = currentY - lastScrollY.current;
-    if (Math.abs(diff) > 10) {
-      setIsScrollingDown(diff > 0);
-    }
+    if (Math.abs(diff) > 10) setIsScrollingDown(diff > 0);
     lastScrollY.current = currentY;
   };
 
-  // Load more
   const handleLoadMore = () => {
     if (!loadingMore && hasMore && !refreshing && !loading && isScrollingDown && currentPage > 0) {
       loadOrders(currentPage + 1, activeFilter);
     }
   };
 
-  // Render footer
   const renderFooter = () => {
     if (!loadingMore) return null;
-    return <ActivityIndicator size="large" color="#2196F3" style={{ marginVertical: 20 }} />;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#000000" />
+        <Text style={styles.loadingMoreText}>Đang tải...</Text>
+      </View>
+    );
   };
 
-  // Render empty
   const renderEmpty = () => {
     if (loading) return null;
     return (
       <View style={styles.emptyContainer}>
+        <Ionicons name="document-text-outline" size={64} color="#CCCCCC" />
         <Text style={styles.emptyText}>Chưa có đơn hàng</Text>
       </View>
     );
   };
 
-  // Render item
   const renderOrderItem = ({ item }: { item: OrderDTO }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(role)/(admin)/(orders)/detail/${item.orderID}`)}
-      style={styles.itemContainer}
+      style={styles.orderCard}
+      activeOpacity={0.7}
     >
-      <View style={styles.itemRow}>
-        <Text style={styles.orderId}>Đơn #{item.orderID}</Text>
-        <Text style={styles.orderDate}>
-          {safeDate(item.orderDate)}
-        </Text>
+      <View style={styles.cardHeader}>
+        <View style={styles.orderIdContainer}>
+          <Text style={styles.orderId}>#{item.orderID}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusBg(item.orderStatus) }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(item.orderStatus) }]}>
+              {getStatusText(item.orderStatus)}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.orderDate}>{safeDate(item.orderDate)}</Text>
       </View>
-      <Text style={styles.customerName}>
-        Khách: <Text style={{ fontWeight: '600' }}>{item.customerName}</Text>
-      </Text>
-      <View style={styles.itemRow}>
-        <Text style={styles.totalAmount}>
-          {item.totalAmount?.toLocaleString('vi-VN')}đ
-        </Text>
-        <Text style={{
-          color: getStatusColor(item.orderStatus),
-          fontWeight: '600',
-          fontSize: 13,
-        }}>
-          {getStatusText(item.orderStatus)}
-        </Text>
+
+      <View style={styles.cardDivider} />
+
+      <View style={styles.cardBody}>
+        <View style={styles.infoRow}>
+          <Ionicons name="person-outline" size={16} color="#666666" />
+          <Text style={styles.customerName}>{item.customerName}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Ionicons name="card-outline" size={16} color="#666666" />
+          <Text style={styles.paymentInfo}>
+            {item.paymentMethod} • {item.paymentStatus === 'PAID' ? 'Đã TT' : 'Chưa TT'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.cardFooter}>
+        <Text style={styles.totalLabel}>Tổng tiền</Text>
+        <Text style={styles.totalAmount}>{item.totalAmount?.toLocaleString('vi-VN')}đ</Text>
+      </View>
+
+      <View style={styles.arrowContainer}>
+        <Ionicons name="chevron-forward" size={20} color="#CCCCCC" />
       </View>
     </TouchableOpacity>
   );
 
+  const renderFilterItem = ({ item }: { item: FilterTab }) => {
+    const isActive = activeFilter === item.status;
+    return (
+      <TouchableOpacity
+        onPress={() => handleFilterPress(item.status)}
+        style={[styles.filterButton, isActive && styles.filterButtonActive]}
+        activeOpacity={0.7}
+      >
+        <Ionicons
+          name={item.icon}
+          size={16}
+          color={isActive ? '#FFFFFF' : '#666666'}
+          style={styles.filterIcon}
+        />
+        <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
+          {item.label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
+        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
+          <Ionicons name="search-outline" size={22} color="#000000" />
+        </TouchableOpacity>
+      </View>
+
       {/* Filter Tabs */}
-      <View style={styles.filterBar}>
+      <View style={styles.filterContainer}>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
           data={FILTERS}
           keyExtractor={item => item.status || 'all'}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => handleFilterPress(item.status)}
-              style={[
-                styles.filterButton,
-                { backgroundColor: activeFilter === item.status ? '#2196F3' : '#eee' }
-              ]}
-            >
-              <Text style={{
-                color: activeFilter === item.status ? '#fff' : '#333',
-                fontWeight: '600',
-              }}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          )}
+          renderItem={renderFilterItem}
+          contentContainerStyle={styles.filterList}
         />
       </View>
 
-      {/* Full screen loading */}
+      {/* Section Header */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Danh sách đơn hàng</Text>
+        <View style={styles.titleUnderline} />
+      </View>
+
+      {/* Loading State */}
       {loading && (
-        <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color="#2196F3" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000000" />
+          <Text style={styles.loadingText}>Đang tải...</Text>
         </View>
       )}
 
@@ -194,22 +228,24 @@ export default function AdminOrdersScreen() {
         <FlatList
           data={orders}
           renderItem={renderOrderItem}
-          keyExtractor={item => `order-${item.orderID}`} // Ổn định, tránh reset scroll
-          contentContainerStyle={{ paddingBottom: 20 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          keyExtractor={item => `order-${item.orderID}`}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#000000" />
+          }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           onScroll={handleScroll}
-          scrollEventThrottle={16} // Mượt hơn
+          scrollEventThrottle={16}
           ListFooterComponent={renderFooter}
           ListEmptyComponent={renderEmpty}
+          showsVerticalScrollIndicator={false}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
-// Helper functions
 const getStatusText = (status: string) => {
   switch (status) {
     case 'PENDING': return 'Chờ duyệt';
@@ -223,59 +259,227 @@ const getStatusText = (status: string) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'PENDING': return '#FF9800';
-    case 'APPROVED': return '#4CAF50';
-    case 'SHIPPED': return '#2196F3';
-    case 'DELIVERED': return '#2E7D32';
-    case 'CANCELLED': return '#F44336';
-    default: return '#666';
+    case 'PENDING': return '#E65100';
+    case 'APPROVED': return '#2E7D32';
+    case 'SHIPPED': return '#1565C0';
+    case 'DELIVERED': return '#1B5E20';
+    case 'CANCELLED': return '#C62828';
+    default: return '#666666';
   }
 };
 
-// Styles
+const getStatusBg = (status: string) => {
+  switch (status) {
+    case 'PENDING': return '#FFF3E0';
+    case 'APPROVED': return '#E8F5E9';
+    case 'SHIPPED': return '#E3F2FD';
+    case 'DELIVERED': return '#E8F5E9';
+    case 'CANCELLED': return '#FFEBEE';
+    default: return '#F5F5F5';
+  }
+};
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  filterBar: { backgroundColor: '#fff', paddingVertical: 12 },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginHorizontal: 6,
-    borderRadius: 20,
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  fullScreenLoader: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '400',
+    color: '#000000',
+    fontStyle: 'italic',
+    letterSpacing: 0.5,
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  filterList: {
+    paddingHorizontal: 12,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginHorizontal: 4,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  filterButtonActive: {
+    backgroundColor: '#000000',
+    borderColor: '#000000',
+  },
+  filterIcon: {
+    marginRight: 6,
+  },
+  filterText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#666666',
+  },
+  filterTextActive: {
+    color: '#FFFFFF',
+  },
+  sectionHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 12,
+    backgroundColor: '#F8F8F8',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#000000',
+    letterSpacing: 0.5,
+  },
+  titleUnderline: {
+    width: 28,
+    height: 2,
+    backgroundColor: '#000000',
+    marginTop: 4,
+  },
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8F8F8',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666666',
+    fontWeight: '500',
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 32,
+    backgroundColor: '#F8F8F8',
+  },
+  orderCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    position: 'relative',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  orderIdContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  orderId: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  orderDate: {
+    fontSize: 12,
+    color: '#999999',
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: '#F5F5F5',
+    marginVertical: 12,
+  },
+  cardBody: {
+    gap: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  customerName: {
+    fontSize: 14,
+    color: '#333333',
+    fontWeight: '500',
+  },
+  paymentInfo: {
+    fontSize: 13,
+    color: '#666666',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F5F5F5',
+  },
+  totalLabel: {
+    fontSize: 13,
+    color: '#666666',
+  },
+  totalAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  arrowContainer: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    marginTop: -10,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 60,
+    paddingTop: 60,
+    gap: 12,
   },
-  emptyText: { color: '#999', fontSize: 16 },
-  itemContainer: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginVertical: 6,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
+  emptyText: {
+    fontSize: 16,
+    color: '#999999',
   },
-  itemRow: {
+  footerLoader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 16,
+    gap: 8,
   },
-  orderId: { fontWeight: 'bold', fontSize: 16 },
-  orderDate: {
-    fontSize: 12,
-    color: '#666',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
+  loadingMoreText: {
+    fontSize: 14,
+    color: '#666666',
   },
-  customerName: { marginTop: 4, color: '#444' },
-  totalAmount: { color: '#2196F3', fontWeight: 'bold', marginTop: 8 },
 });

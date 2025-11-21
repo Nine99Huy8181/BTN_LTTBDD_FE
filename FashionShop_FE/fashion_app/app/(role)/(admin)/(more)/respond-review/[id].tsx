@@ -404,7 +404,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 2,
   },
   cardHeader: {
     flexDirection: "row",
@@ -557,7 +556,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
-    elevation: 4,
   },
   noImageContainer: {
     marginTop: 8,

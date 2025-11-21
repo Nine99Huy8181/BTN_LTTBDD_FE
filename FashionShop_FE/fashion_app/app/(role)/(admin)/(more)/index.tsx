@@ -128,7 +128,6 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 6,
-    elevation: 3,
     marginBottom: 30,
   },
   item: {

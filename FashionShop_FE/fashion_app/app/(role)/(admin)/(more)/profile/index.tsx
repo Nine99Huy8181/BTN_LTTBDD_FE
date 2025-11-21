@@ -641,7 +641,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 2,
   },
   sectionLabel: {
     fontSize: 15,

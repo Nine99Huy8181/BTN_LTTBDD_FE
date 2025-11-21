@@ -456,7 +456,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
-    elevation: 3,
     borderWidth: 1,
     borderColor: "#f0f0f0",
   },
@@ -594,7 +593,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 6,
-    elevation: 3,
   },
   primaryButtonText: {
     color: "#fff",

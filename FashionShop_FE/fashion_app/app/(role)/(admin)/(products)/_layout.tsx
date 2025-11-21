@@ -4,21 +4,21 @@ import { Stack } from "expo-router";
 export default function ProductsLayout() {
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ title: "Products" }} />
-      <Stack.Screen name="add-product" options={{ title: "Add Product" }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="add-product" options={{  headerShown: false }} />
       <Stack.Screen
         name="edit-product/[id]"
-        options={{ title: "Edit Product" }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="detail-product/[id]"
-        options={{ title: "Product Detail" }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="variants/[productId]"
-        options={{ title: "Variants" }}
+        options={{ headerShown: false }}
       />
-      <Stack.Screen name="inventory" options={{ title: "Inventory" }} />
+      <Stack.Screen name="inventory" options={{ headerShown: false }} />
     </Stack>
   );
 }

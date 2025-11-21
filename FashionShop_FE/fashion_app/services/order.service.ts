@@ -55,4 +55,9 @@ export const OrderService = {
     const res = await api.get('/page-orders', { params });
     return res.data;
   },
+
+    async getOrderDTODetail(orderId: number): Promise<OrderDTO> {
+    const res = await api.get(`/orders-dto/${orderId}`);
+    return res.data;
+  },
 };

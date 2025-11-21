@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   TextInput,
-  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { productService } from '@/services/product.service';
@@ -24,11 +23,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/AuthContext';
 import FilterModal from '@/components/FilterModal';
 
+const PAGE_SIZE = 10;
 
 export default function HomeScreen() {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
+  
+  // Featured products (top selling)
+  const [featuredProducts, setFeaturedProducts] = useState<ProductResponse[]>([]);
+  
+  // Random products with pagination
   const [products, setProducts] = useState<ProductResponse[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,14 +49,19 @@ export default function HomeScreen() {
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
   const [maxRating, setMaxRating] = useState('');
-  
-  const fetchData = async () => {
+
+  const fetchInitialData = async () => {
     try {
-      const [productData, categoryData] = await Promise.all([
-        productService.getAllProducts(),
+      const [topSellingData, randomData, categoryData] = await Promise.all([
+        productService.getTopSellingProducts(0, 10),
+        productService.getRandomProducts(0, PAGE_SIZE),
         categoryService.getAllCategories(),
       ]);
-      setProducts(productData);
+      
+      setFeaturedProducts(topSellingData.content);
+      setProducts(randomData.content);
+      setCurrentPage(0);
+      setHasMore(!randomData.last);
       setCategories(categoryData);
       setError(null);
     } catch (err) {
@@ -58,13 +72,33 @@ export default function HomeScreen() {
     }
   };
 
+  const loadMoreProducts = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const randomData = await productService.getRandomProducts(nextPage, PAGE_SIZE);
+      
+      setProducts(prev => [...prev, ...randomData.content]);
+      setCurrentPage(nextPage);
+      setHasMore(!randomData.last);
+    } catch (err) {
+      console.error('Error loading more products:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentPage, loadingMore, hasMore]);
+
   useEffect(() => {
-    fetchData();
+    fetchInitialData();
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchData();
+    setCurrentPage(0);
+    setHasMore(true);
+    fetchInitialData();
   };
 
   const handleSearch = () => {
@@ -80,23 +114,11 @@ export default function HomeScreen() {
 
   const applyFilter = () => {
     const params = new URLSearchParams();
-
-    if (searchQuery.trim()) {
-      params.append('keyword', searchQuery.trim());
-    }
-    if (minPrice.trim()) {
-      params.append('minPrice', minPrice.trim());
-    }
-    if (maxPrice.trim()) {
-      params.append('maxPrice', maxPrice.trim());
-    }
-    if (minRating.trim()) {
-      params.append('minRating', minRating.trim());
-    }
-    if (maxRating.trim()) {
-      params.append('maxRating', maxRating.trim());
-    }
-
+    if (searchQuery.trim()) params.append('keyword', searchQuery.trim());
+    if (minPrice.trim()) params.append('minPrice', minPrice.trim());
+    if (maxPrice.trim()) params.append('maxPrice', maxPrice.trim());
+    if (minRating.trim()) params.append('minRating', minRating.trim());
+    if (maxRating.trim()) params.append('maxRating', maxRating.trim());
     router.push(`${Routes.CustomerSearch}?${params.toString()}`);
     setFilterModalVisible(false);
   };
@@ -106,6 +128,16 @@ export default function HomeScreen() {
     setMaxPrice('');
     setMinRating('');
     setMaxRating('');
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#000000" />
+        <Text style={styles.loadingMoreText}>Đang tải...</Text>
+      </View>
+    );
   };
 
   if (loading) {
@@ -119,22 +151,14 @@ export default function HomeScreen() {
 
   const ListHeaderComponent = () => (
     <>
-      {/* Banner Slider */}
       <BannerSlider />
-
-      {/* Category List */}
       <CategoryList categories={categories} />
-
-      {/* Featured Products */}
-      <FeaturedProducts products={products} />
-
-      {/* All Products Section Header */}
+      <FeaturedProducts products={featuredProducts} />
       <View style={styles.allProductsSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Tất cả sản phẩm</Text>
           <View style={styles.titleUnderline} />
         </View>
-
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorIcon}>⚠️</Text>
@@ -149,7 +173,9 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Fashion Store</Text>
-        <TouchableOpacity style={styles.chatbotButton} activeOpacity={0.7}
+        <TouchableOpacity
+          style={styles.chatbotButton}
+          activeOpacity={0.7}
           onPress={() => router.push('/chatbox')}
         >
           <Ionicons name="chatbubble-ellipses-outline" size={24} color="#000000" />
@@ -178,23 +204,25 @@ export default function HomeScreen() {
           <Ionicons name="options-outline" size={22} color="#000000" />
         </TouchableOpacity>
       </View>
-      
+
       <FlatList
         style={styles.container}
         data={products}
-        renderItem={({ item }) => <ProductItem product={item} accountId={user?.accountId}/>}
-        keyExtractor={(item) => item.productID.toString()}
+        renderItem={({ item }) => <ProductItem product={item} accountId={user?.accountId} />}
+        keyExtractor={(item, index) => `${item.productID}-${index}`}
         numColumns={2}
         columnWrapperStyle={styles.productRow}
         ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={renderFooter}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#000000" />
         }
+        onEndReached={loadMoreProducts}
+        onEndReachedThreshold={0.5}
       />
 
-      {/* Filter Modal */}
       <FilterModal
         visible={filterModalVisible}
         onClose={() => setFilterModalVisible(false)}
@@ -306,12 +334,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-  fontSize: 20,
-  fontWeight: '400',
-  color: '#000000',
-  letterSpacing: 0.5,
-  fontFamily: 'serif',
-},
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#000000',
+    letterSpacing: 0.5,
+    fontFamily: 'serif',
+  },
   titleUnderline: {
     width: 32,
     height: 2,
@@ -342,5 +370,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     flex: 1,
     fontWeight: '500',
+  },
+  footerLoader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  loadingMoreText: {
+    fontSize: 14,
+    color: '#666666',
   },
 });

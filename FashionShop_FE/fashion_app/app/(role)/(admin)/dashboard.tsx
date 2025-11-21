@@ -751,12 +751,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 15,
-    // Shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 2,
     borderWidth: 1,
     borderColor: "#f0f0f0",
   },
@@ -794,7 +792,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
-    elevation: 3,
   },
   cardHeader: {
     marginBottom: 15,
