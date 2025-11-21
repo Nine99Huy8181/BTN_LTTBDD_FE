@@ -133,15 +133,21 @@ export interface OrderCreateRequest {
 //hung
 // Cấu trúc đơn hàng trả về từ backend
 export interface Order {
-  orderId: number;
-  customerId: number;
-  status: string;
-  totalAmount: number;
-  createdAt: string;
+  orderId?: number;
+  orderID?: number;
+  customerId?: number;
+  customer?: { customerID: number; fullName: string };
+  status?: string;
+  orderStatus?: string;
+  totalAmount?: number;
+  createdAt?: string;
+  orderDate?: string;
   updatedAt?: string;
-  paymentMethod: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
   address?: string;
   items?: OrderItemPayload[]; // tùy backend trả có kèm item không
+  orderItems?: any[]; // từ backend trả về với variant + product info
 }
 
 export interface User {

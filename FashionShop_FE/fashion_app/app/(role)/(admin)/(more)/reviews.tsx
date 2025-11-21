@@ -177,7 +177,7 @@ export default function ReviewsScreen() {
               <Text style={styles.reviewDate}>
                 {(() => {
                   const d = parseReviewDate(item.reviewDate);
-                  return d ? d.toLocaleDateString("vi-VN") : "";
+                  return d ? d.toLocaleDateString("vi-VN") : "N/A";
                 })()}
               </Text>
             </View>

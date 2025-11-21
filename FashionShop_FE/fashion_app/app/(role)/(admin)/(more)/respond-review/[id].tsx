@@ -149,7 +149,7 @@ export default function RespondReviewScreen() {
   // ---------------------------------------------------------
   // Hàm format ngày giờ theo yêu cầu: "lúc 00:32 ngày 1 tháng 11, 2025"
   const formatDateTime = (dateObj: Date | null) => {
-    if (!dateObj) return "";
+    if (!dateObj) return "N/A";
     const hh = dateObj.getHours().toString().padStart(2, "0");
     const mm = dateObj.getMinutes().toString().padStart(2, "0");
     const day = dateObj.getDate();

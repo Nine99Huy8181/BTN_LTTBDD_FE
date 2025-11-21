@@ -45,7 +45,7 @@ export default function ProductDetailScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const { user } = useAuth();
-  const [reviews, setReviews] = useState<Array<{ rating: number; comment: string; reviewDate: string; images?: string[] }>>([]);
+  const [reviews, setReviews] = useState<Array<{ rating: number; comment: string; reviewDate: string; images?: string[]; customerName?: string; customerAvatar?: string }>>([]);
   const [selectedImageModal, setSelectedImageModal] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
@@ -103,7 +103,9 @@ export default function ProductDetailScreen() {
           rating: r.rating, 
           comment: r.comment, 
           reviewDate: r.reviewDate || r.review_date || r.reviewDate, 
-          images: r.images || [] 
+          images: r.images || [],
+          customerName: r.customerName || 'User',
+          customerAvatar: r.customerAvatar
         })));
         return;
       }
@@ -548,28 +550,52 @@ const handleBuyNow = async () => {
 
               {isReviewsOpen && reviewCountToShow > 0 && (
                 <View style={styles.reviewsList}>
-                  {reviews.map((r, i) => (
-                    <View key={i} style={styles.reviewItem}>
-                      <View style={styles.reviewHeader}>
-                        <View style={styles.avatar}>
-                          <Ionicons name="person" size={18} color="#666" />
-                        </View>
-                        <View style={styles.reviewInfo}>
-                          <Text style={styles.reviewerName}>User</Text>
-                          <Text style={styles.reviewStars}>
-                            {'★'.repeat(Math.round(r.rating))}
-                            <Text style={styles.reviewStarsEmpty}>
-                              {'☆'.repeat(5 - Math.round(r.rating))}
+                  {reviews.map((r, i) => {
+                    const reviewDate = new Date(r.reviewDate);
+                    const isValidDate = !isNaN(reviewDate.getTime());
+                    const dateStr = isValidDate 
+                      ? reviewDate.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+                      : 'N/A';
+                    
+                    return (
+                      <View key={i} style={styles.reviewItem}>
+                        <View style={styles.reviewHeader}>
+                          <View style={styles.avatar}>
+                            {r.customerAvatar ? (
+                              <Image source={{ uri: r.customerAvatar }} style={{ width: 36, height: 36, borderRadius: 18 }} />
+                            ) : (
+                              <Ionicons name="person" size={18} color="#666" />
+                            )}
+                          </View>
+                          <View style={styles.reviewInfo}>
+                            <Text style={styles.reviewerName}>{r.customerName || 'User'}</Text>
+                            <Text style={styles.reviewStars}>
+                              {'★'.repeat(Math.round(r.rating))}
+                              <Text style={styles.reviewStarsEmpty}>
+                                {'☆'.repeat(5 - Math.round(r.rating))}
+                              </Text>
                             </Text>
-                          </Text>
+                          </View>
+                          <Text style={styles.reviewDate}>{dateStr}</Text>
                         </View>
-                        <Text style={styles.reviewDate}>
-                          {new Date(r.reviewDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </Text>
+                        <Text style={styles.reviewComment}>{r.comment}</Text>
+                        
+                        {r.images && r.images.length > 0 && (
+                          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImagesContainer}>
+                            {r.images.map((img, imgIdx) => (
+                              <TouchableOpacity key={imgIdx} onPress={() => setSelectedImageModal(img)}>
+                                <Image 
+                                  source={{ uri: img }} 
+                                  style={styles.reviewImage}
+                                  resizeMode="cover"
+                                />
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        )}
                       </View>
-                      <Text style={styles.reviewComment}>{r.comment}</Text>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               )}
             </View>
@@ -990,6 +1016,17 @@ const styles = StyleSheet.create({
     fontSize: 13, 
     color: '#444', 
     lineHeight: 20,
+  },
+  
+  reviewImagesContainer: {
+    marginTop: 10,
+    gap: 8,
+  },
+  reviewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 8,
   },
   
   // Bottom Bar

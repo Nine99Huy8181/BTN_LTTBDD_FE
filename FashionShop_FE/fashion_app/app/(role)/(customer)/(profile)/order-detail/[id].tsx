@@ -104,14 +104,16 @@ export default function OrderDetailScreen() {
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() =>
-            router.push(`/(role)/(customer)/(profile)/order-detail/write-review/${id}`)
-          }
-        >
-          <Text style={styles.primaryButtonText}>Viết đánh giá</Text>
-        </TouchableOpacity>
+        {order.orderStatus === 'DELIVERED' && (
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() =>
+              router.push(`/(role)/(customer)/(profile)/order-detail/write-review/${id}`)
+            }
+          >
+            <Text style={styles.primaryButtonText}>Viết đánh giá</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={styles.secondaryButton}

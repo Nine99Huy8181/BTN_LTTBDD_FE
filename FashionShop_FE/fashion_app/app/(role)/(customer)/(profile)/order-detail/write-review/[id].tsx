@@ -1,5 +1,5 @@
 // app/product/reviews/[id].tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   StyleSheet,
   Image,
   ScrollView,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -18,6 +20,7 @@ import { useAuth } from '../../../../../../hooks/AuthContext';
 import { api } from '../../../../../../services/api';
 import { uploadImageToCloudinary } from '../../../../../../services/cloudinaryService'; // Thay đổi import
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { OrderService } from '../../../../../../services/order.service';
 type ReviewItem = {
   id: string;
   rating: number;
@@ -27,13 +30,62 @@ type ReviewItem = {
 };
 
 export default function ProductReviewScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams(); // id is orderId
   const router = useRouter();
 
   const [rating, setRating] = useState('5');
   const [comment, setComment] = useState('');
   const [imageUris, setImageUris] = useState<string[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const auth = useAuth();
+  const [orderData, setOrderData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [canReview, setCanReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+
+  useEffect(() => {
+    fetchOrderData();
+  }, [id]);
+
+  const fetchOrderData = async () => {
+    try {
+      setLoading(true);
+      const data = await OrderService.getOrderDetail(Number(id));
+      setOrderData(data);
+      
+      console.log('[DEBUG fetchOrderData] Order data:', data);
+      console.log('[DEBUG fetchOrderData] orderItems:', data.orderItems);
+      
+      // TODO: Enforce DELIVERED status in production
+      // For now, allow review for testing purposes
+      setCanReview(true);
+      
+      // Auto-select product based on quantity
+      if (data.orderItems && data.orderItems.length > 0) {
+        console.log('[DEBUG fetchOrderData] Found ' + data.orderItems.length + ' items');
+        
+        if (data.orderItems.length === 1) {
+          // Auto-select nếu chỉ có 1 sản phẩm
+          const firstProduct = data.orderItems[0]?.variant?.product?.productID;
+          console.log('[DEBUG fetchOrderData] Single item - Auto-selecting product ID:', firstProduct);
+          if (firstProduct) {
+            setSelectedProductId(firstProduct);
+          }
+        } else {
+          // Multiple items - let user choose
+          console.log('[DEBUG fetchOrderData] Multiple items - User must choose');
+          // Don't set selectedProductId, let user click to select
+        }
+      } else {
+        console.log('[DEBUG fetchOrderData] No orderItems found');
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      Alert.alert('Lỗi', 'Không thể tải thông tin đơn hàng');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   async function pickImage() {
     try {
@@ -98,32 +150,33 @@ export default function ProductReviewScreen() {
   // }
 
   async function submitReviewToBackend(ratingNum: number, commentText: string, uris: string[]) {
-    // const token = await auth.getToken();
-    // if (!token) {
-    //   Alert.alert('Không đăng nhập', 'Vui lòng đăng nhập để gửi đánh giá');
-    //   return;
-    // }
+    if (!selectedProductId) {
+      const errMsg = 'Vui lòng chọn sản phẩm để đánh giá';
+      console.error('[DEBUG submitReviewToBackend] Error:', errMsg);
+      Alert.alert('Lỗi', errMsg);
+      throw new Error(errMsg);
+    }
 
     // 3. Build body MỚI (sử dụng URLs)
     const body = {
-      productID: Number(id),
+      productID: selectedProductId,
       rating: ratingNum,
       comment: commentText,
       // Gửi mảng các URL đã upload lên Cloudinary cho Backend
       images: uris,
     };
 
+    console.log('[DEBUG submitReviewToBackend] Submitting review with body:', body);
 
- try {
-    const res = await api.post('/reviews', body); // dùng axios instance đã config
-    console.log('Review saved', res.data);
-
-    setImageUris([]); // reset danh sách ảnh
-    return res.data; // dữ liệu server trả về
-  } catch (err: any) {
-    console.error('Failed to submit review:', err.response?.data || err.message);
-    Alert.alert('Lỗi', 'Không thể gửi đánh giá tới server');
-  }
+    try {
+      const res = await api.post('/reviews', body); // dùng axios instance đã config
+      console.log('[DEBUG submitReviewToBackend] Review saved successfully:', res.data);
+      return res.data; // dữ liệu server trả về
+    } catch (err: any) {
+      console.error('[DEBUG submitReviewToBackend] API error:', err.response?.data || err.message);
+      const errorMsg = err.response?.data?.message || err.message || 'Không thể gửi đánh giá tới server';
+      throw new Error(errorMsg);
+    }
   }
 
   function addReview() {
@@ -137,36 +190,76 @@ export default function ProductReviewScreen() {
       return;
     }
 
-    const newReview: ReviewItem = {
-      id: Date.now().toString(),
-      rating: parsed,
-      comment: comment.trim(),
-      author: 'Bạn',
-      date: new Date().toISOString(),
-    };
-    // Reset form and submit to backend
-    setComment('');
-    setRating('5');
-    setImageUris([]);
+    console.log('[DEBUG addReview] selectedProductId:', selectedProductId);
+    console.log('[DEBUG addReview] imageUris:', imageUris);
+    console.log('[DEBUG addReview] rating:', parsed);
+    console.log('[DEBUG addReview] comment:', comment);
 
-    // Real backend submission (includes images)
-    submitReviewToBackend(parsed, newReview.comment, imageUris).then(() => {
-      Alert.alert('Thành công', 'Đã gửi đánh giá. Cảm ơn bạn!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            router.back();
-          }
-        }
-      ]);
-    }).catch(err => {
-      console.error('Failed to submit review:', err);
-      Alert.alert('Lỗi', 'Không thể gửi đánh giá tới server');
-    });
+    // Submit to backend BEFORE resetting form!
+    const imagesToSubmit = [...imageUris]; // Make a copy
+    
+    submitReviewToBackend(parsed, comment.trim(), imagesToSubmit)
+      .then(() => {
+        console.log('[DEBUG addReview] Review submitted successfully!');
+        // Reset form AFTER successful submission
+        setComment('');
+        setRating('5');
+        setImageUris([]);
+        setReviewSuccess(true);
+      })
+      .catch(err => {
+        console.error('[DEBUG addReview] Failed to submit review:', err);
+        const errorMsg = err.message || 'Không thể gửi đánh giá tới server';
+        Alert.alert('Lỗi', errorMsg);
+      });
   }
 
   function renderStars(n: number) {
     return '★'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n));
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={{ marginTop: 16, textAlign: 'center' }}>Đang tải thông tin đơn hàng...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (reviewSuccess) {
+    return (
+      <Modal transparent visible={true} animationType="fade">
+        <View style={styles.centeredView}>
+          <View style={styles.successModal}>
+            <Text style={styles.successIcon}>✓</Text>
+            <Text style={styles.successTitle}>Cảm ơn bạn!</Text>
+            <Text style={styles.successText}>Đánh giá của bạn đã được gửi thành công</Text>
+            
+            <View style={styles.successButtonContainer}>
+              <TouchableOpacity
+                style={[styles.successBtn, styles.viewReviewBtn]}
+                onPress={() => {
+                  setReviewSuccess(false);
+                  router.push(`/(role)/(customer)/(home)/product/${selectedProductId}`);
+                }}
+              >
+                <Text style={styles.viewReviewText}>Xem đánh giá</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.successBtn, styles.backBtn]}
+                onPress={() => router.back()}
+              >
+                <Text style={styles.backBtnText}>Quay lại</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
   }
 
   return (
@@ -176,11 +269,41 @@ export default function ProductReviewScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backText}>Quay lại</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Gửi đánh giá cho sản phẩm #{id}</Text>
+          <Text style={styles.title}>Gửi đánh giá cho sản phẩm</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.form}>
+            <Text style={styles.label}>Chọn sản phẩm để đánh giá</Text>
+            {orderData?.orderItems && orderData.orderItems.length > 0 ? (
+              <View style={{ marginBottom: 16 }}>
+                {orderData.orderItems.map((item: any, index: number) => {
+                  const productId = item.variant?.product?.productID;
+                  const productName = item.variant?.product?.name || 'Sản phẩm không xác định';
+                  
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.productSelect,
+                        selectedProductId === productId && styles.productSelectActive
+                      ]}
+                      onPress={() => setSelectedProductId(productId)}
+                    >
+                      <Text style={[
+                        styles.productSelectText,
+                        selectedProductId === productId && styles.productSelectTextActive
+                      ]}>
+                        {selectedProductId === productId ? '✓ ' : '○ '}{productName}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text style={{ color: '#999', marginBottom: 16 }}>Không có sản phẩm trong đơn hàng</Text>
+            )}
+
             <Text style={styles.label}>Chọn số sao đánh giá</Text>
             <View style={styles.starsContainer}>
               {[1, 2, 3, 4, 5].map((star) => (
@@ -262,7 +385,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: '600' },
   content: { padding: 12, paddingBottom: 40 },
   form: { marginBottom: 16, backgroundColor: '#fafafa', padding: 12, borderRadius: 8 },
-  label: { fontSize: 13, marginBottom: 6 },
+  label: { fontSize: 13, marginBottom: 6, fontWeight: '600' },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 6, padding: 8, marginBottom: 10, backgroundColor: '#fff' },
   submit: { backgroundColor: '#007AFF', padding: 10, borderRadius: 6, alignItems: 'center' },
   submitText: { color: '#fff', fontWeight: '600' },
@@ -274,4 +397,79 @@ const styles = StyleSheet.create({
   stars: { color: '#f5a623' },
   date: { fontSize: 11, color: '#666', marginBottom: 6 },
   comment: { fontSize: 14, color: '#333' },
+  productSelect: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    padding: 12,
+    marginBottom: 8,
+    backgroundColor: '#fff',
+  },
+  productSelectActive: {
+    borderColor: '#007AFF',
+    backgroundColor: '#e7f1ff',
+  },
+  productSelectText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  productSelectTextActive: {
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  successModal: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    width: '80%',
+  },
+  successIcon: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#000',
+  },
+  successText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  successButtonContainer: {
+    width: '100%',
+    gap: 8,
+  },
+  successBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  viewReviewBtn: {
+    backgroundColor: '#007AFF',
+  },
+  viewReviewText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  backBtn: {
+    backgroundColor: '#f0f0f0',
+  },
+  backBtnText: {
+    color: '#333',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 });
