@@ -1,6 +1,7 @@
 // components/FilterModal.tsx
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Modal, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import StyledText from './StyledText';
 
 interface FilterModalProps {
   visible: boolean;
@@ -41,8 +42,8 @@ export default function FilterModal({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Filter Products</Text>
-            <TouchableOpacity 
+            <StyledText style={styles.modalTitle}>Lọc sản phẩm</StyledText>
+            <TouchableOpacity
               onPress={onClose}
               style={styles.closeButton}
             >
@@ -51,13 +52,13 @@ export default function FilterModal({
           </View>
 
           <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Price Range</Text>
+            <StyledText style={styles.filterLabel}>Khoảng giá</StyledText>
             <View style={styles.filterRow}>
               <View style={styles.filterInputWrapper}>
-                <Text style={styles.inputPrefix}>$</Text>
+                <StyledText style={styles.inputPrefix}>đ</StyledText>
                 <TextInput
                   style={styles.filterInput}
-                  placeholder="Min"
+                  placeholder="Tối thiểu"
                   placeholderTextColor="#9CA3AF"
                   value={minPrice}
                   onChangeText={setMinPrice}
@@ -66,10 +67,10 @@ export default function FilterModal({
               </View>
               <View style={styles.filterDivider} />
               <View style={styles.filterInputWrapper}>
-                <Text style={styles.inputPrefix}>$</Text>
+                <StyledText style={styles.inputPrefix}>đ</StyledText>
                 <TextInput
                   style={styles.filterInput}
-                  placeholder="Max"
+                  placeholder="Tối đa"
                   placeholderTextColor="#9CA3AF"
                   value={maxPrice}
                   onChangeText={setMaxPrice}
@@ -80,7 +81,7 @@ export default function FilterModal({
           </View>
 
           <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Rating</Text>
+            <StyledText style={styles.filterLabel}>Đánh giá</StyledText>
             <View style={styles.filterRow}>
               <View style={styles.filterInputWrapper}>
                 <Ionicons name="star" size={16} color="#FCD34D" style={styles.ratingIcon} />
@@ -109,17 +110,17 @@ export default function FilterModal({
           </View>
 
           <View style={styles.modalActions}>
-            <TouchableOpacity 
-              style={styles.clearButton} 
+            <TouchableOpacity
+              style={styles.clearButton}
               onPress={onClear}
             >
-              <Text style={styles.clearButtonText}>Clear All</Text>
+              <StyledText style={styles.clearButtonText}>Thiết lập lại</StyledText>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.applyButton} 
+            <TouchableOpacity
+              style={styles.applyButton}
               onPress={onApply}
             >
-              <Text style={styles.applyButtonText}>Apply Filters</Text>
+              <StyledText style={styles.applyButtonText}>Áp dụng</StyledText>
             </TouchableOpacity>
           </View>
         </View>

@@ -1,13 +1,14 @@
 // ProductItem.tsx
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ProductResponse } from '@/types';
 import { Routes } from '@/constants';
-import { Ionicons } from '@expo/vector-icons';
-import { CartService } from '@/services/cart.service';
-import { useState } from 'react';
 import { useWishlist } from '@/hooks/WishlistContext';
+import { CartService } from '@/services/cart.service';
+import { ProductResponse } from '@/types';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import StyledText from './StyledText';
 
 const { width } = Dimensions.get('window');
 const gridItemWidth = (width - 48) / 2;
@@ -70,23 +71,23 @@ export default function ProductItem({
   };
 
   const hasDiscount = product.discountPrice < product.basePrice;
-  const discountPercentage = hasDiscount 
+  const discountPercentage = hasDiscount
     ? Math.round(((product.basePrice - product.discountPrice) / product.basePrice) * 100)
     : 0;
 
   return (
     <TouchableOpacity
       style={[styles.productItem, { width: itemWidth }, horizontal && styles.horizontalItem]}
-      onPress={() => router.push(`${Routes.CustomerProductDetail}/${product.productID}`)}
+      onPress={() => router.push(`${Routes.CustomerProductDetail}/${product.productID}` as any)}
       activeOpacity={0.7}
     >
       <View style={styles.imageContainer}>
-        <Image 
-          style={styles.productImg} 
-          source={{ uri: product.image }} 
-          resizeMode="cover" 
+        <Image
+          style={styles.productImg}
+          source={{ uri: product.image }}
+          resizeMode="cover"
         />
-        
+
         {/* Gradient overlay at bottom */}
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.05)']}
@@ -97,20 +98,20 @@ export default function ProductItem({
         <View style={styles.badgesContainer}>
           {hasDiscount && (
             <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>-{discountPercentage}%</Text>
+              <StyledText style={styles.discountText}>-{discountPercentage}%</StyledText>
             </View>
           )}
           {product.soldQuantity > 50 && (
             <View style={styles.hotBadge}>
               <Ionicons name="flame" size={12} color="#fff" />
-              <Text style={styles.hotText}>Hot</Text>
+              <StyledText style={styles.hotText}>Hot</StyledText>
             </View>
           )}
         </View>
 
         {/* Wishlist button */}
-        <TouchableOpacity 
-          style={[styles.wishlistButton, isWishlisted && styles.wishlistButtonActive]} 
+        <TouchableOpacity
+          style={[styles.wishlistButton, isWishlisted && styles.wishlistButtonActive]}
           onPress={toggleWishlist}
           activeOpacity={0.8}
         >
@@ -123,32 +124,32 @@ export default function ProductItem({
       </View>
 
       <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={2}>
+        <StyledText style={styles.productName} numberOfLines={2}>
           {product.name}
-        </Text>
-        
+        </StyledText>
+
         <View style={styles.ratingContainer}>
           <View style={styles.ratingBadge}>
             <Ionicons name="star" color="#FFA500" size={12} />
-            <Text style={styles.rating}>{product.averageRating.toFixed(1)}</Text>
+            <StyledText style={styles.rating}>{product.averageRating.toFixed(1)}</StyledText>
           </View>
           {product.soldQuantity > 0 && (
-            <Text style={styles.sold}>Đã bán {product.soldQuantity}</Text>
+            <StyledText style={styles.sold}>Đã bán {product.soldQuantity}</StyledText>
           )}
         </View>
 
         <View style={styles.priceRow}>
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>
+            <StyledText style={styles.price}>
               {product.discountPrice.toLocaleString()}đ
-            </Text>
+            </StyledText>
             {hasDiscount && (
-              <Text style={styles.originalPrice}>
+              <StyledText style={styles.originalPrice}>
                 {product.basePrice.toLocaleString()}đ
-              </Text>
+              </StyledText>
             )}
           </View>
-          
+
           <TouchableOpacity
             style={[styles.cartButton, loadingCart && styles.cartButtonLoading]}
             onPress={(e) => {

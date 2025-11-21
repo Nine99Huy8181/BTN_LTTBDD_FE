@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Tabs, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/AuthContext';
-import { DeviceEventEmitter } from 'react-native';
-import { CartService } from '@/services/cart.service';
 import { useNotification } from '@/hooks/NotificationContext';
+import { CartService } from '@/services/cart.service';
+import { Ionicons } from '@expo/vector-icons';
+import { Tabs, router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 
 export default function CustomerLayout() {
   const { user } = useAuth();
@@ -54,7 +54,7 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="(home)"
         options={{
-          title: 'Home',
+          title: 'Trang chủ',
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="home" size={25} color={color} />

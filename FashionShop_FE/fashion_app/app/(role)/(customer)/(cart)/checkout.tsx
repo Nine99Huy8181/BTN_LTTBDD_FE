@@ -3,7 +3,7 @@ import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { Routes } from '@/constants';
+import { formatCurrencyVND, Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { addressService } from '@/services/address.service';
 import { api } from '@/services/api';
@@ -225,8 +225,6 @@ export default function CheckoutScreen() {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Checkout</Text>
-
         <View style={styles.section}>
           {items.map((it) => {
             const uri = (it.variant as any)?.product?.image;
@@ -241,7 +239,7 @@ export default function CheckoutScreen() {
                   <Text style={styles.prodTitle}>{(it.variant as any)?.product?.name}</Text>
                   <Text style={styles.prodSize}>size:{(it.variant as any)?.size}</Text>
                 </View>
-                <Text style={styles.prodPrice}>${((it.variant as any)?.product?.discountPrice ?? (it.variant as any)?.product?.basePrice ?? 0).toFixed(2)}</Text>
+                <Text style={styles.prodPrice}>{formatCurrencyVND((it.variant as any)?.product?.discountPrice ?? (it.variant as any)?.product?.basePrice ?? 0)}</Text>
               </View>
             );
           })}
@@ -313,7 +311,14 @@ export default function CheckoutScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment method</Text>
+          <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+          <TouchableOpacity
+            style={[styles.paymentRow, paymentMethod === 'cod' && styles.paymentActive]}
+            onPress={() => setPaymentMethod('cod')}
+          >
+            <Text>📦  COD</Text>
+            <Text style={styles.paymentNote}>Thanh toán khi nhận hàng</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.paymentRow, paymentMethod === 'card' && styles.paymentActive]}
             onPress={() => setPaymentMethod('card')}
@@ -321,22 +326,15 @@ export default function CheckoutScreen() {
             <Text>💳  VNPay</Text>
             <Text style={styles.paymentNote}>Thanh toán qua VNPay</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.paymentRow, paymentMethod === 'cod' && styles.paymentActive]}
-            onPress={() => setPaymentMethod('cod')}
-          >
-            <Text>📦  Cash on Delivery</Text>
-            <Text style={styles.paymentNote}>Thanh toán khi nhận hàng</Text>
-          </TouchableOpacity>
+
         </View>
 
         <View style={styles.sectionRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>Order summary</Text>
-            <View style={styles.summaryLine}><Text>Total</Text><Text>${total.toFixed(2)}</Text></View>
-            <View style={styles.summaryLine}><Text>Shipping Fee</Text><Text>$0.00</Text></View>
-            <View style={styles.summaryLine}><Text>Discount</Text><Text>$0.00</Text></View>
-            <View style={styles.summaryLine}><Text style={{ fontWeight: '700' }}>Sub Total</Text><Text style={{ fontWeight: '700' }}>${total.toFixed(2)}</Text></View>
+            <View style={styles.summaryLine}><Text>Tạm tính</Text><Text>{formatCurrencyVND(total)}</Text></View>
+            <View style={styles.summaryLine}><Text>Phí vận chuyển</Text><Text>{formatCurrencyVND(0)}</Text></View>
+            <View style={styles.summaryLine}><Text>Giảm giá</Text><Text>{formatCurrencyVND(0)}</Text></View>
+            <View style={styles.summaryLine}><Text style={{ fontWeight: '700' }}>Tổng tiền</Text><Text style={{ fontWeight: '700' }}>{formatCurrencyVND(total)}</Text></View>
           </View>
         </View>
 
@@ -344,15 +342,15 @@ export default function CheckoutScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Text style={{ fontWeight: '700', marginBottom: 6 }}>Notes</Text>
-        <TextInput placeholder="Take note" value={note} onChangeText={setNote} style={styles.noteInput} />
+        <Text style={{ fontWeight: '700', marginBottom: 6 }}>Ghi chú</Text>
+        <TextInput placeholder="Nhập ghi chú..." value={note} onChangeText={setNote} style={styles.noteInput} />
         <TouchableOpacity
           style={[styles.placeBtn, isPlacing && { opacity: 0.5 }]}
           onPress={placeOrder}
           disabled={isPlacing}
         >
           <Text style={{ color: '#fff', fontWeight: '700' }}>
-            {isPlacing ? 'Đang xử lý...' : 'Place Order'}
+            {isPlacing ? 'Đang xử lý...' : 'Đặt hàng'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -429,7 +427,7 @@ const styles = StyleSheet.create({
     fontWeight: '500'
   },
   sectionTitle: { fontWeight: '700', marginBottom: 8 },
-  cartRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  cartRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, borderTopColor: '#c3c3c3' },
   thumb: { width: 56, height: 56, borderRadius: 8, marginRight: 12, backgroundColor: '#f0f0f0' },
   prodTitle: { fontWeight: '600' },
   prodSize: { color: '#666', fontSize: 12 },
@@ -442,6 +440,6 @@ const styles = StyleSheet.create({
   sectionRow: { flexDirection: 'row', marginTop: 8 },
   summaryLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
   footer: { padding: 12, borderTopWidth: 1, borderColor: '#eee', backgroundColor: '#fff' },
-  noteInput: { borderWidth: 1, borderColor: '#eee', borderRadius: 8, padding: 8, height: 60, marginBottom: 8 },
+  noteInput: { borderWidth: 1, borderColor: '#eee', borderRadius: 8, padding: 8, height: 80, marginBottom: 8 },
   placeBtn: { backgroundColor: '#000', padding: 14, borderRadius: 8, alignItems: 'center' },
 });

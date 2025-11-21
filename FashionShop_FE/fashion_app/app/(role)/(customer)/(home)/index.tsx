@@ -1,32 +1,31 @@
+import BannerSlider from '@/components/BannerSlider';
+import CategoryList from '@/components/CategoryList';
+import FeaturedProducts from '@/components/FeaturedProducts';
+import FilterModal from '@/components/FilterModal';
+import ProductItem from '@/components/ProductItem';
+import { Routes } from '@/constants';
+import { useAuth } from '@/hooks/AuthContext';
+import { categoryService } from '@/services/category.service';
+import { productService } from '@/services/product.service';
+import { Category, ProductResponse } from '@/types';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
+  ActivityIndicator,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
-  TouchableOpacity,
+  StyleSheet,
+  Text,
   TextInput,
-  Modal,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { productService } from '@/services/product.service';
-import { categoryService } from '@/services/category.service';
-import { ProductResponse, Category } from '@/types';
-import { Routes } from '@/constants';
-import BannerSlider from '@/components/BannerSlider';
-import FeaturedProducts from '@/components/FeaturedProducts';
-import CategoryList from '@/components/CategoryList';
-import ProductItem from '@/components/ProductItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@/hooks/AuthContext';
-import FilterModal from '@/components/FilterModal';
 
 
 export default function HomeScreen() {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -40,7 +39,7 @@ export default function HomeScreen() {
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
   const [maxRating, setMaxRating] = useState('');
-  
+
   const fetchData = async () => {
     try {
       const [productData, categoryData] = await Promise.all([
@@ -161,7 +160,7 @@ export default function HomeScreen() {
           <Ionicons name="search" size={20} color="#999999" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="What are you looking for... ?"
+            placeholder="Bạn đang muốn mua gì... ?"
             placeholderTextColor="#CCCCCC"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -178,11 +177,11 @@ export default function HomeScreen() {
           <Ionicons name="options-outline" size={22} color="#000000" />
         </TouchableOpacity>
       </View>
-      
+
       <FlatList
         style={styles.container}
         data={products}
-        renderItem={({ item }) => <ProductItem product={item} accountId={user?.accountId}/>}
+        renderItem={({ item }) => <ProductItem product={item} accountId={user?.accountId} />}
         keyExtractor={(item) => item.productID.toString()}
         numColumns={2}
         columnWrapperStyle={styles.productRow}
@@ -306,12 +305,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-  fontSize: 20,
-  fontWeight: '400',
-  color: '#000000',
-  letterSpacing: 0.5,
-  fontFamily: 'serif',
-},
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#000000',
+    letterSpacing: 0.5,
+    fontFamily: 'serif',
+  },
   titleUnderline: {
     width: 32,
     height: 2,
