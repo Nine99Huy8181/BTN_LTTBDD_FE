@@ -405,3 +405,13 @@ export interface Coupon {
   conditions?: string;
   status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
 }
+
+export interface UpdateCustomerRequest {
+  account: { accountID: number };
+  fullName: string;
+  phoneNumber: string;
+  dateOfBirth: string; // format: "YYYY-MM-DD"
+  gender: string;
+  loyaltyPoints?: number;
+  referralCode?: string;
+}

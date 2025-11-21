@@ -1,273 +1,823 @@
-import React, { useState } from 'react';
+// screens/EditProfileScreen.tsx
+import { useAuth } from "@/hooks/AuthContext";
+import { accountService } from "@/services/account.service";
+import { customerService } from "@/services/customer.service";
 import {
-  View,
+  isValidImageUri,
+  uploadProductImage,
+} from "@/services/productImageUpload.service";
+import { Customer } from "@/types";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  Image,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-// Dữ liệu giả (giả lập từ backend)
-const fakeUser = {
-  fullName: 'Nguyễn Văn A',
-  phoneNumber: '0901234567',
-  email: 'nguyenvana@example.com',
-  dateOfBirth: new Date('1995-05-20'),
-  gender: 'Nam',
-  avatar: null,
-  loyaltyPoints: 1250,
-};
+  View,
+} from "react-native";
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const [form, setForm] = useState({ ...fakeUser });
+  const { user, isInitializing } = useAuth();
+
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
+  const [viewerVisible, setViewerVisible] = useState(false);
 
-  // Xử lý chọn ảnh
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Cần quyền truy cập thư viện ảnh!');
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phoneNumber: "",
+    dateOfBirth: new Date(),
+    gender: "",
+  });
+
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Helper: Parse date từ backend
+  const parseDate = (dateInput: any): Date | null => {
+    if (!dateInput) return null;
+    if (Array.isArray(dateInput)) {
+      return new Date(
+        Date.UTC(
+          dateInput[0],
+          dateInput[1] - 1,
+          dateInput[2],
+          dateInput[3] || 0,
+          dateInput[4] || 0,
+          dateInput[5] || 0
+        )
+      );
+    }
+    const d = new Date(dateInput);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  // Hàm format ngày dd/MM/yyyy (VD: 05/12/1990)
+  const formatDate = (dateInput: Date | string) => {
+    if (!dateInput) return "";
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "";
+
+    const day = `0${d.getDate()}`.slice(-2);
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  useEffect(() => {
+    if (isInitializing) return;
+    if (!user || !user.accountId) {
+      setLoading(false);
+      setError("Vui lòng đăng nhập để xem hồ sơ");
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-  };
+    fetchCustomerProfile(user.accountId as number);
+  }, [isInitializing, user?.accountId]);
 
-  // Xử lý ngày sinh
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      setForm({ ...form, dateOfBirth: selectedDate });
+  const fetchCustomerProfile = async (accountId?: number) => {
+    try {
+      setLoading(true);
+      const id = accountId ?? user?.accountId;
+      if (!id) {
+        setError("Không tìm thấy thông tin tài khoản");
+        setLoading(false);
+        return;
+      }
+
+      const data = await customerService.getCustomersByAccountId(id as number);
+      if (data && data.length > 0) {
+        const customerData = data[0];
+        setCustomer(customerData);
+
+        const parsedDOB = parseDate(customerData.dateOfBirth) || new Date();
+
+        setFormData({
+          fullName: customerData.fullName,
+          phoneNumber: customerData.phoneNumber,
+          dateOfBirth: parsedDOB,
+          gender: customerData.gender,
+        });
+        setError("");
+      } else {
+        setError("Không tìm thấy thông tin khách hàng");
+      }
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || "Không thể tải thông tin cá nhân"
+      );
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Lưu hồ sơ
-  const handleSave = () => {
-    Alert.alert('Thành công', 'Cập nhật hồ sơ thành công!', [
-      { text: 'OK', onPress: () => router.back() },
+  const handleEdit = () => {
+    setIsEditing(true);
+    setError("");
+  };
+
+  const handleCancel = () => {
+    if (customer) {
+      const parsedDOB = parseDate(customer.dateOfBirth) || new Date();
+      setFormData({
+        fullName: customer.fullName,
+        phoneNumber: customer.phoneNumber,
+        dateOfBirth: parsedDOB,
+        gender: customer.gender,
+      });
+    }
+    setIsEditing(false);
+    setShowGenderPicker(false);
+    setError("");
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === "ios");
+    if (selectedDate) {
+      setFormData({ ...formData, dateOfBirth: selectedDate });
+    }
+  };
+
+  const handleSave = async () => {
+    // 1. Validate cơ bản
+    if (!formData.fullName || !formData.phoneNumber || !formData.gender) {
+      Alert.alert(
+        "Lỗi",
+        "Vui lòng điền đầy đủ thông tin (Họ tên, SĐT, Giới tính)"
+      );
+      return;
+    }
+    if (!customer) return;
+
+    try {
+      setSaving(true);
+
+      // 2. Chuẩn bị dữ liệu update
+      // QUAN TRỌNG: Không gửi field "account" để tránh lỗi Backend xử lý object con
+      // Chúng ta dùng "as any" để bỏ qua check type của TypeScript tạm thời
+      const updateData: any = {
+        fullName: formData.fullName,
+        phoneNumber: formData.phoneNumber,
+        dateOfBirth: formData.dateOfBirth.toISOString().split("T")[0], // yyyy-MM-dd
+        gender: formData.gender,
+      };
+
+      console.log("📦 Đang gửi dữ liệu update:", updateData);
+
+      // 3. Gọi API
+      await customerService.updateCustomer(customer.customerID, updateData);
+
+      Alert.alert("Thành công", "Cập nhật thông tin cá nhân thành công");
+      setIsEditing(false);
+
+      // Load lại dữ liệu mới nhất
+      fetchCustomerProfile();
+    } catch (err: any) {
+      console.error("❌ Lỗi Update Info:", err);
+
+      // Lấy thông báo lỗi chi tiết từ Backend nếu có
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Không thể cập nhật thông tin";
+
+      setError(errorMsg); // Hiển thị lỗi lên màn hình đỏ (nếu muốn)
+      Alert.alert("Lỗi", errorMsg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCameraPress = () => {
+    Alert.alert("Thay đổi ảnh đại diện", "Bạn có muốn đổi ảnh đại diện mới?", [
+      { text: "Hủy", style: "cancel" },
+      { text: "Chọn từ thư viện", onPress: pickAndUploadAvatar },
     ]);
   };
 
+  const pickAndUploadAvatar = async () => {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
+        return;
+      }
+
+      // ✅ SỬA LỖI: Dùng MediaTypeOptions thay vì MediaType
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        allowsMultipleSelection: false,
+      });
+
+      if (result.canceled || !result.assets?.length) return;
+
+      const uri = result.assets[0].uri;
+      if (!isValidImageUri(uri)) {
+        Alert.alert("Lỗi", "URI ảnh không hợp lệ");
+        return;
+      }
+
+      if (!customer) return;
+
+      setUploadingAvatar(true);
+
+      // 1. Upload ảnh lên Cloudinary
+      const uploadedUrl = await uploadProductImage(uri);
+
+      // 2. Cập nhật UI ngay lập tức (Optimistic UI)
+      setCustomer((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          account: {
+            ...prev.account,
+            avatar: uploadedUrl,
+          },
+        };
+      });
+
+      // 3. Chuẩn bị dữ liệu account để update (giống Admin)
+      // Loại bỏ các trường circular reference để tránh lỗi
+      const updatedAccount = {
+        ...customer.account,
+        avatar: uploadedUrl,
+        customer: undefined,
+        admin: undefined,
+      };
+
+      // 4. Gọi API Backend
+      await accountService.updateAccount(
+        customer.account.accountID,
+        updatedAccount
+      );
+
+      Alert.alert("Thành công", "Ảnh đại diện đã được cập nhật");
+    } catch (err: any) {
+      console.error("Upload avatar error:", err?.response || err);
+      Alert.alert(
+        "Lỗi",
+        err?.response?.data?.message || "Không thể cập nhật avatar"
+      );
+      fetchCustomerProfile();
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#000" />
+        <Text style={{ marginTop: 10 }}>Đang tải thông tin...</Text>
+      </View>
+    );
+  }
+
+  if (error && !customer) {
+    return (
+      <View style={styles.center}>
+        <Text style={{ fontSize: 40, marginBottom: 10 }}>⚠️</Text>
+        <Text style={{ color: "#DC2626", marginBottom: 20 }}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => fetchCustomerProfile(user?.accountId as number)}
+        >
+          <Text style={styles.retryButtonText}>Thử lại</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!customer) return null;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chỉnh sửa hồ sơ</Text>
-          <TouchableOpacity onPress={handleSave}>
-            <Text style={styles.saveText}>Lưu</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Hồ Sơ Cá Nhân</Text>
+          <View style={styles.titleLine} />
+          <Text style={styles.subtitle}>Quản lý thông tin & tài khoản</Text>
+        </View>
+      </View>
+
+      {error && (
+        <View style={styles.errorAlert}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={() => setError("")}>
+            <Text style={styles.errorClose}>✕</Text>
           </TouchableOpacity>
         </View>
+      )}
 
-        {/* Avatar */}
+      {/* Card Avatar */}
+      <View style={styles.card}>
         <View style={styles.avatarSection}>
-          <TouchableOpacity onPress={pickImage}>
-            {form.avatar ? (
-              <Image source={{ uri: form.avatar }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={40} color="#aaa" />
-              </View>
-            )}
-            <View style={styles.cameraIcon}>
-              <Ionicons name="camera" size={20} color="#fff" />
+          <View style={{ position: "relative" }}>
+            <TouchableOpacity
+              onPress={() => setViewerVisible(true)}
+              activeOpacity={0.8}
+            >
+              {customer.account.avatar ? (
+                <Image
+                  source={{ uri: customer.account.avatar }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarText}>
+                    {customer.fullName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cameraIcon}
+              onPress={handleCameraPress}
+              disabled={uploadingAvatar}
+            >
+              <Ionicons name="camera" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {uploadingAvatar && (
+            <ActivityIndicator
+              size="small"
+              color="#000"
+              style={{ marginTop: 8 }}
+            />
+          )}
+
+          <View style={{ alignItems: "center", marginTop: 10 }}>
+            <Text style={styles.avatarName}>{customer.fullName}</Text>
+            <View
+              style={[
+                styles.statusTag,
+                customer.account.accountStatus === "ACTIVE"
+                  ? styles.statusActive
+                  : styles.statusInactive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  customer.account.accountStatus === "ACTIVE"
+                    ? { color: "#155724" }
+                    : { color: "#721c24" },
+                ]}
+              >
+                {customer.account.accountStatus === "ACTIVE"
+                  ? "Hoạt động"
+                  : "Không hoạt động"}
+              </Text>
             </View>
-          </TouchableOpacity>
-          <Text style={styles.changePhotoText}>Thay đổi ảnh đại diện</Text>
+          </View>
         </View>
+      </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Họ và tên</Text>
-            <TextInput
-              style={styles.input}
-              value={form.fullName}
-              onChangeText={(text) => setForm({ ...form, fullName: text })}
-              placeholder="Nhập họ tên"
-            />
+      {/* Card Thông Tin Tài Khoản */}
+      <View style={styles.card}>
+        <Text style={styles.sectionLabel}>Thông Tin Tài Khoản</Text>
+        <View style={styles.detailsRow}>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Email</Text>
+            <Text style={styles.infoValue}>{customer.account.email}</Text>
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Số điện thoại</Text>
-            <TextInput
-              style={styles.input}
-              value={form.phoneNumber}
-              onChangeText={(text) => setForm({ ...form, phoneNumber: text })}
-              keyboardType="phone-pad"
-              placeholder="090xxx"
-            />
+          <View style={styles.separator} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Vai trò</Text>
+            <Text style={styles.infoValue}>{customer.account.role}</Text>
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={[styles.input, styles.disabledInput]}
-              value={form.email}
-              editable={false}
-            />
-            <Text style={styles.hint}>Email không thể thay đổi</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Ngày sinh</Text>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={form.dateOfBirth ? styles.dateText : styles.placeholder}>
-                {form.dateOfBirth
-                  ? form.dateOfBirth.toLocaleDateString('vi-VN')
-                  : 'Chọn ngày sinh'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Giới tính</Text>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => setShowGenderPicker(true)}
-            >
-              <Text style={form.gender ? styles.dateText : styles.placeholder}>
-                {form.gender || 'Chọn giới tính'}
-              </Text>
-            </TouchableOpacity>
-            {showGenderPicker && (
-              <View style={styles.genderPicker}>
-                {['Nam', 'Nữ', 'Khác'].map((g) => (
-                  <TouchableOpacity
-                    key={g}
-                    style={styles.genderOption}
-                    onPress={() => {
-                      setForm({ ...form, gender: g });
-                      setShowGenderPicker(false);
-                    }}
-                  >
-                    <Text style={styles.genderText}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-
-          <View style={styles.loyaltyBox}>
-            <Ionicons name="star" size={20} color="#FFD700" />
-            <Text style={styles.loyaltyText}>
-              Điểm tích lũy: <Text style={styles.points}>{form.loyaltyPoints}</Text>
+          <View style={styles.separator} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Ngày đăng ký</Text>
+            <Text style={styles.infoValue}>
+              {(() => {
+                const d = parseDate(customer.account.registrationDate);
+                return d ? d.toLocaleDateString("vi-VN") : "-";
+              })()}
             </Text>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+
+      {/* Card Thông Tin Cá Nhân */}
+      <View style={styles.card}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 15,
+          }}
+        >
+          <Text style={styles.sectionLabel}>Thông Tin Cá Nhân</Text>
+          {!isEditing && (
+            <TouchableOpacity onPress={handleEdit}>
+              <Text style={{ color: "#007AFF", fontWeight: "600" }}>Sửa</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={{ gap: 12 }}>
+          <View>
+            <Text style={styles.fieldLabel}>
+              Họ và Tên <Text style={{ color: "red" }}>*</Text>
+            </Text>
+            {isEditing ? (
+              <TextInput
+                style={styles.input}
+                value={formData.fullName}
+                onChangeText={(t) => setFormData({ ...formData, fullName: t })}
+              />
+            ) : (
+              <Text style={styles.fieldValue}>{customer.fullName}</Text>
+            )}
+          </View>
+
+          <View>
+            <Text style={styles.fieldLabel}>
+              Số điện thoại <Text style={{ color: "red" }}>*</Text>
+            </Text>
+            {isEditing ? (
+              <TextInput
+                style={styles.input}
+                value={formData.phoneNumber}
+                onChangeText={(t) =>
+                  setFormData({ ...formData, phoneNumber: t })
+                }
+                keyboardType="phone-pad"
+              />
+            ) : (
+              <Text style={styles.fieldValue}>{customer.phoneNumber}</Text>
+            )}
+          </View>
+
+          {/* Date of Birth */}
+          <View>
+            <Text style={styles.fieldLabel}>
+              Ngày sinh <Text style={{ color: "red" }}>*</Text>
+            </Text>
+
+            {isEditing ? (
+              <View>
+                {/* Ô chọn ngày */}
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={{ color: "#000" }}>
+                    {formatDate(formData.dateOfBirth)}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* DateTimePicker logic */}
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={formData.dateOfBirth}
+                    mode="date"
+                    display="default" // Android sẽ hiện Dialog lịch chuẩn
+                    onChange={(event, selectedDate) => {
+                      // Quan trọng: Tắt picker ngay lập tức trên Android để tránh lỗi UI
+                      setShowDatePicker(Platform.OS === "ios");
+                      if (selectedDate) {
+                        setFormData({ ...formData, dateOfBirth: selectedDate });
+                      }
+                    }}
+                    maximumDate={new Date()}
+                  />
+                )}
+              </View>
+            ) : (
+              <Text style={styles.fieldValue}>
+                {/* Hiển thị khi xem (không sửa) */}
+                {customer.dateOfBirth ? formatDate(customer.dateOfBirth) : "-"}
+              </Text>
+            )}
+          </View>
+
+          <View>
+            <Text style={styles.fieldLabel}>
+              Giới tính <Text style={{ color: "red" }}>*</Text>
+            </Text>
+            {isEditing ? (
+              <>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setShowGenderPicker(!showGenderPicker)}
+                >
+                  <Text style={{ color: "#000" }}>
+                    {formData.gender || "Chọn giới tính"}
+                  </Text>
+                </TouchableOpacity>
+                {showGenderPicker && (
+                  <View style={styles.genderPicker}>
+                    {["Nam", "Nữ", "Khác"].map((g) => (
+                      <TouchableOpacity
+                        key={g}
+                        style={styles.genderOption}
+                        onPress={() => {
+                          setFormData({ ...formData, gender: g });
+                          setShowGenderPicker(false);
+                        }}
+                      >
+                        <Text style={styles.genderText}>{g}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </>
+            ) : (
+              <Text style={styles.fieldValue}>{customer.gender}</Text>
+            )}
+          </View>
+        </View>
+
+        {isEditing && (
+          <View style={styles.cardFooter}>
+            <TouchableOpacity
+              style={[styles.actionButton, { borderColor: "#999" }]}
+              onPress={handleCancel}
+              disabled={saving}
+            >
+              <Text style={[styles.actionButtonText, { color: "#666" }]}>
+                Hủy
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                { backgroundColor: "#000", borderColor: "#000" },
+              ]}
+              onPress={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={[styles.actionButtonText, { color: "#fff" }]}>
+                  Lưu thay đổi
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Card 4: Additional Info */}
+      <View style={styles.card}>
+        <Text style={styles.sectionLabel}>Thông Tin Bổ Sung</Text>
+        <View style={styles.detailsRow}>
+          <View style={styles.separator} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Điểm tích lũy</Text>
+            <View style={styles.loyaltyBox}>
+              <Ionicons name="star" size={16} color="#FFD700" />
+              <Text style={styles.loyaltyText}>
+                {customer.loyaltyPoints || 0}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      <View style={{ height: 40 }} />
+
+      <Modal
+        visible={viewerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setViewerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.viewerOverlay}
+          activeOpacity={1}
+          onPress={() => setViewerVisible(false)}
+        >
+          <View style={styles.viewerContainer}>
+            {customer.account.avatar ? (
+              <Image
+                source={{ uri: customer.account.avatar }}
+                style={styles.viewerImage}
+                resizeMode="contain"
+              />
+            ) : (
+              <View
+                style={[
+                  styles.viewerImage,
+                  {
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "#fff",
+                  },
+                ]}
+              >
+                <Text>Chưa có ảnh đại diện</Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </ScrollView>
   );
 }
 
-// === STYLES ===
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
+  container: { padding: 20, paddingTop: 40, backgroundColor: "#fff", flex: 1 },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderColor: '#eee',
+    marginBottom: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
-  backBtn: { padding: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
-  saveText: { fontSize: 16, color: '#000000ff', fontWeight: '600' },
-  avatarSection: { alignItems: 'center', marginVertical: 24 },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#000',
+  title: { fontSize: 22, fontWeight: "700", color: "#111" },
+  titleLine: {
+    width: 40,
+    height: 3,
+    backgroundColor: "#000",
+    borderRadius: 2,
+    marginTop: 5,
+    marginBottom: 4,
+  },
+  subtitle: { fontSize: 13, color: "#666" },
+  card: {
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 14,
+    padding: 15,
+    marginBottom: 15,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 4,
+    elevation: 2,
   },
+  sectionLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 10,
+  },
+  avatarSection: { alignItems: "center", paddingVertical: 10 },
+  avatar: { width: 100, height: 100, borderRadius: 50 },
   avatarPlaceholder: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#eee',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
+  avatarText: { color: "#000", fontSize: 36, fontWeight: "bold" },
   cameraIcon: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: '#000000ff',
+    backgroundColor: "#000",
     width: 32,
     height: 32,
     borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
   },
-  changePhotoText: { marginTop: 12, color: '#666', fontSize: 14 },
-  form: { paddingHorizontal: 16 },
-  inputGroup: { marginBottom: 20 },
-  label: { fontSize: 14, color: '#333', marginBottom: 8, fontWeight: '500' },
-  input: {
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 12,
+  avatarName: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 8,
+  },
+  statusTag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  statusActive: { backgroundColor: "#D4EDDA" },
+  statusInactive: { backgroundColor: "#F8D7DA" },
+  statusText: { fontSize: 12, fontWeight: "700" },
+  detailsRow: { gap: 0 },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+  },
+  separator: { height: 1, backgroundColor: "#f5f5f5" },
+  infoLabel: { fontSize: 14, color: "#666" },
+  infoValue: { fontSize: 14, color: "#000", fontWeight: "500" },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#444",
+    marginBottom: 6,
+  },
+  fieldValue: {
     fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  disabledInput: { backgroundColor: '#f5f5f5', color: '#999' },
-  hint: { fontSize: 12, color: '#999', marginTop: 4 },
-  dateText: { color: '#333' },
-  placeholder: { color: '#aaa' },
-  genderPicker: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    overflow: 'hidden',
-  },
-  genderOption: {
-    padding: 14,
+    color: "#000",
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderBottomColor: "#f0f0f0",
+    marginBottom: 10,
   },
-  genderText: { fontSize: 15, color: '#333' },
-  loyaltyBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff9c4',
-    padding: 16,
+  input: {
+    height: 45,
+    backgroundColor: "#f9f9f9",
+    borderWidth: 1,
+    borderColor: "#ddd",
     borderRadius: 12,
-    marginTop: 10,
+    paddingHorizontal: 15,
+    fontSize: 14,
+    marginBottom: 10,
+    justifyContent: "center",
   },
-  loyaltyText: { marginLeft: 10, fontSize: 15, color: '#333' },
-  points: { fontWeight: 'bold', color: '#000000ff' },
+  genderPicker: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginTop: -5,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    overflow: "hidden",
+  },
+  genderOption: { padding: 14, borderBottomWidth: 1, borderColor: "#eee" },
+  genderText: { fontSize: 15, color: "#333" },
+  cardFooter: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+    paddingTop: 15,
+    marginTop: 10,
+    gap: 10,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#007AFF",
+    backgroundColor: "#fff",
+  },
+  actionButtonText: { fontSize: 14, fontWeight: "600", marginLeft: 4 },
+  retryButton: {
+    backgroundColor: "#000",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: { color: "#fff", fontWeight: "600" },
+  errorAlert: {
+    backgroundColor: "#FFE5E5",
+    borderWidth: 1,
+    borderColor: "#F8D7DA",
+    padding: 12,
+    marginBottom: 15,
+    borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  errorText: { color: "#D32F2F", flex: 1, fontSize: 14 },
+  errorClose: {
+    color: "#D32F2F",
+    fontSize: 18,
+    fontWeight: "bold",
+    paddingLeft: 12,
+  },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerContainer: {
+    width: "100%",
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerImage: { width: "100%", height: 400, borderRadius: 8 },
 });
