@@ -85,7 +85,8 @@ export default {
       reactCompiler: true,
     },
     extra: {
-      apiUrl: getApiUrl() || process.env.API_URL,
+      // API URL - Railway production
+      apiUrl: 'https://btnlttbdd-production.up.railway.app/api',
       eas: {
         projectId: "fcdd3db2-7bf7-4e68-9f00-0b63e24adb9e"
       }
