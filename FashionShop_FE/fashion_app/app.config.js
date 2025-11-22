@@ -1,4 +1,4 @@
-const { getApiUrl } = require('./scripts/getLocalIP');
+require('dotenv').config();
 
 export default {
   expo: {
@@ -85,7 +85,7 @@ export default {
       reactCompiler: true,
     },
     extra: {
-      apiUrl: getApiUrl() || process.env.API_URL,
+      apiUrl: process.env.API_URL || 'http://localhost:8085/api',
       eas: {
         projectId: "fcdd3db2-7bf7-4e68-9f00-0b63e24adb9e"
       }
