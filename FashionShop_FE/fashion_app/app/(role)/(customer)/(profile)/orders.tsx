@@ -16,6 +16,7 @@ import {
 // Bộ lọc mới theo đúng trạng thái thực tế
 const FILTERS = ['ALL', 'PENDING', 'APPROVED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 
+
 // Hàm chuyển trạng thái sang tiếng Việt + màu sắc
 const getStatusText = (status: string) => {
   switch (status) {
@@ -172,7 +173,7 @@ export default function OrdersScreen() {
                 </View>
 
                 <Text style={styles.info}>
-                  Ngày đặt: {safeDate(item.orderDate)}
+                  Ngày đặt: {item.orderDate}
                 </Text>
                 <Text style={styles.info}>
                   Tổng tiền:{' '}

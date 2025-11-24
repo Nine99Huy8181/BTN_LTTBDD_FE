@@ -9,6 +9,7 @@ import { ActivityIndicator, Alert, Dimensions, FlatList, Image, Modal, ScrollVie
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { showToast } from '@/utils/toast';
 
+
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 import { useAuth } from '@/hooks/AuthContext';
@@ -187,32 +188,6 @@ export default function ProductDetailScreen() {
     }
   };
 
-  // const handleBuyNow = () => {
-  //   if (!selectedVariant) {
-  //     alert('Vui lòng chọn màu sắc và kích cỡ');
-  //     return;
-  //   }
-
-  //   if (selectedVariant.validQuantity <= 0) {
-  //     alert('Sản phẩm này hiện đã hết hàng');
-  //     return;
-  //   }
-
-  //   router.push({
-  //     pathname: '/checkout',
-  //     params: {
-  //       productId: product?.productID,
-  //       variantId: selectedVariant.variantID,
-  //       productName: product?.name,
-  //       color: selectedVariant.color,
-  //       size: selectedVariant.size,
-  //       price: finalPrice,
-  //       image: selectedVariant.images[0] || product?.image,
-  //       availableQuantity: selectedVariant.validQuantity,
-  //     },
-  //   });
-  // };
-
   const handleThumbnailPress = (index: number) => {
     setCurrentImageIndex(index);
     flatListRef.current?.scrollToOffset({
@@ -328,32 +303,27 @@ export default function ProductDetailScreen() {
       <View style={styles.container}>
         {/* Header Buttons */}
         <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={22} color="#000" />
+          {/* Nút Back bên trái */}
+          <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
 
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerBtn}>
-              <Ionicons name="share-social-outline" size={22} color="#000" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerBtn}
-              onPress={toggleWishlist}
-              disabled={loadingWishlist}
-            >
-              {loadingWishlist ? (
-                <ActivityIndicator size={16} color="#666" />
-              ) : (
-                <Ionicons
-                  name={isWishlisted ? "heart" : "heart-outline"}
-                  size={22}
-                  color={isWishlisted ? "#FF4444" : "#000"}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
+          {/* Nút Wishlist bên phải – căn đều với nút trái */}
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={toggleWishlist}
+            disabled={loadingWishlist}
+          >
+            {loadingWishlist ? (
+              <ActivityIndicator size={18} color="#fff" />
+            ) : (
+              <Ionicons
+                name={isWishlisted ? "heart" : "heart-outline"}
+                size={26}
+                color={isWishlisted ? "#FF3B30" : "#fff"}
+              />
+            )}
+          </TouchableOpacity>
         </View>
 
         <ScrollView
@@ -666,38 +636,37 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#FFF'
+    backgroundColor: '#f5f5f5'
   },
 
   // Header
-  headerButtons: {
-    position: 'static',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    backgroundColor: '#f5f5f5ff'
-  },
-  headerBtn: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+headerButtons: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  zIndex: 10,
+  flexDirection: 'row',
+  justifyContent: 'space-between',   // tự động đẩy 2 đứa ra 2 góc
+  alignItems: 'center',
+  paddingHorizontal: 16,
+  paddingTop: 10,        // tránh status bar iPhone
+  paddingBottom: 15,
+  backgroundColor: 'transparent',   // trong suốt 100%
+},
+
+headerBtn: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+},
 
   // Image Slider
   imageSliderContainer: {

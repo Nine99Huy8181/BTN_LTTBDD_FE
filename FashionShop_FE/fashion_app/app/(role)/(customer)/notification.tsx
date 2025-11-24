@@ -46,44 +46,121 @@ export default function CustomerNotificationScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
-      <View style={{ padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#eee' }}>
-        <Text style={{ fontSize: 20, fontWeight: 'bold' }}>
-          Thông báo {unreadCount > 0 && `(${unreadCount} mới)`}
+    <View style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
+      {/* Header */}
+      <View style={{ 
+        paddingTop: 50, 
+        paddingBottom: 16, 
+        paddingHorizontal: 16, 
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0'
+      }}>
+        <Text style={{ fontSize: 24, fontWeight: '700', color: '#000' }}>
+          Thông báo
         </Text>
+        {unreadCount > 0 && (
+          <Text style={{ fontSize: 14, color: '#666', marginTop: 4 }}>
+            {unreadCount} thông báo mới
+          </Text>
+        )}
       </View>
 
       <FlatList
         data={notifications}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            tintColor="#FF3B30"
+          />
+        }
         keyExtractor={item => item.notificationID.toString()}
+        contentContainerStyle={{ paddingVertical: 8 }}
         renderItem={({ item }) => (
           <View
             style={{
-              backgroundColor: item.isRead ? '#fff' : '#e3f2fd',
-              padding: 16,
+              backgroundColor: '#fff',
               marginHorizontal: 16,
-              marginVertical: 4,
+              marginVertical: 6,
               borderRadius: 12,
-              borderLeftWidth: 4,
-              borderLeftColor: item.isRead ? '#ddd' : '#2196F3',
+              overflow: 'hidden',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 3,
+              elevation: 2,
             }}
           >
-            <TouchableOpacity onPress={() => handlePress(item)} activeOpacity={0.7}>
-              <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.title}</Text>
-              <Text style={{ marginTop: 4, color: '#444' }}>{item.message}</Text>
-              <Text style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
-                {new Date(item.createdDate).toLocaleString('vi-VN')}
-              </Text>
+            <TouchableOpacity 
+              onPress={() => handlePress(item)} 
+              activeOpacity={0.7}
+              style={{ padding: 16 }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                {/* Notification Indicator */}
+                {!item.isRead && (
+                  <View style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#FF3B30',
+                    marginRight: 12,
+                    marginTop: 6
+                  }} />
+                )}
+                
+                <View style={{ flex: 1 }}>
+                  <Text style={{ 
+                    fontWeight: item.isRead ? '600' : '700', 
+                    fontSize: 16,
+                    color: item.isRead ? '#333' : '#000',
+                    marginBottom: 6
+                  }}>
+                    {item.title}
+                  </Text>
+                  
+                  <Text style={{ 
+                    fontSize: 14, 
+                    color: '#666',
+                    lineHeight: 20
+                  }}>
+                    {item.message}
+                  </Text>
+                  
+                  <Text style={{ 
+                    fontSize: 12, 
+                    color: '#999', 
+                    marginTop: 8 
+                  }}>
+                    {new Date(item.createdDate).toLocaleString('vi-VN')}
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 }}>
+            {/* Action Buttons */}
+            <View style={{ 
+              flexDirection: 'row', 
+              justifyContent: 'flex-end',
+              paddingHorizontal: 16,
+              paddingBottom: 12,
+              paddingTop: 4,
+              borderTopWidth: 1,
+              borderTopColor: '#f5f5f5'
+            }}>
               {!item.isRead && (
                 <TouchableOpacity
                   onPress={async () => { await markAsRead(item.notificationID); }}
-                  style={{ marginRight: 12 }}
+                  style={{ 
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    marginRight: 8
+                  }}
                 >
-                  <Text style={{ color: '#1976d2' }}>Đánh dấu đã đọc</Text>
+                  <Text style={{ color: '#007AFF', fontSize: 14, fontWeight: '500' }}>
+                    Đánh dấu đã đọc
+                  </Text>
                 </TouchableOpacity>
               )}
 
@@ -91,18 +168,57 @@ export default function CustomerNotificationScreen() {
                 onPress={() => {
                   showAlert('Xác nhận', 'Bạn có chắc muốn xóa thông báo này?', [
                     { text: 'Hủy', style: 'cancel' },
-                    { text: 'Xóa', style: 'destructive', onPress: async () => { await deleteNotification(item.notificationID); } },
+                    { 
+                      text: 'Xóa', 
+                      style: 'destructive', 
+                      onPress: async () => { await deleteNotification(item.notificationID); } 
+                    },
                   ]);
                 }}
+                style={{ 
+                  paddingVertical: 6,
+                  paddingHorizontal: 12
+                }}
               >
-                <Text style={{ color: '#d32f2f' }}>Xóa</Text>
+                <Text style={{ color: '#FF3B30', fontSize: 14, fontWeight: '500' }}>
+                  Xóa
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
         ListEmptyComponent={
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 }}>
-            <Text style={{ color: '#999' }}>Chưa có thông báo</Text>
+          <View style={{ 
+            flex: 1, 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            marginTop: 100 
+          }}>
+            <View style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: '#f5f5f5',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: 16
+            }}>
+              <Text style={{ fontSize: 40 }}>🔔</Text>
+            </View>
+            <Text style={{ 
+              color: '#999', 
+              fontSize: 16,
+              fontWeight: '500'
+            }}>
+              Chưa có thông báo
+            </Text>
+            <Text style={{ 
+              color: '#ccc', 
+              fontSize: 14,
+              marginTop: 8
+            }}>
+              Các thông báo mới sẽ hiển thị tại đây
+            </Text>
           </View>
         }
       />
