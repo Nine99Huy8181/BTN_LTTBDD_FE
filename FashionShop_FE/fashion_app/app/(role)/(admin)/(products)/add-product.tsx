@@ -83,7 +83,7 @@ export default function AddProductScreen() {
         handleChange("image", uri);
       }
     } catch (error) {
-      console.error("Pick image error:", error);
+      console.log("Pick image error:", error);
       showToast.error("Lỗi", "Không thể chọn ảnh");
       setSelectingFromAlbum(false);
     } finally {
@@ -114,7 +114,7 @@ export default function AddProductScreen() {
           const uploaded = await uploadProductImage(String(form.image));
           handleChange("image", uploaded);
         } catch (e) {
-          console.error("Upload error:", e);
+          console.log("Upload error:", e);
           showToast.error("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
           setUploadingImage(false);
           setLoading(false);
@@ -131,7 +131,7 @@ export default function AddProductScreen() {
         },
       ]);
     } catch (error: any) {
-      console.error("Add product error:", error);
+      console.log("Add product error:", error);
       showToast.error(
         "Lỗi",
         error.message || "Không thể thêm sản phẩm. Vui lòng thử lại."

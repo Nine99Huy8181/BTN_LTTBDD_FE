@@ -63,7 +63,7 @@ export default function RespondReviewScreen() {
         setExistingResponse(null);
       }
     } catch (error) {
-      console.error("Error fetching review:", error);
+      console.log("Error fetching review:", error);
       showToast.error("Lỗi", "Không thể tải thông tin đánh giá");
       router.back();
     } finally {
@@ -106,7 +106,7 @@ export default function RespondReviewScreen() {
       router.back();
     } catch (error) {
       const e: any = error;
-      console.error("Error submitting response:", e);
+      console.log("Error submitting response:", e);
       const msg =
         e?.response?.data?.message ||
         e?.response?.data ||
@@ -136,7 +136,7 @@ export default function RespondReviewScreen() {
             showToast.success("Thành công", "Đã xóa phản hồi");
             router.back();
           } catch (err) {
-            console.error("Error deleting response:", err);
+            console.log("Error deleting response:", err);
             showToast.error("Lỗi", "Không thể xóa phản hồi. Vui lòng thử lại");
           } finally {
             setSubmitting(false);

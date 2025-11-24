@@ -39,7 +39,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
       const ids = new Set(items.map(item => item.product.productID));
       setWishlistProductIds(ids);
     } catch (error) {
-      console.error('Failed to load wishlist:', error);
+      console.log('Failed to load wishlist:', error);
       setWishlistProductIds(new Set());
     } finally {
       setIsLoading(false);
@@ -62,7 +62,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
       await wishlistService.addItem(wishlist.wishlistID, productId);
       setWishlistProductIds(prev => new Set(prev).add(productId));
     } catch (error) {
-      console.error('Add to wishlist failed:', error);
+      console.log('Add to wishlist failed:', error);
       throw error;
     }
   };
@@ -85,7 +85,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     } catch (error) {
-      console.error('Remove from wishlist failed:', error);
+      console.log('Remove from wishlist failed:', error);
       throw error;
     }
   };

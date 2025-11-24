@@ -105,7 +105,7 @@ const CartService = {
   try { DeviceEventEmitter.emit('cartUpdated'); } catch(e) {}
       return { success: true, items: latest };
     } catch (error: any) {
-      console.error('Add to cart error', error);
+      console.log('Add to cart error', error);
       return { success: false, message: error.message || 'Add to cart failed' };
     }
   },

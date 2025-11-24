@@ -21,7 +21,7 @@ export default function ProfileScreen() {
       accountService
         .getAccountByEmail(user.userName)
         .then((res) => setAccount(res))
-        .catch((err) => console.error("Lỗi khi lấy account:", err));
+        .catch((err) => console.log("Lỗi khi lấy account:", err));
     }
   }, [user]);
 

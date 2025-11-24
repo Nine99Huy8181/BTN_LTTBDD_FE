@@ -81,7 +81,7 @@ export default function ProductReviewScreen() {
         console.log('[DEBUG fetchOrderData] No orderItems found');
       }
     } catch (error) {
-      console.error('Error fetching order:', error);
+      console.log('Error fetching order:', error);
       showToast.error('Lỗi', 'Không thể tải thông tin đơn hàng');
     } finally {
       setLoading(false);
@@ -129,7 +129,7 @@ export default function ProductReviewScreen() {
         showToast.success('Thành công', `${uploadedUrls.length} ảnh đã được tải lên.`);
       }
     } catch (err) {
-      console.error('pickImage/uploadImage error', err);
+      console.log('pickImage/uploadImage error', err);
       showToast.error('Lỗi', 'Không thể chọn hoặc tải ảnh lên');
     }
   }
@@ -145,7 +145,7 @@ export default function ProductReviewScreen() {
   //     const b = await FileSystem.readAsStringAsync(uri, { encoding: encodingAny });
   //     return b;
   //   } catch (err) {
-  //     console.error('uriToBase64 error', err);
+  //     console.log('uriToBase64 error', err);
   //     throw err;
   //   }
   // }
@@ -153,7 +153,7 @@ export default function ProductReviewScreen() {
   async function submitReviewToBackend(ratingNum: number, commentText: string, uris: string[]) {
     if (!selectedProductId) {
       const errMsg = 'Vui lòng chọn sản phẩm để đánh giá';
-      console.error('[DEBUG submitReviewToBackend] Error:', errMsg);
+      console.log('[DEBUG submitReviewToBackend] Error:', errMsg);
       showToast.error('Lỗi', errMsg);
       throw new Error(errMsg);
     }
@@ -174,7 +174,7 @@ export default function ProductReviewScreen() {
       console.log('[DEBUG submitReviewToBackend] Review saved successfully:', res.data);
       return res.data; // dữ liệu server trả về
     } catch (err: any) {
-      console.error('[DEBUG submitReviewToBackend] API error:', err.response?.data || err.message);
+      console.log('[DEBUG submitReviewToBackend] API error:', err.response?.data || err.message);
       const errorMsg = err.response?.data?.message || err.message || 'Không thể gửi đánh giá tới server';
       throw new Error(errorMsg);
     }
@@ -209,7 +209,7 @@ export default function ProductReviewScreen() {
         setReviewSuccess(true);
       })
       .catch(err => {
-        console.error('[DEBUG addReview] Failed to submit review:', err);
+        console.log('[DEBUG addReview] Failed to submit review:', err);
         const errorMsg = err.message || 'Không thể gửi đánh giá tới server';
         showToast.error('Lỗi', errorMsg);
       });

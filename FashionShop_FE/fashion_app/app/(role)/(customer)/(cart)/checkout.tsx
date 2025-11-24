@@ -77,7 +77,7 @@ export default function CheckoutScreen() {
         setRecipientPhone(selectedAddr.recipientPhone);
       }
     } catch (err) {
-      console.error('Load address error:', err);
+      console.log('Load address error:', err);
     }
 
     try {
@@ -86,7 +86,7 @@ export default function CheckoutScreen() {
       const cartItems = await CartService.getCartItemsByCartId(cart.cartID);
       setItems(cartItems);
     } catch (err) {
-      console.error('Load cart error:', err);
+      console.log('Load cart error:', err);
     }
   };
 
@@ -136,16 +136,16 @@ export default function CheckoutScreen() {
         if (supported) {
           await Linking.openURL(response.data.paymentUrl);
         } else {
-          console.error('❌ Cannot open URL:', response.data.paymentUrl);
+          console.log('❌ Cannot open URL:', response.data.paymentUrl);
           showToast.error('Lỗi', 'Không thể mở trang thanh toán VNPay');
         }
       } else {
-        console.error('❌ No payment URL received');
+        console.log('❌ No payment URL received');
         showToast.error('Lỗi', 'Không tạo được link thanh toán VNPay');
       }
     } catch (err: any) {
-      console.error('❌ VNPay payment error:', err);
-      console.error('Error details:', err.response?.data);
+      console.log('❌ VNPay payment error:', err);
+      console.log('Error details:', err.response?.data);
       showToast.error('Lỗi', err.response?.data?.message || 'Lỗi khi tạo thanh toán VNPay');
     }
   };
@@ -197,7 +197,7 @@ export default function CheckoutScreen() {
           try {
             await CartService.deleteCartItem(it.cartItemID);
           } catch (err) {
-            console.error('Delete cart item error:', err);
+            console.log('Delete cart item error:', err);
           }
         }
       } else {
@@ -206,7 +206,7 @@ export default function CheckoutScreen() {
           try {
             await CartService.deleteCartItem(it.cartItemID);
           } catch (err) {
-            console.error('Delete cart item error:', err);
+            console.log('Delete cart item error:', err);
           }
         }
 
@@ -215,8 +215,8 @@ export default function CheckoutScreen() {
         ]);
       }
     } catch (err: any) {
-      console.error('❌ Place order error', err);
-      console.error('Error response:', err.response?.data);
+      console.log('❌ Place order error', err);
+      console.log('Error response:', err.response?.data);
       showToast.error('Lỗi', err.response?.data?.message || err?.message || 'Đặt hàng thất bại');
     } finally {
       setIsPlacing(false);

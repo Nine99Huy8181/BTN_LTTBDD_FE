@@ -19,7 +19,7 @@ export default function MenuScreen() {
       accountService
         .getAccountByEmail(user.userName)
         .then((res) => setAccount(res))
-        .catch((err) => console.error("Lỗi khi lấy account:", err));
+        .catch((err) => console.log("Lỗi khi lấy account:", err));
     }
   }, [user]);
 
@@ -100,7 +100,7 @@ export default function MenuScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#F5F5F5",
     paddingHorizontal: 24,
     paddingTop: 70,
   },

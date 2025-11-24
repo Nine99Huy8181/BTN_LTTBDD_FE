@@ -1,5 +1,5 @@
 // app/(auth)/register.tsx
-import { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,297 +13,270 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/AuthContext';
-import axios from 'axios';
-import { Config } from '@/constants';
-import Toast from 'react-native-toast-message';
+import { useAlertDialog } from '@/hooks/AlertDialogContext'; // Đảm bảo đúng đường dẫn
 
 export default function RegisterScreen() {
-  const [step, setStep] = useState<'form' | 'otp'>('form');
-
-  // Form data
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [gender, setGender] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState(''); // DD/MM/YYYY
+  const [gender, setGender] = useState<'Nam' | 'Nữ' | ''>('');
 
-  // OTP state
-  const [otp, setOtp] = useState('');
-  const otpInputRef = useRef<TextInput>(null);
-
-  // UI state
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
   const { register } = useAuth();
+  const { showAlert } = useAlertDialog();
 
-  // Countdown 60s
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
-
-  // Gửi OTP
-  const sendOtp = async () => {
-    setError(null);
-
-    if (!email || !email.includes('@') || !email.includes('.')) {
-      setError('Vui lòng nhập email hợp lệ');
-      return;
-    }
-    if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError('Mật khẩu không khớp');
-      return;
-    }
-    if (!fullName.trim()) {
-      setError('Vui lòng nhập họ tên');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await axios.post(`${Config.API_URL}/auth/send-otp`, { email });
-      setStep('otp');
-      setCountdown(60);
-      Toast.show({
-        type: 'success',
-        text1: 'Đã gửi mã OTP!',
-        text2: `Mã đã được gửi đến ${email}`,
-      });
-      setTimeout(() => otpInputRef.current?.focus(), 300);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Không thể gửi OTP';
-      if (msg.toLowerCase().includes('exist') || msg.includes('tồn tại')) {
-        setError('Email này đã được đăng ký');
-      } else {
-        setError(msg);
-      }
-    } finally {
-      setIsLoading(false);
-    }
+  // Chuyển DD/MM/YYYY → YYYY-MM-DD
+  const formatDateToISO = (ddmmyyyy: string): string => {
+    if (!ddmmyyyy) return '';
+    const [d, m, y] = ddmmyyyy.split('/');
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
   };
 
-  // Gửi lại OTP
-  const resendOtp = async () => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      await axios.post(`${Config.API_URL}/auth/send-otp`, { email });
-      setCountdown(60);
-      setOtp('');
-      Toast.show({
-        type: 'success',
-        text1: 'Đã gửi lại mã!',
-        text2: 'Kiểm tra email của bạn',
-      });
-      otpInputRef.current?.focus();
-    } catch (err: any) {
-      setError('Không thể gửi lại mã. Vui lòng thử lại sau.');
-    } finally {
-      setIsLoading(false);
-    }
+  // Chuyển giới tính sang backend (MALE / FEMALE)
+  const mapGenderToEnglish = (gender: 'Nam' | 'Nữ' | ''): string => {
+    if (gender === 'Nam') return 'Nam';
+    if (gender === 'Nữ') return 'Nữ';
+    return '';
   };
 
-  // Xác minh OTP + Đăng ký
-  const verifyAndRegister = async () => {
-    if (otp.length !== 6 || !/^\d+$/.test(otp)) {
-      setError('Mã OTP phải là 6 chữ số');
-      return;
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!fullName.trim()) newErrors.fullName = 'Vui lòng nhập họ và tên';
+    else if (fullName.trim().length < 2) newErrors.fullName = 'Họ và tên phải có ít nhất 2 ký tự';
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) newErrors.email = 'Vui lòng nhập email';
+    else if (!emailRegex.test(email.trim())) newErrors.email = 'Email không đúng định dạng';
+
+    if (!password) newErrors.password = 'Vui lòng nhập mật khẩu';
+    else if (password.length < 6) newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+
+    if (password !== confirmPassword) newErrors.confirmPassword = 'Mật khẩu nhập lại không khớp';
+
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})\b/;
+    if (!phoneNumber.trim()) newErrors.phoneNumber = 'Vui lòng nhập số điện thoại';
+    else if (!phoneRegex.test(phoneNumber)) newErrors.phoneNumber = 'Số điện thoại không hợp lệ (VD: 0901234567)';
+
+    const dobRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/(19|20)\d{2}$/;
+    if (!dateOfBirth.trim()) newErrors.dateOfBirth = 'Vui lòng nhập ngày sinh';
+    else if (!dobRegex.test(dateOfBirth)) newErrors.dateOfBirth = 'Ngày sinh không đúng định dạng DD/MM/YYYY';
+    else {
+      const [d, m, y] = dateOfBirth.split('/').map(Number);
+      const birthDate = new Date(y, m - 1, d);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const mDiff = today.getMonth() - birthDate.getMonth();
+      if (mDiff < 0 || (mDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+      if (age < 13) newErrors.dateOfBirth = 'Bạn phải từ 13 tuổi trở lên để đăng ký';
     }
 
-    setIsLoading(true);
-    setError(null);
+    if (!gender) newErrors.gender = 'Vui lòng chọn giới tính';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleRegister = async () => {
+    if (!validateForm()) return;
+
+    setIsRegistering(true);
+    setErrors({});
 
     try {
-      // Bước 1: Xác minh OTP
-      await axios.post(`${Config.API_URL}/auth/verify-otp`, { email, otp });
+      const isoDateOfBirth = formatDateToISO(dateOfBirth);
+      const genderEn = mapGenderToEnglish(gender);
 
-      // Bước 2: Đăng ký
-      const { success, error: regError } = await register(
-        email,
+      const { success, error: errorMessage } = await register(
+        email.trim(),
         password,
-        fullName,
+        fullName.trim(),
         phoneNumber,
-        dateOfBirth,
-        gender || 'OTHER'
+        isoDateOfBirth,
+        genderEn
       );
 
       if (success) {
-        Toast.show({
-          type: 'success',
-          text1: 'Đăng ký thành công!',
-          text2: 'Chào mừng bạn đến với Fashion Store',
-        });
-        router.replace('/(auth)/login');
+        showAlert(
+          'Thành công!',
+          'Đăng ký tài khoản thành công. Vui lòng đăng nhập.',
+          [{ text: 'OK', onPress: () => router.replace('/(auth)/login') || router.back() }]
+        );
       } else {
-        setError(regError || 'Đăng ký thất bại');
+        let message = 'Đăng ký thất bại. Vui lòng thử lại.';
+
+        if (errorMessage) {
+          if (errorMessage.toLowerCase().includes('email')) message = 'Email này đã được sử dụng.';
+          else if (errorMessage.toLowerCase().includes('phone') || errorMessage.includes('điện thoại'))
+            message = 'Số điện thoại đã được đăng ký.';
+          else message = errorMessage;
+        }
+
+        setErrors({ submit: message });
+        showAlert('Đăng ký thất bại', message, [{ text: 'OK' }]);
       }
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn';
-      setError(msg);
-      if (msg.includes('hết hạn') || msg.includes('invalid')) {
-        setError('Mã OTP đã hết hạn. Vui lòng gửi lại mã mới.');
-      }
+    } catch (err) {
+      const msg = 'Lỗi kết nối. Vui lòng kiểm tra mạng và thử lại.';
+      setErrors({ submit: msg });
+      showAlert('Lỗi', msg, [{ text: 'OK' }]);
     } finally {
-      setIsLoading(false);
+      setIsRegistering(false);
     }
   };
 
-  // ==================== BƯỚC OTP ====================
-  if (step === 'otp') {
-    return (
-      <View style={styles.container}>
-        <StatusBar barStyle="dark-content" />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <View style={styles.card}>
-              <Text style={styles.brandName}>Fashion Store</Text>
-              <Text style={styles.title}>Xác minh email</Text>
-
-              <Text style={styles.otpSubtitle}>
-                Chúng tôi đã gửi mã 6 số đến{'\n'}
-                <Text style={{ fontWeight: '600', color: '#000' }}>{email}</Text>
-              </Text>
-
-              {error && (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.error}>{error}</Text>
-                </View>
-              )}
-
-              <TextInput
-                ref={otpInputRef}
-                style={[styles.input, styles.otpInput]}
-                placeholder="000000"
-                value={otp}
-                onChangeText={setOtp}
-                keyboardType="number-pad"
-                maxLength={6}
-                autoFocus
-              />
-
-              <TouchableOpacity
-                style={[styles.registerButton, (isLoading || otp.length !== 6) && styles.registerButtonDisabled]}
-                onPress={verifyAndRegister}
-                disabled={isLoading || otp.length !== 6}
-              >
-                <Text style={styles.registerButtonText}>
-                  {isLoading ? 'Đang xử lý...' : 'Hoàn tất đăng ký'}
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.resendContainer}>
-                {countdown > 0 ? (
-                  <Text style={styles.resendText}>Gửi lại mã sau {countdown}s</Text>
-                ) : (
-                  <TouchableOpacity onPress={resendOtp} disabled={isLoading}>
-                    <Text style={styles.resendLink}>Gửi lại mã OTP</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <TouchableOpacity onPress={() => setStep('form')}>
-                <Text style={styles.backText}>← Quay lại chỉnh sửa thông tin</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
-    );
-  }
-
-  // ==================== BƯỚC FORM ====================
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={styles.card}>
             <Text style={styles.brandName}>Fashion Store</Text>
             <Text style={styles.title}>Đăng ký tài khoản</Text>
 
-            {error && (
+            {/* Lỗi chung */}
+            {errors.submit && (
               <View style={styles.errorContainer}>
-                <Text style={styles.error}>{error}</Text>
+                <Text style={styles.errorText}>{errors.submit}</Text>
               </View>
             )}
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="username@gmail.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Mật khẩu</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Nhập lại mật khẩu</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
-
+            {/* Họ và tên */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Họ và tên</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, focusedInput === 'fullName' && styles.inputFocused]}
                 placeholder="Nguyễn Văn A"
+                placeholderTextColor="#999"
                 value={fullName}
                 onChangeText={setFullName}
+                onFocus={() => setFocusedInput('fullName')}
+                onBlur={() => setFocusedInput(null)}
               />
+              {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
             </View>
 
+            {/* Email */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Số điện thoại (tùy chọn)</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput
-                style={styles.input}
-                placeholder="0123456789"
+                style={[styles.input, focusedInput === 'email' && styles.inputFocused]}
+                placeholder="example@gmail.com"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={setEmail}
+                onFocus={() => setFocusedInput('email')}
+                onBlur={() => setFocusedInput(null)}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            </View>
+
+            {/* Mật khẩu */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Mật khẩu</Text>
+              <TextInput
+                style={[styles.input, focusedInput === 'password' && styles.inputFocused]}
+                placeholder="Ít nhất 6 ký tự"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setFocusedInput('password')}
+                onBlur={() => setFocusedInput(null)}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            </View>
+
+            {/* Nhập lại mật khẩu */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Nhập lại mật khẩu</Text>
+              <TextInput
+                style={[styles.input, focusedInput === 'confirmPassword' && styles.inputFocused]}
+                placeholder="Nhập lại mật khẩu"
+                placeholderTextColor="#999"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                onFocus={() => setFocusedInput('confirmPassword')}
+                onBlur={() => setFocusedInput(null)}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+            </View>
+
+            {/* Số điện thoại */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Số điện thoại</Text>
+              <TextInput
+                style={[styles.input, focusedInput === 'phoneNumber' && styles.inputFocused]}
+                placeholder="0901234567"
+                placeholderTextColor="#999"
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
+                onFocus={() => setFocusedInput('phoneNumber')}
+                onBlur={() => setFocusedInput(null)}
                 keyboardType="phone-pad"
+                maxLength={10}
               />
+              {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
             </View>
 
+            {/* Ngày sinh */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Ngày sinh (DD/MM/YYYY)</Text>
+              <TextInput
+                style={[styles.input, focusedInput === 'dateOfBirth' && styles.inputFocused]}
+                placeholder="01/01/2000"
+                placeholderTextColor="#999"
+                value={dateOfBirth}
+                onChangeText={setDateOfBirth}
+                onFocus={() => setFocusedInput('dateOfBirth')}
+                onBlur={() => setFocusedInput(null)}
+                maxLength={10}
+              />
+              {errors.dateOfBirth && <Text style={styles.errorText}>{errors.dateOfBirth}</Text>}
+            </View>
+
+            {/* Giới tính */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Giới tính</Text>
+              <View style={styles.genderContainer}>
+                <TouchableOpacity
+                  style={[styles.genderButton, gender === 'Nam' && styles.genderButtonSelected]}
+                  onPress={() => setGender('Nam')}
+                >
+                  <Text style={[styles.genderText, gender === 'Nam' && styles.genderTextSelected]}>Nam</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.genderButton, gender === 'Nữ' && styles.genderButtonSelected]}
+                  onPress={() => setGender('Nữ')}
+                >
+                  <Text style={[styles.genderText, gender === 'Nữ' && styles.genderTextSelected]}>Nữ</Text>
+                </TouchableOpacity>
+              </View>
+              {errors.gender && <Text style={styles.errorText}>{errors.gender}</Text>}
+            </View>
+
+            {/* Nút đăng ký */}
             <TouchableOpacity
-              style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
-              onPress={sendOtp}
-              disabled={isLoading}
+              style={[styles.registerButton, isRegistering && styles.registerButtonDisabled]}
+              onPress={handleRegister}
+              disabled={isRegistering}
             >
               <Text style={styles.registerButtonText}>
-                {isLoading ? 'Đang gửi mã...' : 'Gửi mã xác minh'}
+                {isRegistering ? 'Đang đăng ký...' : 'Đăng ký'}
               </Text>
             </TouchableOpacity>
 
+            {/* Đăng nhập */}
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Đã có tài khoản? </Text>
               <TouchableOpacity onPress={() => router.back()}>
@@ -317,8 +290,10 @@ export default function RegisterScreen() {
   );
 }
 
+// Styles giữ nguyên đẹp như cũ
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
+  keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 20, paddingTop: 60 },
   card: {
     backgroundColor: '#fff',
@@ -339,13 +314,11 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: { fontSize: 28, fontWeight: '600', color: '#000', marginBottom: 24, textAlign: 'center' },
-  otpSubtitle: { textAlign: 'center', color: '#666', marginBottom: 32, lineHeight: 22 },
-  errorContainer: { backgroundColor: '#fee', padding: 12, borderRadius: 8, marginBottom: 16 },
-  error: { color: '#c00', fontSize: 14, textAlign: 'center' },
-  inputContainer: { marginBottom: 20 },
+  errorContainer: { backgroundColor: '#ffebee', padding: 12, borderRadius: 8, marginBottom: 16 },
+  inputContainer: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '500', color: '#000', marginBottom: 8 },
   input: {
-    height: 48,
+    height: 50,
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
@@ -353,29 +326,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     backgroundColor: '#fff',
   },
-  otpInput: {
-    textAlign: 'center',
-    fontSize: 22,
-    letterSpacing: 10,
-    fontWeight: '600',
-    marginBottom: 32,
-  },
-  registerButton: {
-    backgroundColor: '#000',
+  inputFocused: { borderColor: '#000', borderWidth: 1.5 },
+  errorText: { color: '#d32f2f', fontSize: 12, marginTop: 4 },
+  genderContainer: { flexDirection: 'row', gap: 16 },
+  genderButton: {
+    flex: 1,
     height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    backgroundColor: '#fff',
+  },
+  genderButtonSelected: { backgroundColor: '#000', borderColor: '#000' },
+  genderText: { fontSize: 15, color: '#333' },
+  genderTextSelected: { color: '#fff', fontWeight: '600' },
+  registerButton: {
+    backgroundColor: '#000',
+    height: 54,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
     marginBottom: 20,
   },
   registerButtonDisabled: { opacity: 0.7 },
   registerButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  loginContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+  loginContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   loginText: { fontSize: 14, color: '#666' },
   loginLink: { fontSize: 14, color: '#000', fontWeight: '600' },
-  backText: { textAlign: 'center', color: '#666', marginTop: 16, fontSize: 14 },
-  resendContainer: { alignItems: 'center', marginBottom: 20 },
-  resendText: { color: '#666', fontSize: 14 },
-  resendLink: { color: '#000', fontWeight: '600', fontSize: 15 },
 });

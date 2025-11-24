@@ -20,7 +20,7 @@ function RootLayoutContent() {
   // Initialize background notification handler ONCE at app startup
   useEffect(() => {
     initializeBackgroundNotifications().catch(e => 
-      console.error('Failed to initialize background notifications:', e)
+      console.log('Failed to initialize background notifications:', e)
     );
   }, []);
 

@@ -111,7 +111,7 @@ export default function ChatboxScreen() {
         return updated;
       });
     } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         text: 'Xin lỗi, có lỗi kết nối. Vui lòng thử lại sau.',

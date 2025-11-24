@@ -54,7 +54,7 @@ export default function EditAddressScreen() {
         isDefault: data.isDefault || false,
       });
     } catch (error) {
-      console.error('❌ Lỗi khi tải địa chỉ:', error);
+      console.log('❌ Lỗi khi tải địa chỉ:', error);
       showToast.error('Lỗi', 'Không thể tải thông tin địa chỉ.');
       router.back();
     } finally {
@@ -92,7 +92,7 @@ export default function EditAddressScreen() {
         { text: 'OK', onPress: () => router.replace('/(customer)/(profile)/address-book') },
       ]);
     } catch (error: any) {
-      console.error('❌ Error updating address:', error.response?.data || error.message);
+      console.log('❌ Error updating address:', error.response?.data || error.message);
       if (error.response?.status === 409) {
         showToast.error(
           'Xung đột dữ liệu',

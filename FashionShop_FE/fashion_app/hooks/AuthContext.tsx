@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(response.data.message || 'Failed to fetch user');
       }
     } catch (error) {
-      // console.error('Fetch user error:', error);
+      // console.log('Fetch user error:', error);
       Toast.show({type: "error", text1: "Hết hạn đăng nhập", text2: "Vui lòng đăng nhập lại"})
       return null;
     }
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { success: true };
     } catch (error: any) {
-      // console.error('Login error:', error);
+      // console.log('Login error:', error);
       setUser(null);
       setIsInitializing(false);
       const errorMessage = error.response?.data?.message || error.message || 'Invalid credentials';
@@ -123,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { success: true };
     } catch (error: any) {
-      console.error('Register error:', error);
+      console.log('Register error:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
       return { success: false, error: errorMessage };
     }

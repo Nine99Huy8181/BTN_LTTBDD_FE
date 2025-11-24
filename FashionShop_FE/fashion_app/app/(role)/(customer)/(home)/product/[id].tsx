@@ -86,7 +86,7 @@ export default function ProductDetailScreen() {
           setSelectedSize(variantsData[0].size);
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.log('Error fetching data:', err);
       }
     };
 
@@ -119,7 +119,7 @@ export default function ProductDetailScreen() {
       setReviews(mock);
     } catch (err) {
       // Log error and use fallback mock data
-      console.error('fetchReviews error', err);
+      console.log('fetchReviews error', err);
       const mock = [
         { rating: 5, comment: 'Sản phẩm tuyệt vời, giao nhanh.', reviewDate: '2025-10-23T12:34:00', images: [] },
         { rating: 4, comment: 'Chất lượng ok, nhưng màu khác so với hình.', reviewDate: '2025-10-22T10:20:00', images: [] },

@@ -73,7 +73,7 @@ export default function ReviewsScreen() {
       );
       setReviews(sortedData);
     } catch (error) {
-      console.error("Error fetching reviews:", error);
+      console.log("Error fetching reviews:", error);
     } finally {
       setLoading(false);
     }

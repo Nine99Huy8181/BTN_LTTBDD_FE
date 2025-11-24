@@ -19,7 +19,7 @@ async function compressImage(uri: string): Promise<string> {
     );
     return manipulated.uri;
   } catch (err) {
-    console.error('Compress error:', err);
+    console.log('Compress error:', err);
     return uri;
   }
 }
@@ -64,7 +64,7 @@ export async function uploadProductImage(uri: string): Promise<string> {
     
     if (!uploadRes.ok) {
       const errorData = await uploadRes.json();
-      console.error('Product image upload failed:', uploadRes.status, errorData);
+      console.log('Product image upload failed:', uploadRes.status, errorData);
       throw new Error(`Upload failed: ${errorData.error?.message || 'Unknown error'}`);
     }
     
@@ -77,7 +77,7 @@ export async function uploadProductImage(uri: string): Promise<string> {
       throw new Error('Upload failed: No secure_url returned');
     }
   } catch (err) {
-    console.error('Product image upload error:', err);
+    console.log('Product image upload error:', err);
     throw err;
   }
 }

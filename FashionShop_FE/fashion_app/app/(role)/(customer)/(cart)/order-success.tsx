@@ -51,11 +51,6 @@ export default function OrderSuccessScreen() {
         {/* Card thông tin */}
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Mã đơn hàng</Text>
-            <Text style={styles.value}>#DH{Date.now().toString().slice(-6)}</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.infoRow}>
             <Text style={styles.label}>Thời gian</Text>
             <Text style={styles.value}>
               {new Date().toLocaleString('vi-VN', {
@@ -71,7 +66,7 @@ export default function OrderSuccessScreen() {
 
         {/* Mô tả */}
         <Text style={styles.description}>
-          Đơn hàng đang được xử lý. Chúng tôi sẽ gửi email xác nhận ngay lập tức!
+          Đơn hàng đang được xử lý. Chúng tôi sẽ xác nhận ngay lập tức!
         </Text>
 
         {/* Nút hành động */}

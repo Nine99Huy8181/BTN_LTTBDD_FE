@@ -116,7 +116,7 @@ export default function SearchScreen() {
 
       setProducts(result);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.log('Error fetching products:', error);
       setProducts([]);
     } finally {
       setLoading(false);

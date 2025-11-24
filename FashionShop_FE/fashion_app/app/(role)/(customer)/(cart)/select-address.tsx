@@ -21,7 +21,7 @@ export default function SelectAddressScreen() {
       const addrs = await addressService.getAddressesByCustomerId(user.customerId);
       setAddresses(addrs || []);
     } catch (err) {
-      console.error('Load addresses error:', err);
+      console.log('Load addresses error:', err);
     }
   };
 
@@ -31,7 +31,7 @@ export default function SelectAddressScreen() {
       await addressService.setDefaultAddress(address.addressID);
       router.back(); // Quay lại màn hình checkout
     } catch (err) {
-      console.error('Set default address error:', err);
+      console.log('Set default address error:', err);
     }
   };
 

@@ -65,7 +65,7 @@ export default function DashboardScreen() {
       setRecentOrders(orders);
       setRecentReviews(reviews);
     } catch (error: any) {
-      console.error("Load dashboard error:", error);
+      console.log("Load dashboard error:", error);
       Toast.show({
         type: "error",
         text1: "Lỗi",
@@ -220,7 +220,7 @@ export default function DashboardScreen() {
         });
       }
     } catch (error) {
-      console.error("Export error:", error);
+      console.log("Export error:", error);
       Toast.show({
         type: "error",
         text1: "Lỗi",
@@ -683,7 +683,7 @@ function StatCard({ icon, label, value, color }: StatCardProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff", // Nền trắng
+    backgroundColor: "#F5F5F5", // Nền trắng
     paddingHorizontal: 20,
   },
   loadingContainer: {

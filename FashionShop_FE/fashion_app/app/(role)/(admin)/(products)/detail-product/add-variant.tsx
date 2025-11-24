@@ -84,7 +84,7 @@ export default function AddVariantScreen() {
         setImages((prev) => [...prev, ...validUris]);
       }
     } catch (error) {
-      console.error("Pick image error:", error);
+      console.log("Pick image error:", error);
       showToast.error("Lỗi", "Không thể chọn ảnh");
       setSelectingFromAlbum(false);
       setUploadingImages(false);
@@ -130,7 +130,7 @@ export default function AddVariantScreen() {
               try {
                 return await uploadVariantImage(uri);
               } catch (e) {
-                console.error("Upload single image failed:", e);
+                console.log("Upload single image failed:", e);
                 throw e;
               }
             })

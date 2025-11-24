@@ -81,7 +81,7 @@ export default function EditProductScreen() {
         handleChange("image", uri);
       }
     } catch (error) {
-      console.error("Pick image error:", error);
+      console.log("Pick image error:", error);
       showToast.error("Lỗi", "Không thể chọn ảnh");
       setSelectingFromAlbum(false);
     } finally {
@@ -114,7 +114,7 @@ export default function EditProductScreen() {
           // Cập nhật state (để UI hiển thị đúng, nhưng không dùng cho payload bên dưới ngay được)
           handleChange("image", uploaded);
         } catch (e) {
-          console.error("Upload error:", e);
+          console.log("Upload error:", e);
           showToast.error("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
           setUploadingImage(false);
           return;

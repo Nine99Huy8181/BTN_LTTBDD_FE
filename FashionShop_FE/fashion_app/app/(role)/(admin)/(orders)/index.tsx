@@ -66,7 +66,7 @@ export default function AdminOrdersScreen() {
       setHasMore(!response.last);
       setCurrentPage(page);
     } catch (error) {
-      console.error('Load orders error:', error);
+      console.log('Load orders error:', error);
       Toast.show({ type: 'error', text1: 'Lỗi', text2: 'Không thể tải đơn hàng' });
     } finally {
       if (isRefresh) setRefreshing(false);
@@ -192,9 +192,6 @@ export default function AdminOrdersScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
-        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
-          <Ionicons name="search-outline" size={22} color="#000000" />
-        </TouchableOpacity>
       </View>
 
       {/* Filter Tabs */}

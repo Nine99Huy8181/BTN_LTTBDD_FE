@@ -23,7 +23,7 @@ export default function CouponScreen() {
       const data = await couponService.getAvailableCoupons();
       setCoupons(data);
     } catch (error) {
-      console.error('❌ Lỗi khi tải coupon:', error);
+      console.log('❌ Lỗi khi tải coupon:', error);
       showToast.error('Lỗi', 'Không thể tải danh sách mã giảm giá');
     } finally {
       setLoading(false);

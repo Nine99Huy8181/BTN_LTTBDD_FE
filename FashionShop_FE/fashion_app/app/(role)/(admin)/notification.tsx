@@ -27,7 +27,7 @@ export default function AdminNotificationsScreen() {
     try {
       await refreshNotifications();
     } catch (e) {
-      console.error('Failed to refresh admin notifications', e);
+      console.log('Failed to refresh admin notifications', e);
     } finally {
       setRefreshing(false);
       setLoading(false);

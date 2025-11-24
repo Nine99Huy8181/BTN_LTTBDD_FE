@@ -94,7 +94,7 @@ export default function EditCouponScreen() {
       setConditions(coupon.conditions || "");
       setStatus(coupon.status as any);
     } catch (error) {
-      console.error("Error fetching coupon:", error);
+      console.log("Error fetching coupon:", error);
       showToast.error("Lỗi", "Không thể tải thông tin mã giảm giá");
       router.back();
     } finally {
@@ -205,7 +205,7 @@ export default function EditCouponScreen() {
         },
       ]);
     } catch (error: any) {
-      console.error("Error updating coupon:", error);
+      console.log("Error updating coupon:", error);
       const message =
         error.response?.data?.message || "Không thể cập nhật mã giảm giá";
       showToast.error("Lỗi", message);

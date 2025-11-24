@@ -13,7 +13,7 @@ const BACKGROUND_NOTIFICATION_TASK = 'BACKGROUND_NOTIFICATION_TASK';
 // Define the background task
 TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, async ({ data, error }: any) => {
   if (error) {
-    console.error('[BackgroundNotification] Error:', error);
+    console.log('[BackgroundNotification] Error:', error);
     return;
   }
 
@@ -34,7 +34,7 @@ TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, async ({ data, error }: any
     // Background notifications will be handled by NotificationResponseReceivedListener
     // when user taps on the notification and app restarts.
   } catch (e) {
-    console.error('[BackgroundNotification] Handler error:', e);
+    console.log('[BackgroundNotification] Handler error:', e);
   }
 });
 
@@ -53,7 +53,7 @@ export async function initializeBackgroundNotifications() {
       console.log('[BackgroundNotifications] Task already registered');
     }
   } catch (error) {
-    console.error('[BackgroundNotifications] Failed to register task:', error);
+    console.log('[BackgroundNotifications] Failed to register task:', error);
   }
 }
 

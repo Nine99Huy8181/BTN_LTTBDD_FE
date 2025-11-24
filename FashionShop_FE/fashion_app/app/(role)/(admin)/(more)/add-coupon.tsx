@@ -146,7 +146,7 @@ export default function AddCouponScreen() {
         },
       ]);
     } catch (error: any) {
-      console.error("Error creating coupon:", error);
+      console.log("Error creating coupon:", error);
       const message =
         error.response?.data?.message || "Không thể tạo mã giảm giá";
       showToast.error("Lỗi", message);

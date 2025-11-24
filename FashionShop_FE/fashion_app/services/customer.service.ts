@@ -25,11 +25,11 @@ export const customerService = {
       return response.data;
     } catch (error: any) {
       if (error.response) {
-        console.error('❌ Lỗi khi cập nhật customer:');
-        console.error('Status code:', error.response.status);
-        console.error('Response data:', error.response.data);
+        console.log('❌ Lỗi khi cập nhật customer:');
+        console.log('Status code:', error.response.status);
+        console.log('Response data:', error.response.data);
       } else {
-        console.error('⚠️ Lỗi không có response:', error.message);
+        console.log('⚠️ Lỗi không có response:', error.message);
       }
       throw error;
     }

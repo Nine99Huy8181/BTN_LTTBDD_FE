@@ -66,7 +66,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       setNotifications(data.sort((a, b) => normalizeDate(b.createdDate) - normalizeDate(a.createdDate)));
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      console.log('Failed to load notifications:', error);
     } finally {
       setLoading(false);
     }
@@ -194,7 +194,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             console.warn(`[NotificationContext] Connection failed, retrying in ${delay}ms (attempt ${retries}/${maxRetries})`);
             setTimeout(attemptConnect, delay);
           } else {
-            console.error('[NotificationContext] Failed to connect WebSocket after max retries', e);
+            console.log('[NotificationContext] Failed to connect WebSocket after max retries', e);
             // Don't crash the app, just warn user in console
           }
         }
@@ -219,7 +219,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         prev.map(n => n.notificationID === id ? { ...n, isRead: true, readDate: new Date().toISOString() } : n)
       );
     } catch (error) {
-      console.error('Mark as read failed:', error);
+      console.log('Mark as read failed:', error);
     }
   };
 
@@ -232,7 +232,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
       setNotifications(prev => prev.filter(n => n.notificationID !== id));
     } catch (error) {
-      console.error('Delete notification failed:', error);
+      console.log('Delete notification failed:', error);
     }
   };
 

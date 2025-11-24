@@ -68,7 +68,7 @@ export default function CouponsScreen() {
       });
       setCoupons(sortedData);
     } catch (error) {
-      console.error("Error fetching coupons:", error);
+      console.log("Error fetching coupons:", error);
       showToast.error("Lỗi", "Không thể tải danh sách mã giảm giá");
     } finally {
       setLoading(false);
@@ -148,7 +148,7 @@ export default function CouponsScreen() {
               showToast.success("Thành công", "Đã xóa mã giảm giá");
               fetchCoupons();
             } catch (error) {
-              console.error("Error deleting coupon:", error);
+              console.log("Error deleting coupon:", error);
               showToast.error("Lỗi", "Không thể xóa mã giảm giá");
             }
           },

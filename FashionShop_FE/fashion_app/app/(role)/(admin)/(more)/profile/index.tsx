@@ -109,7 +109,7 @@ export default function ProfileAdminScreen() {
       setError(
         err.response?.data?.message || "Không thể tải thông tin cá nhân"
       );
-      console.error(err);
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -237,7 +237,7 @@ export default function ProfileAdminScreen() {
       );
       showToast.success("Thành công", "Ảnh đại diện đã được cập nhật");
     } catch (err: any) {
-      console.error("Upload avatar error:", err?.response || err);
+      console.log("Upload avatar error:", err?.response || err);
       showAlert(
         "Lỗi",
         err?.response?.data?.message || "Không thể cập nhật avatar"

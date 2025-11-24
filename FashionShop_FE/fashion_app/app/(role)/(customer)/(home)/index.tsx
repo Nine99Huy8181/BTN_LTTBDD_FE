@@ -84,7 +84,7 @@ export default function HomeScreen() {
       setCurrentPage(nextPage);
       setHasMore(!randomData.last);
     } catch (err) {
-      console.error('Error loading more products:', err);
+      console.log('Error loading more products:', err);
     } finally {
       setLoadingMore(false);
     }

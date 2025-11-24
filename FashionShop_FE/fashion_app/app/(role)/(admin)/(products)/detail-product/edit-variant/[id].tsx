@@ -113,7 +113,7 @@ export default function EditVariantScreen() {
         setImages((prev) => [...prev, ...validUris]);
       }
     } catch (error) {
-      console.error("Pick image error:", error);
+      console.log("Pick image error:", error);
       showToast.error("Lỗi", "Không thể chọn ảnh");
       setSelectingFromAlbum(false);
       setUploadingImages(false);
@@ -155,7 +155,7 @@ export default function EditVariantScreen() {
             !/^https?:\/\//i.test(u) ? uploaded[idx++] : u
           );
         } catch (e) {
-          console.error("Upload error:", e);
+          console.log("Upload error:", e);
           showToast.error("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
           setUploadingImages(false);
           setLoading(false);

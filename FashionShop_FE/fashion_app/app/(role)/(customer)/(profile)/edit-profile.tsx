@@ -123,7 +123,7 @@ export default function EditProfileScreen() {
       setError(
         err.response?.data?.message || "Không thể tải thông tin cá nhân"
       );
-      console.error(err);
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -191,7 +191,7 @@ export default function EditProfileScreen() {
       // Load lại dữ liệu mới nhất
       fetchCustomerProfile();
     } catch (err: any) {
-      console.error("❌ Lỗi Update Info:", err);
+      console.log("❌ Lỗi Update Info:", err);
 
       // Lấy thông báo lỗi chi tiết từ Backend nếu có
       const errorMsg =
@@ -277,7 +277,7 @@ export default function EditProfileScreen() {
 
       showToast.success("Thành công", "Ảnh đại diện đã được cập nhật");
     } catch (err: any) {
-      console.error("Upload avatar error:", err?.response || err);
+      console.log("Upload avatar error:", err?.response || err);
       showToast.error(
         "Lỗi",
         err?.response?.data?.message || "Không thể cập nhật avatar"

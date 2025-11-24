@@ -30,7 +30,7 @@ export default function CustomerLayout() {
       const items = await CartService.getCartItemsByCartId(cart.cartID);
       setBadgeCount(items?.length ? items.length : undefined);
     } catch (err) {
-      console.error('Failed to load cart badge', err);
+      console.log('Failed to load cart badge', err);
       setBadgeCount(undefined);
     }
   };

@@ -76,7 +76,7 @@ export const connectWebSocket = async (
   };
 
   client.onStompError = (frame) => {
-    console.error('STOMP Error:', frame);
+    console.log('STOMP Error:', frame);
   };
 
   client.activate();
@@ -107,7 +107,7 @@ export const registerPushToken = async (customerId: number) => {
   }
 
   if (finalStatus !== 'granted') {
-    console.error('Permission not granted for push notifications');
+    console.log('Permission not granted for push notifications');
     return;
   }
 
@@ -118,7 +118,7 @@ export const registerPushToken = async (customerId: number) => {
       Constants.manifest?.extra?.eas?.projectId;
 
     if (!projectId) {
-      console.error('EAS Project ID not found in app config');
+      console.log('EAS Project ID not found in app config');
       return;
     }
 
@@ -133,6 +133,6 @@ export const registerPushToken = async (customerId: number) => {
 
     console.log('Push token saved to backend');
   } catch (e: any) {
-    console.error('Error getting or saving push token', e.message);
+    console.log('Error getting or saving push token', e.message);
   }
 };

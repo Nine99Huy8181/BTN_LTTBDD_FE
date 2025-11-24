@@ -21,7 +21,7 @@ async function compressImage(uri: string): Promise<string> {
     );
     return manipulated.uri;
   } catch (err) {
-    console.error('Compress error:', err);
+    console.log('Compress error:', err);
     return uri;  // Fallback nếu lỗi
   }
 }
@@ -70,7 +70,7 @@ try {
   const testData = await testResponse.json();
   console.log('Connection test response:', testData);
 } catch (err) {
-  console.error('Connection test failed:', err);
+  console.log('Connection test failed:', err);
 }
 
     // 4. Gửi POST request với các headers bổ sung
@@ -89,8 +89,8 @@ try {
     
     if (!uploadRes.ok) {
       const errorData = await uploadRes.json();
-      console.error('Upload failed with status:', uploadRes.status);
-      console.error('Error details:', errorData);
+      console.log('Upload failed with status:', uploadRes.status);
+      console.log('Error details:', errorData);
       throw new Error(`Upload failed: ${errorData.error?.message || 'Unknown error'}`);
     }
     const data = await uploadRes.json();
@@ -102,7 +102,7 @@ try {
       throw new Error('Upload failed: No secure_url');
     }
   } catch (err) {
-    console.error('Cloudinary upload error:', err);
+    console.log('Cloudinary upload error:', err);
     if (axios.isAxiosError(err)) {
       console.log('Error details:', {
         request: err.request,
