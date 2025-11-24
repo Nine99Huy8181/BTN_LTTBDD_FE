@@ -1,7 +1,8 @@
 // app/(customer)/(cart)/checkout.tsx
 import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAlertDialog } from '@/hooks/AlertDialogContext';
 
 import { formatCurrencyVND, Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
@@ -9,6 +10,7 @@ import { addressService } from '@/services/address.service';
 import { api } from '@/services/api';
 import { CartService } from '@/services/cart.service';
 import { OrderService } from '@/services/order.service';
+import { showToast } from '@/utils/toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -24,6 +26,7 @@ export default function CheckoutScreen() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'cod'>('card');
   const [note, setNote] = useState('');
   const [isPlacing, setIsPlacing] = useState(false);
+  const { showAlert } = useAlertDialog();
 
   // Deep Link handler cho VNPay callback
   useEffect(() => {
@@ -38,9 +41,7 @@ export default function CheckoutScreen() {
         // Clear cart và navigate
         router.replace(`/(role)/(customer)/(cart)/order-success`);
       } else if (queryParams?.status === 'failed') {
-        Alert.alert('Thanh toán thất bại', 'Vui lòng thử lại', [
-          { text: 'OK', onPress: () => router.back() }
-        ]);
+        showToast.error('Thanh toán thất bại', 'Vui lòng thử lại');
       }
     };
 
@@ -136,38 +137,38 @@ export default function CheckoutScreen() {
           await Linking.openURL(response.data.paymentUrl);
         } else {
           console.error('❌ Cannot open URL:', response.data.paymentUrl);
-          Alert.alert('Lỗi', 'Không thể mở trang thanh toán VNPay');
+          showToast.error('Lỗi', 'Không thể mở trang thanh toán VNPay');
         }
       } else {
         console.error('❌ No payment URL received');
-        Alert.alert('Lỗi', 'Không tạo được link thanh toán VNPay');
+        showToast.error('Lỗi', 'Không tạo được link thanh toán VNPay');
       }
     } catch (err: any) {
       console.error('❌ VNPay payment error:', err);
       console.error('Error details:', err.response?.data);
-      Alert.alert('Lỗi', err.response?.data?.message || 'Lỗi khi tạo thanh toán VNPay');
+      showToast.error('Lỗi', err.response?.data?.message || 'Lỗi khi tạo thanh toán VNPay');
     }
   };
 
   const placeOrder = async () => {
     if (!customerId) {
-      Alert.alert('Lỗi', 'Không tìm thấy thông tin khách hàng.');
+      showToast.error('Lỗi', 'Không tìm thấy thông tin khách hàng.');
       return;
     }
     if (!items || items.length === 0) {
-      Alert.alert('Giỏ hàng rỗng', 'Vui lòng thêm sản phẩm trước khi đặt hàng.');
+      showToast.error('Giỏ hàng rỗng', 'Vui lòng thêm sản phẩm trước khi đặt hàng.');
       return;
     }
     if (!defaultAddress) {
-      Alert.alert('Lỗi', 'Vui lòng thêm địa chỉ giao hàng');
+      showToast.error('Lỗi', 'Vui lòng thêm địa chỉ giao hàng');
       return;
     }
     if (!recipientName.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập tên người nhận');
+      showToast.error('Lỗi', 'Vui lòng nhập tên người nhận');
       return;
     }
     if (!recipientPhone.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại người nhận');
+      showToast.error('Lỗi', 'Vui lòng nhập số điện thoại người nhận');
       return;
     }
 
@@ -209,14 +210,14 @@ export default function CheckoutScreen() {
           }
         }
 
-        Alert.alert('Đặt hàng thành công', 'Cảm ơn bạn đã đặt hàng', [
+        showAlert('Đặt hàng thành công', 'Cảm ơn bạn đã đặt hàng', [
           { text: 'OK', onPress: () => router.replace('/(role)/(customer)/(cart)/order-success') }
         ]);
       }
     } catch (err: any) {
       console.error('❌ Place order error', err);
       console.error('Error response:', err.response?.data);
-      Alert.alert('Lỗi', err.response?.data?.message || err?.message || 'Đặt hàng thất bại');
+      showToast.error('Lỗi', err.response?.data?.message || err?.message || 'Đặt hàng thất bại');
     } finally {
       setIsPlacing(false);
     }

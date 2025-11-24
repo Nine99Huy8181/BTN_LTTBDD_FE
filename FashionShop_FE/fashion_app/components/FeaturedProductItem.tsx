@@ -1,10 +1,11 @@
 // FeaturedProductItem.tsx
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ProductResponse } from '@/types';
 import { Routes } from '@/constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useWishlist } from '@/hooks/WishlistContext';
+import { showToast } from '@/utils/toast';
 
 const { width } = Dimensions.get('window');
 const itemWidth = width * 0.35;
@@ -32,7 +33,7 @@ export default function FeaturedProductItem({
         await addToWishlist(product.productID);
       }
     } catch (error) {
-      Alert.alert('Lỗi', 'Không thể cập nhật danh sách yêu thích');
+      showToast.error('Lỗi', 'Không thể cập nhật danh sách yêu thích');
     }
   };
 

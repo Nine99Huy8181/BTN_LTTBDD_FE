@@ -9,7 +9,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -20,6 +19,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from "@/hooks/AlertDialogContext";
 
 export default function RespondReviewScreen() {
   const params = useLocalSearchParams();
@@ -27,6 +28,7 @@ export default function RespondReviewScreen() {
   const nameParam = params?.name as string | undefined;
   const avatarParam = params?.avatar as string | undefined;
   const router = useRouter();
+  const { showAlert } = useAlertDialog();
 
   const [review, setReview] = useState<ReviewDTO | null>(null);
   const [existingResponse, setExistingResponse] =
@@ -62,7 +64,7 @@ export default function RespondReviewScreen() {
       }
     } catch (error) {
       console.error("Error fetching review:", error);
-      Alert.alert("Lỗi", "Không thể tải thông tin đánh giá");
+      showToast.error("Lỗi", "Không thể tải thông tin đánh giá");
       router.back();
     } finally {
       setLoading(false);
@@ -71,7 +73,7 @@ export default function RespondReviewScreen() {
 
   const handleSubmitResponse = async () => {
     if (!responseContent.trim()) {
-      Alert.alert("Thông báo", "Vui lòng nhập nội dung phản hồi");
+      showToast.info("Thông báo", "Vui lòng nhập nội dung phản hồi");
       return;
     }
 
@@ -89,7 +91,7 @@ export default function RespondReviewScreen() {
             status: "ACTIVE",
           } as any
         );
-        Alert.alert("Thành công", "Đã cập nhật phản hồi");
+        showToast.success("Thành công", "Đã cập nhật phản hồi");
       } else {
         await reviewResponseService.createResponse({
           review: { reviewID: Number(id) },
@@ -98,7 +100,7 @@ export default function RespondReviewScreen() {
           responseDate: new Date().toISOString(),
           status: "ACTIVE",
         } as any);
-        Alert.alert("Thành công", "Đã gửi phản hồi");
+        showToast.success("Thành công", "Đã gửi phản hồi");
       }
 
       router.back();
@@ -110,14 +112,14 @@ export default function RespondReviewScreen() {
         e?.response?.data ||
         e?.message ||
         "Không thể gửi phản hồi. Vui lòng thử lại";
-      Alert.alert("Lỗi", msg.toString());
+      showToast.error("Lỗi", msg.toString());
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteResponse = () => {
-    Alert.alert("Xác nhận", "Bạn có chắc chắn muốn xóa phản hồi này?", [
+    showAlert("Xác nhận", "Bạn có chắc chắn muốn xóa phản hồi này?", [
       { text: "Hủy", style: "cancel" },
       {
         text: "Xóa",
@@ -131,11 +133,11 @@ export default function RespondReviewScreen() {
             );
             setResponseContent("");
             setExistingResponse(null);
-            Alert.alert("Thành công", "Đã xóa phản hồi");
+            showToast.success("Thành công", "Đã xóa phản hồi");
             router.back();
           } catch (err) {
             console.error("Error deleting response:", err);
-            Alert.alert("Lỗi", "Không thể xóa phản hồi. Vui lòng thử lại");
+            showToast.error("Lỗi", "Không thể xóa phản hồi. Vui lòng thử lại");
           } finally {
             setSubmitting(false);
           }

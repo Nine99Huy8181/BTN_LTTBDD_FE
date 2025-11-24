@@ -31,7 +31,7 @@ export default function SplashScreen() {
               onPress={() => router.push(Routes.AuthLogin)}
               activeOpacity={0.8}
             >
-              <Text style={styles.discoverText}>Discover</Text>
+              <Text style={styles.discoverText}>Bắt đầu</Text>
               <Text style={styles.arrow}>›</Text>
             </TouchableOpacity>
           </View>

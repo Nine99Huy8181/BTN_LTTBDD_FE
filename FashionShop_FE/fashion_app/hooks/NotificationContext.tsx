@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Platform, ToastAndroid, Alert } from 'react-native';
+import { Platform, ToastAndroid } from 'react-native';
 import { connectWebSocket, disconnectWebSocket, registerPushToken } from '@/services/websocket';
+import { showToast } from '@/utils/toast';
 import { useAuth } from '@/hooks/AuthContext';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
@@ -139,7 +140,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             if (Platform.OS === 'android') {
               ToastAndroid.show(text, ToastAndroid.SHORT);
             } else {
-              Alert.alert(data.title || 'Thông báo', text);
+              showToast.info(text);
             }
           }
         } catch (e) {

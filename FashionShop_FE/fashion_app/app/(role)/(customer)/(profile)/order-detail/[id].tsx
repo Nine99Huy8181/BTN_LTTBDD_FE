@@ -5,7 +5,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,10 +13,13 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from "@/hooks/AlertDialogContext";
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { showAlert } = useAlertDialog();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +30,6 @@ export default function OrderDetailScreen() {
         setOrder(data);
       } catch (error) {
         console.log('Lỗi khi tải đơn hàng:', error);
-        Alert.alert('Lỗi', 'Không thể tải thông tin đơn hàng');
       } finally {
         setLoading(false);
       }
@@ -37,7 +38,7 @@ export default function OrderDetailScreen() {
   }, [id]);
 
   const handleCancel = async () => {
-    Alert.alert('Hủy đơn hàng', 'Bạn có chắc muốn hủy đơn hàng này?', [
+    showAlert('Hủy đơn hàng', 'Bạn có chắc muốn hủy đơn hàng này?', [
       { text: 'Không giữ lại', style: 'cancel' },
       {
         text: 'Hủy đơn',
@@ -45,9 +46,9 @@ export default function OrderDetailScreen() {
         onPress: async () => {
           try {
             await OrderService.cancelOrder(Number(id));
-            Alert.alert('Thành công', 'Đơn hàng đã được hủy', [{ text: 'OK', onPress: () => router.back() }]);
+            showAlert('Thành công', 'Đơn hàng đã được hủy', [{ text: 'OK', onPress: () => router.back() }]);
           } catch (error) {
-            Alert.alert('Lỗi', 'Không thể hủy đơn hàng. Vui lòng thử lại sau.');
+            showToast.error('Lỗi', 'Không thể hủy đơn hàng. Vui lòng thử lại sau.');
           }
         },
       },

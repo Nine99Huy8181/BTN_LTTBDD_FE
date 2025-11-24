@@ -2,10 +2,11 @@
 import { formatCurrencyVND, Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { CartItem, CartService } from '@/services/cart.service';
+import { showToast } from '@/utils/toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Animated, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -52,7 +53,7 @@ export default function CartScreen() {
       }
       await loadCart();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Could not update quantity');
+      showToast.error('Error', err.message || 'Could not update quantity');
     }
   };
 
@@ -61,7 +62,7 @@ export default function CartScreen() {
       await CartService.deleteCartItem(item.cartItemID);
       await loadCart();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Could not delete item');
+      showToast.error('Error', err.message || 'Could not delete item');
     }
   };
 

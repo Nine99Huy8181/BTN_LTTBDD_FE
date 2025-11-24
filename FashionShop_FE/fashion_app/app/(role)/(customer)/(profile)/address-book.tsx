@@ -2,8 +2,10 @@
 import { Routes } from '@/constants';
 import { useAuth } from '@/hooks/AuthContext';
 import { addressService } from '@/services/address.service';
+import { showToast } from '@/utils/toast';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import CustomAlertDialog, { ButtonType } from '@/components/CustomAlertDialog';
 import {
   ActivityIndicator,
   Alert,
@@ -29,29 +31,43 @@ export default function AddressBookScreen() {
       const sorted = (data as any[]).sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
       setAddresses(sorted);
     } catch (error) {
-      Alert.alert('Lỗi', 'Không thể tải danh sách địa chỉ');
+      showToast.error('Lỗi', 'Không thể tải danh sách địa chỉ');
     } finally {
       setLoading(false);
     }
   };
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalProps, setModalProps] = useState<any>({});
+
+  const showAlert = (title: string, message: string, buttons: ButtonType[]) => {
+    setModalProps({ title, message, buttons });
+    setIsModalVisible(true);
+  };
+  const handleClose = () => setIsModalVisible(false);
 
   useEffect(() => {
     if (customerId) fetchAddresses();
   }, [customerId]);
 
   const handleDelete = async (id: number) => {
-    Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa địa chỉ này?', [
-      { text: 'Hủy', style: 'cancel' },
+    showAlert('Xác nhận', 'Bạn có chắc muốn xóa địa chỉ này?', [
+      { 
+        text: 'Hủy', 
+        style: 'cancel',
+        // Nút Hủy không cần làm gì cả, chỉ cần đóng modal (hàm handlePress trong CustomAlertDialog tự đóng)
+      },
       {
         text: 'Xóa',
-        style: 'destructive',
+        style: 'destructive', // Sử dụng style 'destructive' để có màu đỏ
         onPress: async () => {
+          // Logic xóa giữ nguyên
           try {
             await addressService.deleteAddress(id);
-            Alert.alert('Thành công', 'Địa chỉ đã bị xóa!');
+            showToast.success('Thành công', 'Địa chỉ đã bị xóa!');
             fetchAddresses();
           } catch {
-            Alert.alert('Lỗi', 'Không thể xóa địa chỉ này');
+            showToast.error('Lỗi', 'Không thể xóa địa chỉ này');
           }
         },
       },
@@ -72,10 +88,10 @@ export default function AddressBookScreen() {
   const handleSetDefault = async (id: number) => {
     try {
       await addressService.setDefaultAddress(id);
-      Alert.alert('Thành công', 'Đã đặt làm địa chỉ mặc định!');
+      showToast.success('Thành công', 'Đã đặt làm địa chỉ mặc định!');
       fetchAddresses();
     } catch {
-      Alert.alert('Lỗi', 'Không thể đặt làm mặc định');
+      showToast.error('Lỗi', 'Không thể đặt làm mặc định');
     }
   };
 
@@ -171,6 +187,14 @@ export default function AddressBookScreen() {
           <Text style={styles.secondaryButtonText}>Quay lại</Text>
         </TouchableOpacity>
       </View>
+
+      <CustomAlertDialog
+        isVisible={isModalVisible}
+        title={modalProps.title || ""}
+        message={modalProps.message || ""}
+        buttons={modalProps.buttons || []}
+        onClose={handleClose}
+      />
     </ScrollView>
   );
 }

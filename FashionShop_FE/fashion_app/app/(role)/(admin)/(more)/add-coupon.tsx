@@ -7,7 +7,6 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,9 +16,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from "@/hooks/AlertDialogContext";
 
 export default function AddCouponScreen() {
   const router = useRouter();
+  const { showAlert } = useAlertDialog();
   const [loading, setLoading] = useState(false);
 
   // Form States
@@ -116,7 +118,7 @@ export default function AddCouponScreen() {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert("Lỗi", "Vui lòng kiểm tra lại thông tin");
+      showToast.error("Lỗi", "Vui lòng kiểm tra lại thông tin");
       return;
     }
 
@@ -137,7 +139,7 @@ export default function AddCouponScreen() {
       };
 
       await couponService.createCoupon(couponData);
-      Alert.alert("Thành công", "Đã tạo mã giảm giá mới", [
+      showAlert("Thành công", "Đã tạo mã giảm giá mới", [
         {
           text: "OK",
           onPress: () => router.back(),
@@ -147,7 +149,7 @@ export default function AddCouponScreen() {
       console.error("Error creating coupon:", error);
       const message =
         error.response?.data?.message || "Không thể tạo mã giảm giá";
-      Alert.alert("Lỗi", message);
+      showToast.error("Lỗi", message);
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import { Stack, useRouter } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
+import { AlertDialogProvider } from '@/hooks/AlertDialogContext';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
@@ -116,8 +117,10 @@ export default function RootLayout() {
       <AuthProvider>
         <WishlistProvider>
           <NotificationProvider>
-            <RootLayoutContent />
-            <Toast />
+            <AlertDialogProvider>
+              <RootLayoutContent />
+              <Toast />
+            </AlertDialogProvider>
           </NotificationProvider>
         </WishlistProvider>
       </AuthProvider>

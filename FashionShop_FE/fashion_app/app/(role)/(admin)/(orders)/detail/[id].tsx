@@ -4,10 +4,10 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import { useAlertDialog } from '@/hooks/AlertDialogContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ const STATUS_FLOW = ['PENDING', 'APPROVED', 'SHIPPED', 'DELIVERED'];
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { showAlert } = useAlertDialog();
   const [order, setOrder] = useState<OrderDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -41,7 +42,7 @@ export default function OrderDetailScreen() {
   }, [id]);
 
   const updateStatus = async (newStatus: string) => {
-    Alert.alert(
+    showAlert(
       'Xác nhận',
       `Cập nhật trạng thái đơn hàng thành "${getStatusText(newStatus)}"?`,
       [

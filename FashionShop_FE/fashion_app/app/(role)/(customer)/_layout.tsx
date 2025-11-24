@@ -70,7 +70,7 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="(cart)"
         options={{
-          title: 'Cart',
+          title: 'Giỏ hàng',
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="cart" size={25} color={color} />
@@ -86,7 +86,7 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="wishlist"
         options={{
-          title: 'Wishlist',
+          title: 'Yêu thích',
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="heart" size={25} color={color} />
@@ -101,7 +101,7 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="notification"
         options={{
-          title: 'Notification',
+          title: 'Thông báo',
           headerShown: false,
           tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
           tabBarIcon: ({ color }) => (
@@ -117,7 +117,7 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="(profile)"
         options={{
-          title: 'Profile',
+          title: 'Thông tin',
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Ionicons name="person" size={25} color={color} />

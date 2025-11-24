@@ -5,7 +5,6 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -13,6 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from '@/hooks/AlertDialogContext';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -20,6 +21,7 @@ export default function ProductDetailScreen() {
 
   const [variants, setVariants] = useState<ProductVariantResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const { showAlert } = useAlertDialog();
 
   // Sử dụng useFocusEffect để refresh khi quay lại từ EditVariantScreen
   useFocusEffect(
@@ -36,7 +38,7 @@ export default function ProductDetailScreen() {
       );
       setVariants(res);
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể tải variants");
+      showToast.error("Lỗi", "Không thể tải variants");
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,7 @@ export default function ProductDetailScreen() {
   };
 
   const confirmDeleteVariant = (variantId: number) => {
-    Alert.alert("Xác nhận", "Bạn có chắc muốn xóa biến thể này?", [
+    showAlert("Xác nhận", "Bạn có chắc muốn xóa biến thể này?", [
       { text: "Hủy", style: "cancel" },
       {
         text: "Xóa",
@@ -64,10 +66,10 @@ export default function ProductDetailScreen() {
           try {
             setLoading(true);
             await productVariantService.deleteVariant(variantId);
-            Alert.alert("Đã xóa");
+            showToast.success("Thành công", "Đã xóa biến thể");
             fetchVariants();
           } catch (error) {
-            Alert.alert("Lỗi", "Không thể xóa biến thể");
+            showToast.error("Lỗi", "Không thể xóa biến thể");
           } finally {
             setLoading(false);
           }

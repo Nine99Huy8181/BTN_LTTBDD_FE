@@ -21,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { showToast } from "@/utils/toast";
 
 export default function AddVariantScreen() {
   const params = useLocalSearchParams();
@@ -59,7 +60,7 @@ export default function AddVariantScreen() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         setSelectingFromAlbum(false);
-        Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
+        showToast.error("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
         return;
       }
 
@@ -76,7 +77,7 @@ export default function AddVariantScreen() {
         // Validate URIs and add them to state as local URIs (no upload now)
         const validUris = uris.filter((uri) => isValidImageUri(uri));
         if (validUris.length === 0) {
-          Alert.alert("Lỗi", "Không có URI ảnh hợp lệ");
+          showToast.error("Lỗi", "Không có URI ảnh hợp lệ");
           return;
         }
 
@@ -84,7 +85,7 @@ export default function AddVariantScreen() {
       }
     } catch (error) {
       console.error("Pick image error:", error);
-      Alert.alert("Lỗi", "Không thể chọn ảnh");
+      showToast.error("Lỗi", "Không thể chọn ảnh");
       setSelectingFromAlbum(false);
       setUploadingImages(false);
     } finally {
@@ -104,12 +105,12 @@ export default function AddVariantScreen() {
 
   const saveVariant = async () => {
     if (!sku.trim()) {
-      Alert.alert("Lỗi", "SKU là bắt buộc");
+      showToast.error("Lỗi", "SKU là bắt buộc");
       return;
     }
 
     if (!productID || productID <= 0) {
-      Alert.alert("Lỗi", "ProductID không hợp lệ");
+      showToast.error("Lỗi", "ProductID không hợp lệ");
       return;
     }
 
@@ -141,7 +142,7 @@ export default function AddVariantScreen() {
             !/^https?:\/\//i.test(u) ? uploaded[uploadIndex++] : u
           );
         } catch (e) {
-          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+          showToast.error("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
           setUploadingImages(false);
           setLoading(false);
           return;
@@ -166,10 +167,10 @@ export default function AddVariantScreen() {
 
       await productVariantService.createVariant(createPayload);
 
-      Alert.alert("Thành công", "Biến thể đã được tạo");
+      showToast.success("Thành công", "Biến thể đã được tạo");
       router.back();
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể tạo biến thể");
+      showToast.error("Lỗi", "Không thể tạo biến thể");
     } finally {
       setLoading(false);
     }

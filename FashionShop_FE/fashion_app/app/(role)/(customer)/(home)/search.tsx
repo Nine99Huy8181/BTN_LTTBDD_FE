@@ -282,7 +282,7 @@ export default function SearchScreen() {
       {sortedProducts.length > 0 && (
         <View style={styles.resultInfo}>
           <Text style={styles.resultText}>
-            {sortedProducts.length} {sortedProducts.length === 1 ? 'Product' : 'Products'} Found
+            {sortedProducts.length} {sortedProducts.length === 1 ? 'sản phẩm' : 'sản phẩm'} tìm thấy
           </Text>
         </View>
       )}
@@ -315,8 +315,8 @@ export default function SearchScreen() {
                 <View style={styles.emptyIconContainer}>
                   <Ionicons name="search-outline" size={64} color="#D1D5DB" />
                 </View>
-                <Text style={styles.emptyTitle}>No Products Found</Text>
-                <Text style={styles.emptySubtitle}>Try adjusting your search or filter to find what you're looking for</Text>
+                <Text style={styles.emptyTitle}>Không tìm thấy sản phẩm</Text>
+                <Text style={styles.emptySubtitle}>Hãy thử lại</Text>
               </View>
             }
           />

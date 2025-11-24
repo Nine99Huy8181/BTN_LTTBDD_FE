@@ -21,6 +21,7 @@ import { api } from '../../../../../../services/api';
 import { uploadImageToCloudinary } from '../../../../../../services/cloudinaryService'; // Thay đổi import
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { OrderService } from '../../../../../../services/order.service';
+import { showToast } from '../../../../../../utils/toast';
 type ReviewItem = {
   id: string;
   rating: number;
@@ -81,7 +82,7 @@ export default function ProductReviewScreen() {
       }
     } catch (error) {
       console.error('Error fetching order:', error);
-      Alert.alert('Lỗi', 'Không thể tải thông tin đơn hàng');
+      showToast.error('Lỗi', 'Không thể tải thông tin đơn hàng');
     } finally {
       setLoading(false);
     }
@@ -91,7 +92,7 @@ export default function ProductReviewScreen() {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Quyền truy cập bị từ chối', 'Cần quyền truy cập thư viện ảnh để chọn ảnh');
+        showToast.error('Quyền truy cập bị từ chối', 'Cần quyền truy cập thư viện ảnh để chọn ảnh');
         return;
       }
 
@@ -103,7 +104,7 @@ export default function ProductReviewScreen() {
       const MAX_IMAGES = 3;
       const remaining = Math.max(0, MAX_IMAGES - imageUris.length);
       if (remaining <= 0) {
-        Alert.alert('Giới hạn ảnh', `Bạn chỉ có thể chọn tối đa ${MAX_IMAGES} ảnh cho một đánh giá.`);
+        showToast.error('Giới hạn ảnh', `Bạn chỉ có thể chọn tối đa ${MAX_IMAGES} ảnh cho một đánh giá.`);
         return;
       }
       const pickerOptions: any = { quality: 0.6, allowsMultipleSelection: true, selectionLimit: remaining }; // Giới hạn ảnh
@@ -117,7 +118,7 @@ export default function ProductReviewScreen() {
       const assets = result.assets ?? (result.uri ? [{ uri: result.uri }] : []);
 
       if (!cancelled && assets.length > 0) {
-        Alert.alert('Đang tải ảnh', 'Vui lòng chờ ảnh được tải lên server...');
+        showToast.info('Đang tải ảnh', 'Vui lòng chờ ảnh được tải lên server...');
 
         // Ensure we don't exceed MAX_IMAGES even if picker returns more
         const toUpload = assets.slice(0, remaining);
@@ -125,11 +126,11 @@ export default function ProductReviewScreen() {
         const uploadedUrls = await Promise.all(uploadPromises);
 
         setImageUris(prev => [...prev, ...uploadedUrls].slice(0, MAX_IMAGES));
-        Alert.alert('Thành công', `${uploadedUrls.length} ảnh đã được tải lên.`);
+        showToast.success('Thành công', `${uploadedUrls.length} ảnh đã được tải lên.`);
       }
     } catch (err) {
       console.error('pickImage/uploadImage error', err);
-      Alert.alert('Lỗi', 'Không thể chọn hoặc tải ảnh lên');
+      showToast.error('Lỗi', 'Không thể chọn hoặc tải ảnh lên');
     }
   }
 
@@ -153,7 +154,7 @@ export default function ProductReviewScreen() {
     if (!selectedProductId) {
       const errMsg = 'Vui lòng chọn sản phẩm để đánh giá';
       console.error('[DEBUG submitReviewToBackend] Error:', errMsg);
-      Alert.alert('Lỗi', errMsg);
+      showToast.error('Lỗi', errMsg);
       throw new Error(errMsg);
     }
 
@@ -182,11 +183,11 @@ export default function ProductReviewScreen() {
   function addReview() {
     const parsed = parseInt(rating + '', 10);
     if (isNaN(parsed) || parsed < 1 || parsed > 5) {
-      Alert.alert('Lỗi', 'Rating phải là số từ 1 đến 5');
+      showToast.error('Lỗi', 'Rating phải là số từ 1 đến 5');
       return;
     }
     if (!comment.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập nội dung bình luận');
+      showToast.error('Lỗi', 'Vui lòng nhập nội dung bình luận');
       return;
     }
 
@@ -210,7 +211,7 @@ export default function ProductReviewScreen() {
       .catch(err => {
         console.error('[DEBUG addReview] Failed to submit review:', err);
         const errorMsg = err.message || 'Không thể gửi đánh giá tới server';
-        Alert.alert('Lỗi', errorMsg);
+        showToast.error('Lỗi', errorMsg);
       });
   }
 

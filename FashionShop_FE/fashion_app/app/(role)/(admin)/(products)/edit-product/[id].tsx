@@ -24,6 +24,7 @@ import {
   View,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import { showToast } from "@/utils/toast";
 
 export default function EditProductScreen() {
   const { id } = useLocalSearchParams();
@@ -45,7 +46,7 @@ export default function EditProductScreen() {
       const response = await productService.getProductById(Number(id));
       setProduct(response);
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể tải thông tin sản phẩm");
+      showToast.error("Lỗi", "Không thể tải thông tin sản phẩm");
     } finally {
       setLoading(false);
     }
@@ -58,7 +59,7 @@ export default function EditProductScreen() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         setSelectingFromAlbum(false);
-        Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
+        showToast.error("Lỗi", "Quyền truy cập bị từ chối");
         return;
       }
 
@@ -73,7 +74,7 @@ export default function EditProductScreen() {
 
         if (!isValidImageUri(uri)) {
           setSelectingFromAlbum(false);
-          Alert.alert("Lỗi", "URI ảnh không hợp lệ");
+          showToast.error("Lỗi", "URI ảnh không hợp lệ");
           return;
         }
 
@@ -81,7 +82,7 @@ export default function EditProductScreen() {
       }
     } catch (error) {
       console.error("Pick image error:", error);
-      Alert.alert("Lỗi", "Không thể chọn ảnh");
+      showToast.error("Lỗi", "Không thể chọn ảnh");
       setSelectingFromAlbum(false);
     } finally {
       setSelectingFromAlbum(false);
@@ -90,7 +91,7 @@ export default function EditProductScreen() {
 
   const handleUpdateProduct = async () => {
     if (!product?.name || !product?.basePrice || !product?.brand) {
-      Alert.alert(
+      showToast.error(
         "Lỗi",
         "Vui lòng điền đầy đủ các trường bắt buộc (Tên, Giá, Thương hiệu)"
       );
@@ -114,7 +115,7 @@ export default function EditProductScreen() {
           handleChange("image", uploaded);
         } catch (e) {
           console.error("Upload error:", e);
-          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+          showToast.error("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
           setUploadingImage(false);
           return;
         } finally {
@@ -136,10 +137,10 @@ export default function EditProductScreen() {
       };
 
       await productService.updateProduct(Number(id), payload);
-      Alert.alert("Thành công", "Sản phẩm đã được cập nhật");
+      showToast.success("Thành công", "Sản phẩm đã được cập nhật");
       router.replace("/(role)/(admin)/(products)");
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể cập nhật sản phẩm");
+      showToast.error("Lỗi", "Không thể cập nhật sản phẩm");
     }
   };
 

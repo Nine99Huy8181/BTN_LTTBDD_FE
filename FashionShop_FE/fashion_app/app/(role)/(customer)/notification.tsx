@@ -1,4 +1,6 @@
-import { FlatList, RefreshControl, TouchableOpacity, Text, View, Alert } from 'react-native';
+import { FlatList, RefreshControl, TouchableOpacity, Text, View } from 'react-native';
+import { useAlertDialog } from '@/hooks/AlertDialogContext';
+import { showToast } from '@/utils/toast';
 import { useRouter } from 'expo-router';
 import { useNotification } from '@/hooks/NotificationContext';
 import * as Linking from 'expo-linking';
@@ -28,6 +30,7 @@ export default function CustomerNotificationScreen() {
   const router = useRouter();
   const { notifications, unreadCount, markAsRead, deleteNotification, refreshNotifications } = useNotification();
   const [refreshing, setRefreshing] = useState(false);
+  const { showAlert } = useAlertDialog();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -86,7 +89,7 @@ export default function CustomerNotificationScreen() {
 
               <TouchableOpacity
                 onPress={() => {
-                  Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa thông báo này?', [
+                  showAlert('Xác nhận', 'Bạn có chắc muốn xóa thông báo này?', [
                     { text: 'Hủy', style: 'cancel' },
                     { text: 'Xóa', style: 'destructive', onPress: async () => { await deleteNotification(item.notificationID); } },
                   ]);

@@ -46,7 +46,7 @@ export default function LoginScreen() {
             <Text style={styles.brandName}>Fashion Store</Text>
             
             {/* Title */}
-            <Text style={styles.title}>Login</Text>
+            <Text style={styles.title}>Đăng nhập</Text>
 
             {error && (
               <View style={styles.errorContainer}>
@@ -62,7 +62,7 @@ export default function LoginScreen() {
                   styles.input,
                   focusedInput === 'username' && styles.inputFocused
                 ]}
-                placeholder="username@gmail.com"
+                placeholder="email@gmail.com"
                 placeholderTextColor="#999"
                 value={username}
                 onChangeText={setUsername}
@@ -97,7 +97,7 @@ export default function LoginScreen() {
               style={styles.forgotPasswordLink}
               onPress={() => router.push(Routes.AuthForgotPassword)}
             >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
             </TouchableOpacity>
 
             {/* Sign In Button */}
@@ -108,15 +108,15 @@ export default function LoginScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.loginButtonText}>
-                {isLoggingIn ? 'Signing in...' : 'Sign in'}
+                {isLoggingIn ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </Text>
             </TouchableOpacity>
 
             {/* Register Link */}
             <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>Don't have an account yet? </Text>
+              <Text style={styles.registerText}>Bạn chưa có tài khoản? </Text>
               <TouchableOpacity onPress={() => router.push(Routes.AuthRegister)}>
-                <Text style={styles.registerLink}>Register for free</Text>
+                <Text style={styles.registerLink}>Đăng kí ngay</Text>
               </TouchableOpacity>
             </View>
           </View>

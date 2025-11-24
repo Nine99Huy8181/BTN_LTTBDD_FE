@@ -1,11 +1,11 @@
 // app/(customer)/(profile)/edit-address/[id].tsx
 import { useAuth } from '@/hooks/AuthContext';
 import { addressService } from '@/services/address.service';
+import { showToast } from '@/utils/toast';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Switch,
@@ -14,11 +14,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useAlertDialog } from '@/hooks/AlertDialogContext';
 
 export default function EditAddressScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
+  const { showAlert } = useAlertDialog();
   const customerId = user?.customerId || 1;
 
   const [form, setForm] = useState({
@@ -53,7 +55,7 @@ export default function EditAddressScreen() {
       });
     } catch (error) {
       console.error('❌ Lỗi khi tải địa chỉ:', error);
-      Alert.alert('Lỗi', 'Không thể tải thông tin địa chỉ.');
+      showToast.error('Lỗi', 'Không thể tải thông tin địa chỉ.');
       router.back();
     } finally {
       setLoading(false);
@@ -67,7 +69,7 @@ export default function EditAddressScreen() {
   // 💾 Cập nhật
   const handleUpdate = async () => {
     if (!form.recipientName || !form.recipientPhone || !form.streetAddress || !form.city) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin bắt buộc!');
+      showToast.error('Lỗi', 'Vui lòng điền đầy đủ thông tin bắt buộc!');
       return;
     }
 
@@ -86,18 +88,18 @@ export default function EditAddressScreen() {
     setSaving(true);
     try {
       await addressService.updateAddress(Number(id), updatedAddress);
-      Alert.alert('Thành công', 'Địa chỉ đã được cập nhật!', [
+      showAlert('Thành công', 'Địa chỉ đã được cập nhật!', [
         { text: 'OK', onPress: () => router.replace('/(customer)/(profile)/address-book') },
       ]);
     } catch (error: any) {
       console.error('❌ Error updating address:', error.response?.data || error.message);
       if (error.response?.status === 409) {
-        Alert.alert(
+        showToast.error(
           'Xung đột dữ liệu',
           'Địa chỉ mặc định khác đã tồn tại. Vui lòng bỏ chọn "Đặt làm mặc định" hoặc chỉnh địa chỉ cũ.'
         );
       } else {
-        Alert.alert('Lỗi', 'Không thể cập nhật địa chỉ. Vui lòng thử lại.');
+        showToast.error('Lỗi', 'Không thể cập nhật địa chỉ. Vui lòng thử lại.');
       }
     } finally {
       setSaving(false);

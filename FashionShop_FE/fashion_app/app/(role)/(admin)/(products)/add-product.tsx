@@ -10,7 +10,6 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -24,6 +23,8 @@ import {
   View,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from '@/hooks/AlertDialogContext';
 export default function AddProductScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -31,6 +32,7 @@ export default function AddProductScreen() {
   const [selectingFromAlbum, setSelectingFromAlbum] = useState(false);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerImage, setViewerImage] = useState("");
+  const { showAlert } = useAlertDialog();
 
   const [form, setForm] = useState<Partial<Product>>({
     name: "",
@@ -58,7 +60,7 @@ export default function AddProductScreen() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         setSelectingFromAlbum(false);
-        Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
+        showToast.error("Lỗi", "Quyền truy cập bị từ chối");
         return;
       }
 
@@ -73,7 +75,7 @@ export default function AddProductScreen() {
 
         if (!isValidImageUri(uri)) {
           setSelectingFromAlbum(false);
-          Alert.alert("Lỗi", "URI ảnh không hợp lệ");
+          showToast.error("Lỗi", "URI ảnh không hợp lệ");
           return;
         }
 
@@ -82,7 +84,7 @@ export default function AddProductScreen() {
       }
     } catch (error) {
       console.error("Pick image error:", error);
-      Alert.alert("Lỗi", "Không thể chọn ảnh");
+      showToast.error("Lỗi", "Không thể chọn ảnh");
       setSelectingFromAlbum(false);
     } finally {
       setSelectingFromAlbum(false);
@@ -91,7 +93,7 @@ export default function AddProductScreen() {
 
   const handleAddProduct = async () => {
     if (!form.name || !form.basePrice || !form.brand) {
-      Alert.alert(
+      showToast.error(
         "Lỗi",
         "Vui lòng điền đầy đủ các trường bắt buộc (Tên, Giá, Thương hiệu)"
       );
@@ -99,7 +101,7 @@ export default function AddProductScreen() {
     }
 
     if (form.basePrice <= 0) {
-      Alert.alert("Lỗi", "Giá sản phẩm phải lớn hơn 0");
+      showToast.error("Lỗi", "Giá sản phẩm phải lớn hơn 0");
       return;
     }
 
@@ -113,7 +115,7 @@ export default function AddProductScreen() {
           handleChange("image", uploaded);
         } catch (e) {
           console.error("Upload error:", e);
-          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+          showToast.error("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
           setUploadingImage(false);
           setLoading(false);
           return;
@@ -122,7 +124,7 @@ export default function AddProductScreen() {
         }
       }
       await productService.createProduct(form as Product);
-      Alert.alert("Thành công", "Sản phẩm đã được thêm!", [
+      showAlert("Thành công", "Sản phẩm đã được thêm!", [
         {
           text: "OK",
           onPress: () => router.replace("/(role)/(admin)/(products)"),
@@ -130,7 +132,7 @@ export default function AddProductScreen() {
       ]);
     } catch (error: any) {
       console.error("Add product error:", error);
-      Alert.alert(
+      showToast.error(
         "Lỗi",
         error.message || "Không thể thêm sản phẩm. Vui lòng thử lại."
       );

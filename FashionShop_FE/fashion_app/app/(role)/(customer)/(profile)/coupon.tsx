@@ -4,13 +4,13 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { showToast } from '@/utils/toast';
 
 export default function CouponScreen() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function CouponScreen() {
       setCoupons(data);
     } catch (error) {
       console.error('❌ Lỗi khi tải coupon:', error);
-      Alert.alert('Lỗi', 'Không thể tải danh sách mã giảm giá');
+      showToast.error('Lỗi', 'Không thể tải danh sách mã giảm giá');
     } finally {
       setLoading(false);
     }

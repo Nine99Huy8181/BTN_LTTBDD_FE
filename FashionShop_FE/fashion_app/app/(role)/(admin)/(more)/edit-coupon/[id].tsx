@@ -7,7 +7,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,10 +16,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from "@/hooks/AlertDialogContext";
 
 export default function EditCouponScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { showAlert } = useAlertDialog();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -93,9 +95,8 @@ export default function EditCouponScreen() {
       setStatus(coupon.status as any);
     } catch (error) {
       console.error("Error fetching coupon:", error);
-      Alert.alert("Lỗi", "Không thể tải thông tin mã giảm giá", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      showToast.error("Lỗi", "Không thể tải thông tin mã giảm giá");
+      router.back();
     } finally {
       setLoading(false);
     }
@@ -176,7 +177,7 @@ export default function EditCouponScreen() {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert("Lỗi", "Vui lòng kiểm tra lại thông tin");
+      showToast.error("Lỗi", "Vui lòng kiểm tra lại thông tin");
       return;
     }
 
@@ -197,7 +198,7 @@ export default function EditCouponScreen() {
       };
 
       await couponService.updateCoupon(Number(id), couponData);
-      Alert.alert("Thành công", "Đã cập nhật mã giảm giá", [
+      showAlert("Thành công", "Đã cập nhật mã giảm giá", [
         {
           text: "OK",
           onPress: () => router.back(),
@@ -207,7 +208,7 @@ export default function EditCouponScreen() {
       console.error("Error updating coupon:", error);
       const message =
         error.response?.data?.message || "Không thể cập nhật mã giảm giá";
-      Alert.alert("Lỗi", message);
+      showToast.error("Lỗi", message);
     } finally {
       setSubmitting(false);
     }

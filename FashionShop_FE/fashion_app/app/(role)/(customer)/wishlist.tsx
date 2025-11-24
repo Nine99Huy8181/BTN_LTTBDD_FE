@@ -9,7 +9,6 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   RefreshControl,
@@ -20,6 +19,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { showToast } from '@/utils/toast';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -66,7 +66,7 @@ export default function WishlistScreen() {
           }));
         setProducts(productList);
       } catch (error) {
-        Alert.alert('Lỗi', 'Không thể tải sản phẩm yêu thích');
+        showToast.error('Lỗi', 'Không thể tải sản phẩm yêu thích');
         setProducts([]);
       } finally {
         setLoading(false);

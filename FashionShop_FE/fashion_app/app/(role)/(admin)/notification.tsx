@@ -5,14 +5,15 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  Alert,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { useAlertDialog } from '@/hooks/AlertDialogContext';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotification } from '@/hooks/NotificationContext';
+import { showToast } from '@/utils/toast';
 import { safeDate } from '@/scripts/safeDate';
 
 export default function AdminNotificationsScreen() {
@@ -20,6 +21,7 @@ export default function AdminNotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { showAlert } = useAlertDialog();
 
   const loadNotifications = async () => {
     try {
@@ -53,7 +55,7 @@ export default function AdminNotificationsScreen() {
   };
 
   const handleDelete = (id: number) => {
-    Alert.alert(
+    showAlert(
       'Xác nhận xóa',
       'Bạn có chắc muốn xóa thông báo này?',
       [

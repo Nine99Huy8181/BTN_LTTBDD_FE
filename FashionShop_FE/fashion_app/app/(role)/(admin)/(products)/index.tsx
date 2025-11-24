@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   ScrollView,
@@ -15,6 +14,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from '@/hooks/AlertDialogContext';
 
 // 1. Định nghĩa lại Brands (Có nút Tất cả làm mặc định)
 const BRAND_OPTIONS = [
@@ -43,6 +44,7 @@ export default function ProductManagementScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("all"); // Mặc định là 'all'
   const [sortBy, setSortBy] = useState("none");
+  const { showAlert } = useAlertDialog();
 
   useEffect(() => {
     fetchProducts();
@@ -54,7 +56,7 @@ export default function ProductManagementScreen() {
       const response = await productService.getAllProducts();
       setProducts(response);
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể tải danh sách sản phẩm");
+      showToast.error("Lỗi", "Không thể tải danh sách sản phẩm");
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ export default function ProductManagementScreen() {
       const response = await productService.getAllProducts();
       setProducts(response);
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể làm mới danh sách sản phẩm");
+      showToast.error("Lỗi", "Không thể làm mới danh sách sản phẩm");
     } finally {
       setRefreshing(false);
     }
@@ -116,7 +118,7 @@ export default function ProductManagementScreen() {
   // XÓA SẢN PHẨM
   // ----------------
   const deleteProduct = (id: number) => {
-    Alert.alert("Xác nhận", "Bạn có chắc muốn xóa sản phẩm này?", [
+    showAlert("Xác nhận", "Bạn có chắc muốn xóa sản phẩm này?", [
       { text: "Hủy", style: "cancel" },
       {
         text: "Xóa",
@@ -125,8 +127,9 @@ export default function ProductManagementScreen() {
           try {
             await productService.deleteProduct(id);
             fetchProducts(); // Load lại dữ liệu sau khi xóa
+            showToast.success("Thành công", "Sản phẩm đã được xóa");
           } catch (error) {
-            Alert.alert("Lỗi", "Không thể xóa sản phẩm");
+            showToast.error("Lỗi", "Không thể xóa sản phẩm");
           }
         },
       },

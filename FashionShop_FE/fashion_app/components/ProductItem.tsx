@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { showToast } from '@/utils/toast';
 import StyledText from './StyledText';
 
 const { width } = Dimensions.get('window');
@@ -39,19 +40,19 @@ export default function ProductItem({
       if (isWishlisted) {
         await removeFromWishlist(product.productID);
         onRemoveFromWishlist?.();
-        Alert.alert('Đã xóa khỏi danh sách yêu thích');
+        showToast.success('Đã xóa khỏi danh sách yêu thích');
       } else {
         await addToWishlist(product.productID);
-        Alert.alert('Đã thêm vào danh sách yêu thích');
+        showToast.success('Đã thêm vào danh sách yêu thích');
       }
     } catch (error) {
-      Alert.alert('Lỗi', 'Không thể cập nhật danh sách yêu thích');
+      showToast.error('Lỗi', 'Không thể cập nhật danh sách yêu thích');
     }
   };
 
   const addToCart = async () => {
     if (!accountId) {
-      Alert.alert('Lỗi', 'Vui lòng đăng nhập để thêm vào giỏ hàng');
+      showToast.error('Lỗi', 'Vui lòng đăng nhập để thêm vào giỏ hàng');
       return;
     }
 
@@ -59,12 +60,12 @@ export default function ProductItem({
     try {
       const result = await CartService.addToCart(accountId, product.productID, 1);
       if (result.success) {
-        Alert.alert('Thành công', 'Đã thêm vào giỏ hàng');
+        showToast.success('Thành công', 'Đã thêm vào giỏ hàng');
       } else {
-        Alert.alert('Lỗi', result.message || 'Không thể thêm vào giỏ hàng');
+        showToast.error('Lỗi', result.message || 'Không thể thêm vào giỏ hàng');
       }
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message || 'Thao tác thất bại');
+      showToast.error('Lỗi', error.message || 'Thao tác thất bại');
     } finally {
       setLoadingCart(false);
     }

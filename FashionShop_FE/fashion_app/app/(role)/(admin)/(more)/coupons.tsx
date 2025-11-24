@@ -3,11 +3,11 @@ import { Routes } from "@/constants";
 import { couponService } from "@/services/coupon.service";
 import { Coupon } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
+import { showToast } from "@/utils/toast";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   ScrollView,
@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAlertDialog } from "@/hooks/AlertDialogContext";
 
 const STATUS_OPTIONS = [
   { label: "Tất cả", value: "ALL" },
@@ -37,6 +38,7 @@ export default function CouponsScreen() {
   const [filteredCoupons, setFilteredCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { showAlert } = useAlertDialog();
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,7 +69,7 @@ export default function CouponsScreen() {
       setCoupons(sortedData);
     } catch (error) {
       console.error("Error fetching coupons:", error);
-      Alert.alert("Lỗi", "Không thể tải danh sách mã giảm giá");
+      showToast.error("Lỗi", "Không thể tải danh sách mã giảm giá");
     } finally {
       setLoading(false);
     }
@@ -132,23 +134,27 @@ export default function CouponsScreen() {
   };
 
   const handleDeleteCoupon = (id: number, code: string) => {
-    Alert.alert("Xác nhận xóa", `Bạn có chắc muốn xóa mã giảm giá "${code}"?`, [
-      { text: "Hủy", style: "cancel" },
-      {
-        text: "Xóa",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await couponService.deleteCoupon(id);
-            Alert.alert("Thành công", "Đã xóa mã giảm giá");
-            fetchCoupons();
-          } catch (error) {
-            console.error("Error deleting coupon:", error);
-            Alert.alert("Lỗi", "Không thể xóa mã giảm giá");
-          }
+    showAlert(
+      "Xác nhận xóa",
+      `Bạn có chắc muốn xóa mã giảm giá "${code}"?`,
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await couponService.deleteCoupon(id);
+              showToast.success("Thành công", "Đã xóa mã giảm giá");
+              fetchCoupons();
+            } catch (error) {
+              console.error("Error deleting coupon:", error);
+              showToast.error("Lỗi", "Không thể xóa mã giảm giá");
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const formatDate = (dateInput: any): string => {

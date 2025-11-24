@@ -1,7 +1,9 @@
 import { useAuth } from "@/hooks/AuthContext";
 import { addressService } from "@/services/address.service";
+import { showToast } from "@/utils/toast";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import CustomAlertDialog, { ButtonType } from '@/components/CustomAlertDialog';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -30,6 +32,15 @@ export default function AddAddressScreen() {
     isDefault: false,
   });
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalProps, setModalProps] = useState<any>({});
+
+  const showAlert = (title: string, message: string, buttons: ButtonType[]) => {
+    setModalProps({ title, message, buttons });
+    setIsModalVisible(true);
+  };
+  const handleClose = () => setIsModalVisible(false);
+
   const [loading, setLoading] = useState(false);
 
   const handleChange = (key: string, value: string | boolean) => {
@@ -43,7 +54,7 @@ export default function AddAddressScreen() {
       !form.streetAddress ||
       !form.city
     ) {
-      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin bắt buộc!");
+      showToast.error("Lỗi", "Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
 
@@ -61,20 +72,25 @@ export default function AddAddressScreen() {
     setLoading(true);
     try {
       await addressService.createAddress(newAddress);
-      Alert.alert("Thành công", "Đã thêm địa chỉ mới!", [
+      // Gọi hàm này sau khi API thêm địa chỉ thành công
+      showAlert("Thành công", "Đã thêm địa chỉ mới!", [
         {
           text: "OK",
-          onPress: () => router.replace("/(customer)/(profile)/address-book"),
+          style: "default", // Đặt style là 'default' để sử dụng màu xanh/chính
+          onPress: () => {
+            // Logic điều hướng giữ nguyên
+            router.replace("/(customer)/(profile)/address-book");
+          },
         },
       ]);
     } catch (error: any) {
       if (error.response?.status === 409) {
-        Alert.alert(
+        showToast.error(
           "Xung đột dữ liệu",
           'Có thể đã tồn tại địa chỉ mặc định khác. Vui lòng bỏ chọn "Đặt làm mặc định" hoặc chỉnh lại địa chỉ cũ.'
         );
       } else {
-        Alert.alert("Lỗi", "Không thể thêm địa chỉ. Vui lòng thử lại.");
+        showToast.error("Lỗi", "Không thể thêm địa chỉ. Vui lòng thử lại.");
       }
     } finally {
       setLoading(false);
@@ -179,6 +195,14 @@ export default function AddAddressScreen() {
           <Text style={styles.secondaryButtonText}>Quay lại</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <CustomAlertDialog
+        isVisible={isModalVisible}
+        title={modalProps.title || ""}
+        message={modalProps.message || ""}
+        buttons={modalProps.buttons || []}
+        onClose={handleClose}
+      />
     </KeyboardAvoidingView>
   );
 }

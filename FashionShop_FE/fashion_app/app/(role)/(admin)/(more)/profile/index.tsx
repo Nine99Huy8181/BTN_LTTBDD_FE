@@ -13,17 +13,19 @@ import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   Platform,
   ScrollView,
   StyleSheet,
+
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from "@/hooks/AlertDialogContext";
 
 export default function ProfileAdminScreen() {
   const [admin, setAdmin] = useState<Admin | null>(null);
@@ -44,6 +46,7 @@ export default function ProfileAdminScreen() {
   const [saving, setSaving] = useState(false);
 
   const { user, isInitializing } = useAuth();
+  const { showAlert } = useAlertDialog();
 
   // Hàm helper parseDate (Giữ nguyên logic cũ)
   const parseDate = (dateInput: any): Date | null => {
@@ -156,14 +159,14 @@ export default function ProfileAdminScreen() {
       };
 
       await adminService.updateAdmin(admin.adminID, updateData);
-      Alert.alert("Thành công", "Cập nhật thông tin cá nhân thành công");
+      showToast.success("Thành công", "Cập nhật thông tin cá nhân thành công");
       setIsEditing(false);
       fetchAdminProfile();
     } catch (err: any) {
       const errorMsg =
         err.response?.data?.message || "Không thể cập nhật thông tin";
       setError(errorMsg);
-      Alert.alert("Lỗi", errorMsg);
+      showToast.error("Lỗi", errorMsg);
     } finally {
       setSaving(false);
     }
@@ -173,10 +176,14 @@ export default function ProfileAdminScreen() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const handleCameraPress = () => {
-    Alert.alert("Thay đổi ảnh đại diện", "Bạn có muốn đổi ảnh đại diện mới?", [
-      { text: "Hủy", style: "cancel" },
-      { text: "Chọn từ thư viện", onPress: pickAndUploadAvatar },
-    ]);
+    showAlert(
+      "Thay đổi ảnh đại diện",
+      "Bạn có muốn đổi ảnh đại diện mới?",
+      [
+        { text: "Hủy", style: "cancel" },
+        { text: "Chọn từ thư viện", onPress: pickAndUploadAvatar },
+      ]
+    );
   };
 
   const pickAndUploadAvatar = async () => {
@@ -184,7 +191,7 @@ export default function ProfileAdminScreen() {
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
+        showToast.error("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
         return;
       }
 
@@ -200,7 +207,7 @@ export default function ProfileAdminScreen() {
 
       const uri = result.assets[0].uri;
       if (!isValidImageUri(uri)) {
-        Alert.alert("Lỗi", "URI ảnh không hợp lệ");
+        showToast.error("Lỗi", "URI ảnh không hợp lệ");
         return;
       }
 
@@ -228,10 +235,10 @@ export default function ProfileAdminScreen() {
         admin.account.accountID,
         updatedAccount
       );
-      Alert.alert("Thành công", "Ảnh đại diện đã được cập nhật");
+      showToast.success("Thành công", "Ảnh đại diện đã được cập nhật");
     } catch (err: any) {
       console.error("Upload avatar error:", err?.response || err);
-      Alert.alert(
+      showAlert(
         "Lỗi",
         err?.response?.data?.message || "Không thể cập nhật avatar"
       );

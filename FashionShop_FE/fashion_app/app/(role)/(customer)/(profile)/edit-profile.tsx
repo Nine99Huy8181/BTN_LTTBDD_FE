@@ -14,7 +14,6 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   Platform,
@@ -25,10 +24,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { showToast } from "@/utils/toast";
+import { useAlertDialog } from "@/hooks/AlertDialogContext";
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { user, isInitializing } = useAuth();
+  const { showAlert } = useAlertDialog();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,7 +159,7 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     // 1. Validate cơ bản
     if (!formData.fullName || !formData.phoneNumber || !formData.gender) {
-      Alert.alert(
+      showToast.error(
         "Lỗi",
         "Vui lòng điền đầy đủ thông tin (Họ tên, SĐT, Giới tính)"
       );
@@ -183,7 +185,7 @@ export default function EditProfileScreen() {
       // 3. Gọi API
       await customerService.updateCustomer(customer.customerID, updateData);
 
-      Alert.alert("Thành công", "Cập nhật thông tin cá nhân thành công");
+      showToast.success("Thành công", "Cập nhật thông tin cá nhân thành công");
       setIsEditing(false);
 
       // Load lại dữ liệu mới nhất
@@ -198,17 +200,21 @@ export default function EditProfileScreen() {
         "Không thể cập nhật thông tin";
 
       setError(errorMsg); // Hiển thị lỗi lên màn hình đỏ (nếu muốn)
-      Alert.alert("Lỗi", errorMsg);
+      showToast.error("Lỗi", errorMsg);
     } finally {
       setSaving(false);
     }
   };
 
   const handleCameraPress = () => {
-    Alert.alert("Thay đổi ảnh đại diện", "Bạn có muốn đổi ảnh đại diện mới?", [
-      { text: "Hủy", style: "cancel" },
-      { text: "Chọn từ thư viện", onPress: pickAndUploadAvatar },
-    ]);
+    showAlert(
+      "Thay đổi ảnh đại diện",
+      "Bạn có muốn đổi ảnh đại diện mới?",
+      [
+        { text: "Hủy", style: "cancel" },
+        { text: "Chọn từ thư viện", onPress: pickAndUploadAvatar },
+      ]
+    );
   };
 
   const pickAndUploadAvatar = async () => {
@@ -216,7 +222,7 @@ export default function EditProfileScreen() {
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
+        showToast.error("Quyền truy cập bị từ chối", "Không thể chọn ảnh");
         return;
       }
 
@@ -231,7 +237,7 @@ export default function EditProfileScreen() {
 
       const uri = result.assets[0].uri;
       if (!isValidImageUri(uri)) {
-        Alert.alert("Lỗi", "URI ảnh không hợp lệ");
+        showToast.error("Lỗi", "URI ảnh không hợp lệ");
         return;
       }
 
@@ -269,10 +275,10 @@ export default function EditProfileScreen() {
         updatedAccount
       );
 
-      Alert.alert("Thành công", "Ảnh đại diện đã được cập nhật");
+      showToast.success("Thành công", "Ảnh đại diện đã được cập nhật");
     } catch (err: any) {
       console.error("Upload avatar error:", err?.response || err);
-      Alert.alert(
+      showToast.error(
         "Lỗi",
         err?.response?.data?.message || "Không thể cập nhật avatar"
       );
