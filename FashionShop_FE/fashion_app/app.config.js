@@ -87,6 +87,7 @@ export default {
     extra: {
       // API URL - Railway production
       apiUrl: 'https://btnlttbdd-production.up.railway.app/api',
+      // apiUrl: getApiUrl() || process.env.API_URL, //khi dùng localhost
       eas: {
         projectId: "fcdd3db2-7bf7-4e68-9f00-0b63e24adb9e"
       }
