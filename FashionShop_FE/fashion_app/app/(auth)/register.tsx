@@ -1,5 +1,5 @@
 // app/(auth)/register.tsx
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/AuthContext';
@@ -19,7 +18,6 @@ import { Config } from '@/constants';
 import Toast from 'react-native-toast-message';
 
 export default function RegisterScreen() {
-  // Bước hiện tại: 'form' hoặc 'otp'
   const [step, setStep] = useState<'form' | 'otp'>('form');
 
   // Form data
@@ -31,22 +29,35 @@ export default function RegisterScreen() {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [gender, setGender] = useState('');
 
-  // OTP
+  // OTP state
   const [otp, setOtp] = useState('');
+  const otpInputRef = useRef<TextInput>(null);
 
   // UI state
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(0);
 
   const { register } = useAuth();
+
+  // Countdown 60s
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   // Gửi OTP
   const sendOtp = async () => {
     setError(null);
 
-    if (!email.includes('@') || !email.includes('.')) {
+    if (!email || !email.includes('@') || !email.includes('.')) {
       setError('Vui lòng nhập email hợp lệ');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự');
       return;
     }
     if (password !== confirmPassword) {
@@ -62,17 +73,41 @@ export default function RegisterScreen() {
     try {
       await axios.post(`${Config.API_URL}/auth/send-otp`, { email });
       setStep('otp');
+      setCountdown(60);
       Toast.show({
         type: 'success',
         text1: 'Đã gửi mã OTP!',
-        text2: `Kiểm tra email: ${email}`,
+        text2: `Mã đã được gửi đến ${email}`,
       });
+      setTimeout(() => otpInputRef.current?.focus(), 300);
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Không thể gửi OTP';
-      setError(msg);
-      if (msg.toLowerCase().includes('exists')) {
+      if (msg.toLowerCase().includes('exist') || msg.includes('tồn tại')) {
         setError('Email này đã được đăng ký');
+      } else {
+        setError(msg);
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Gửi lại OTP
+  const resendOtp = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await axios.post(`${Config.API_URL}/auth/send-otp`, { email });
+      setCountdown(60);
+      setOtp('');
+      Toast.show({
+        type: 'success',
+        text1: 'Đã gửi lại mã!',
+        text2: 'Kiểm tra email của bạn',
+      });
+      otpInputRef.current?.focus();
+    } catch (err: any) {
+      setError('Không thể gửi lại mã. Vui lòng thử lại sau.');
     } finally {
       setIsLoading(false);
     }
@@ -80,8 +115,8 @@ export default function RegisterScreen() {
 
   // Xác minh OTP + Đăng ký
   const verifyAndRegister = async () => {
-    if (otp.length !== 6) {
-      setError('Vui lòng nhập đủ 6 số');
+    if (otp.length !== 6 || !/^\d+$/.test(otp)) {
+      setError('Mã OTP phải là 6 chữ số');
       return;
     }
 
@@ -92,13 +127,13 @@ export default function RegisterScreen() {
       // Bước 1: Xác minh OTP
       await axios.post(`${Config.API_URL}/auth/verify-otp`, { email, otp });
 
-      // Bước 2: Đăng ký tài khoản
+      // Bước 2: Đăng ký
       const { success, error: regError } = await register(
         email,
         password,
         fullName,
-        phoneNumber || '',
-        dateOfBirth || '',
+        phoneNumber,
+        dateOfBirth,
         gender || 'OTHER'
       );
 
@@ -106,29 +141,29 @@ export default function RegisterScreen() {
         Toast.show({
           type: 'success',
           text1: 'Đăng ký thành công!',
-          text2: 'Bây giờ bạn có thể đăng nhập',
+          text2: 'Chào mừng bạn đến với Fashion Store',
         });
-        router.back();
+        router.replace('/(auth)/login');
       } else {
         setError(regError || 'Đăng ký thất bại');
       }
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn';
       setError(msg);
+      if (msg.includes('hết hạn') || msg.includes('invalid')) {
+        setError('Mã OTP đã hết hạn. Vui lòng gửi lại mã mới.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ==================== BƯỚC 2: NHẬP OTP ====================
+  // ==================== BƯỚC OTP ====================
   if (step === 'otp') {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.card}>
               <Text style={styles.brandName}>Fashion Store</Text>
@@ -146,6 +181,7 @@ export default function RegisterScreen() {
               )}
 
               <TextInput
+                ref={otpInputRef}
                 style={[styles.input, styles.otpInput]}
                 placeholder="000000"
                 value={otp}
@@ -156,17 +192,27 @@ export default function RegisterScreen() {
               />
 
               <TouchableOpacity
-                style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
+                style={[styles.registerButton, (isLoading || otp.length !== 6) && styles.registerButtonDisabled]}
                 onPress={verifyAndRegister}
                 disabled={isLoading || otp.length !== 6}
               >
                 <Text style={styles.registerButtonText}>
-                  {isLoading ? 'Đang xác nhận...' : 'Hoàn tất đăng ký'}
+                  {isLoading ? 'Đang xử lý...' : 'Hoàn tất đăng ký'}
                 </Text>
               </TouchableOpacity>
 
+              <View style={styles.resendContainer}>
+                {countdown > 0 ? (
+                  <Text style={styles.resendText}>Gửi lại mã sau {countdown}s</Text>
+                ) : (
+                  <TouchableOpacity onPress={resendOtp} disabled={isLoading}>
+                    <Text style={styles.resendLink}>Gửi lại mã OTP</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <TouchableOpacity onPress={() => setStep('form')}>
-                <Text style={styles.backText}>← Quay lại chỉnh sửa</Text>
+                <Text style={styles.backText}>← Quay lại chỉnh sửa thông tin</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -175,21 +221,15 @@ export default function RegisterScreen() {
     );
   }
 
-  // ==================== BƯỚC 1: FORM ĐĂNG KÝ ====================
+  // ==================== BƯỚC FORM ====================
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.card}>
             <Text style={styles.brandName}>Fashion Store</Text>
-            <Text style={styles.title}>Register</Text>
+            <Text style={styles.title}>Đăng ký tài khoản</Text>
 
             {error && (
               <View style={styles.errorContainer}>
@@ -197,82 +237,63 @@ export default function RegisterScreen() {
               </View>
             )}
 
-            {/* Email */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput
-                style={[styles.input, focusedInput === 'email' && styles.inputFocused]}
+                style={styles.input}
                 placeholder="username@gmail.com"
-                placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
-                onFocus={() => setFocusedInput('email')}
-                onBlur={() => setFocusedInput(null)}
-                autoCapitalize="none"
                 keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
 
-            {/* Password */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>Mật khẩu</Text>
               <TextInput
-                style={[styles.input, focusedInput === 'password' && styles.inputFocused]}
+                style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
-                onFocus={() => setFocusedInput('password')}
-                onBlur={() => setFocusedInput(null)}
                 secureTextEntry
                 autoCapitalize="none"
               />
             </View>
 
-            {/* Confirm Password */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Nhập lại mật khẩu</Text>
               <TextInput
-                style={[styles.input, focusedInput === 'confirm' && styles.inputFocused]}
+                style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor="#999"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                onFocus={() => setFocusedInput('confirm')}
-                onBlur={() => setFocusedInput(null)}
                 secureTextEntry
                 autoCapitalize="none"
               />
             </View>
 
-            {/* Full Name */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Họ và tên</Text>
               <TextInput
-                style={[styles.input, focusedInput === 'name' && styles.inputFocused]}
+                style={styles.input}
                 placeholder="Nguyễn Văn A"
-                placeholderTextColor="#999"
                 value={fullName}
                 onChangeText={setFullName}
-                onFocus={() => setFocusedInput('name')}
-                onBlur={() => setFocusedInput(null)}
               />
             </View>
 
-            {/* Phone (tùy chọn) */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Số điện thoại (tùy chọn)</Text>
               <TextInput
-                style={[styles.input, focusedInput === 'phone' && styles.inputFocused]}
+                style={styles.input}
                 placeholder="0123456789"
-                placeholderTextColor="#999"
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"
               />
             </View>
 
-            {/* Nút Tiếp tục → Gửi OTP */}
             <TouchableOpacity
               style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
               onPress={sendOtp}
@@ -296,10 +317,8 @@ export default function RegisterScreen() {
   );
 }
 
-// STYLE GIỮ NGUYÊN 100% + thêm vài dòng cho OTP
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 20, paddingTop: 60 },
   card: {
     backgroundColor: '#fff',
@@ -309,7 +328,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
-    elevation: 3,
+    elevation: 5,
   },
   brandName: {
     fontSize: 32,
@@ -332,13 +351,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 15,
-    color: '#000',
     backgroundColor: '#fff',
   },
-  inputFocused: { borderColor: '#000', borderWidth: 1.5 },
   otpInput: {
     textAlign: 'center',
-    fontSize: 28,
+    fontSize: 22,
     letterSpacing: 10,
     fontWeight: '600',
     marginBottom: 32,
@@ -354,8 +371,11 @@ const styles = StyleSheet.create({
   },
   registerButtonDisabled: { opacity: 0.7 },
   registerButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  loginContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  loginContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   loginText: { fontSize: 14, color: '#666' },
   loginLink: { fontSize: 14, color: '#000', fontWeight: '600' },
   backText: { textAlign: 'center', color: '#666', marginTop: 16, fontSize: 14 },
+  resendContainer: { alignItems: 'center', marginBottom: 20 },
+  resendText: { color: '#666', fontSize: 14 },
+  resendLink: { color: '#000', fontWeight: '600', fontSize: 15 },
 });
