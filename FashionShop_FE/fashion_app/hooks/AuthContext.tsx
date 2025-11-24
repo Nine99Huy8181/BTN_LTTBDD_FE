@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(response.data.message || 'Failed to fetch user');
       }
     } catch (error) {
-      // console.log('Fetch user error:', error);
+      console.log('Fetch user error:', error);
       Toast.show({type: "error", text1: "Hết hạn đăng nhập", text2: "Vui lòng đăng nhập lại"})
       return null;
     }

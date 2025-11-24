@@ -13,6 +13,7 @@ import { OrderService } from '@/services/order.service';
 import { showToast } from '@/utils/toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -224,138 +225,140 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.section}>
-          {items.map((it) => {
-            const uri = (it.variant as any)?.product?.image;
-            return (
-              <View key={it.cartItemID} style={styles.cartRow}>
-                {uri ? (
-                  <Image source={{ uri }} style={styles.thumb} />
-                ) : (
-                  <View style={styles.thumb} />
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.prodTitle}>{(it.variant as any)?.product?.name}</Text>
-                  <Text style={styles.prodSize}>size:{(it.variant as any)?.size}</Text>
+    <SafeAreaView style={{flex: 1}}>
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.section}>
+            {items.map((it) => {
+              const uri = (it.variant as any)?.product?.image;
+              return (
+                <View key={it.cartItemID} style={styles.cartRow}>
+                  {uri ? (
+                    <Image source={{ uri }} style={styles.thumb} />
+                  ) : (
+                    <View style={styles.thumb} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.prodTitle}>{(it.variant as any)?.product?.name}</Text>
+                    <Text style={styles.prodSize}>size:{(it.variant as any)?.size}</Text>
+                  </View>
+                  <Text style={styles.prodPrice}>{formatCurrencyVND((it.variant as any)?.product?.discountPrice ?? (it.variant as any)?.product?.basePrice ?? 0)}</Text>
                 </View>
-                <Text style={styles.prodPrice}>{formatCurrencyVND((it.variant as any)?.product?.discountPrice ?? (it.variant as any)?.product?.basePrice ?? 0)}</Text>
-              </View>
-            );
-          })}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Thông tin người nhận</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Họ tên:</Text>
-            <TextInput
-              style={[styles.infoValue, styles.editableInput]}
-              value={recipientName}
-              onChangeText={setRecipientName}
-              placeholder="Nhập tên người nhận"
-            />
+              );
+            })}
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Số điện thoại:</Text>
-            <TextInput
-              style={[styles.infoValue, styles.editableInput]}
-              value={recipientPhone}
-              onChangeText={setRecipientPhone}
-              placeholder="Nhập số điện thoại người nhận"
-              keyboardType="phone-pad"
-            />
-          </View>
-        </View>
 
-        <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }} >
-            <Text style={styles.sectionTitle}>Địa chỉ giao hàng</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Thông tin người nhận</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Họ tên:</Text>
+              <TextInput
+                style={[styles.infoValue, styles.editableInput]}
+                value={recipientName}
+                onChangeText={setRecipientName}
+                placeholder="Nhập tên người nhận"
+              />
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Số điện thoại:</Text>
+              <TextInput
+                style={[styles.infoValue, styles.editableInput]}
+                value={recipientPhone}
+                onChangeText={setRecipientPhone}
+                placeholder="Nhập số điện thoại người nhận"
+                keyboardType="phone-pad"
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }} >
+              <Text style={styles.sectionTitle}>Địa chỉ giao hàng</Text>
+              {!defaultAddress ? (
+                <TouchableOpacity
+                  onPress={() => router.push({
+                    pathname: Routes.CustomerAddressBook as any,
+                    params: { fromCheckout: '1' }
+                  })}
+                >
+                  <Text style={{ color: 'blue' }}>Thêm địa chỉ</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => router.push({
+                    pathname: Routes.CustomerAddressBook as any,
+                    params: { fromCheckout: '1' }
+                  })}
+                >
+                  <Text style={{ color: 'blue' }}>Thay đổi địa chỉ</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             {!defaultAddress ? (
-              <TouchableOpacity
-                onPress={() => router.push({
-                  pathname: Routes.CustomerAddressBook as any,
-                  params: { fromCheckout: '1' }
-                })}
-              >
-                <Text style={{ color: 'blue' }}>Thêm địa chỉ</Text>
-              </TouchableOpacity>
+              <View style={styles.emptyAddress}>
+                <Text style={{ color: '#666', marginBottom: 10 }}>Bạn chưa có địa chỉ nào</Text>
+              </View>
             ) : (
-              <TouchableOpacity
-                onPress={() => router.push({
-                  pathname: Routes.CustomerAddressBook as any,
-                  params: { fromCheckout: '1' }
-                })}
-              >
-                <Text style={{ color: 'blue' }}>Thay đổi địa chỉ</Text>
-              </TouchableOpacity>
+              <View style={styles.addressCard}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={styles.recipientName}>{defaultAddress.recipientName}</Text>
+                  <Text style={styles.defaultTag}>Mặc định</Text>
+                </View>
+                <Text style={styles.addressText}>{defaultAddress.recipientPhone}</Text>
+                <Text style={styles.addressText}>
+                  {defaultAddress.streetAddress}, {defaultAddress.district}, {defaultAddress.city}
+                </Text>
+              </View>
             )}
           </View>
 
-          {!defaultAddress ? (
-            <View style={styles.emptyAddress}>
-              <Text style={{ color: '#666', marginBottom: 10 }}>Bạn chưa có địa chỉ nào</Text>
-            </View>
-          ) : (
-            <View style={styles.addressCard}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={styles.recipientName}>{defaultAddress.recipientName}</Text>
-                <Text style={styles.defaultTag}>Mặc định</Text>
-              </View>
-              <Text style={styles.addressText}>{defaultAddress.recipientPhone}</Text>
-              <Text style={styles.addressText}>
-                {defaultAddress.streetAddress}, {defaultAddress.district}, {defaultAddress.city}
-              </Text>
-            </View>
-          )}
-        </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+            <TouchableOpacity
+              style={[styles.paymentRow, paymentMethod === 'cod' && styles.paymentActive]}
+              onPress={() => setPaymentMethod('cod')}
+            >
+              <Text>📦  COD</Text>
+              <Text style={styles.paymentNote}>Thanh toán khi nhận hàng</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.paymentRow, paymentMethod === 'card' && styles.paymentActive]}
+              onPress={() => setPaymentMethod('card')}
+            >
+              <Text>💳  VNPay</Text>
+              <Text style={styles.paymentNote}>Thanh toán qua VNPay</Text>
+            </TouchableOpacity>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
-          <TouchableOpacity
-            style={[styles.paymentRow, paymentMethod === 'cod' && styles.paymentActive]}
-            onPress={() => setPaymentMethod('cod')}
-          >
-            <Text>📦  COD</Text>
-            <Text style={styles.paymentNote}>Thanh toán khi nhận hàng</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.paymentRow, paymentMethod === 'card' && styles.paymentActive]}
-            onPress={() => setPaymentMethod('card')}
-          >
-            <Text>💳  VNPay</Text>
-            <Text style={styles.paymentNote}>Thanh toán qua VNPay</Text>
-          </TouchableOpacity>
-
-        </View>
-
-        <View style={styles.sectionRow}>
-          <View style={{ flex: 1 }}>
-            <View style={styles.summaryLine}><Text>Tạm tính</Text><Text>{formatCurrencyVND(total)}</Text></View>
-            <View style={styles.summaryLine}><Text>Phí vận chuyển</Text><Text>{formatCurrencyVND(0)}</Text></View>
-            <View style={styles.summaryLine}><Text>Giảm giá</Text><Text>{formatCurrencyVND(0)}</Text></View>
-            <View style={styles.summaryLine}><Text style={{ fontWeight: '700' }}>Tổng tiền</Text><Text style={{ fontWeight: '700' }}>{formatCurrencyVND(total)}</Text></View>
           </View>
+
+          <View style={styles.sectionRow}>
+            <View style={{ flex: 1 }}>
+              <View style={styles.summaryLine}><Text>Tạm tính</Text><Text>{formatCurrencyVND(total)}</Text></View>
+              <View style={styles.summaryLine}><Text>Phí vận chuyển</Text><Text>{formatCurrencyVND(0)}</Text></View>
+              <View style={styles.summaryLine}><Text>Giảm giá</Text><Text>{formatCurrencyVND(0)}</Text></View>
+              <View style={styles.summaryLine}><Text style={{ fontWeight: '700' }}>Tổng tiền</Text><Text style={{ fontWeight: '700' }}>{formatCurrencyVND(total)}</Text></View>
+            </View>
+          </View>
+
+          <View style={{ height: 80 }} />
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Text style={{ fontWeight: '700', marginBottom: 6 }}>Ghi chú</Text>
+          <TextInput placeholder="Nhập ghi chú..." value={note} onChangeText={setNote} style={styles.noteInput} />
+          <TouchableOpacity
+            style={[styles.placeBtn, isPlacing && { opacity: 0.5 }]}
+            onPress={placeOrder}
+            disabled={isPlacing}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700' }}>
+              {isPlacing ? 'Đang xử lý...' : 'Đặt hàng'}
+            </Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={{ height: 80 }} />
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <Text style={{ fontWeight: '700', marginBottom: 6 }}>Ghi chú</Text>
-        <TextInput placeholder="Nhập ghi chú..." value={note} onChangeText={setNote} style={styles.noteInput} />
-        <TouchableOpacity
-          style={[styles.placeBtn, isPlacing && { opacity: 0.5 }]}
-          onPress={placeOrder}
-          disabled={isPlacing}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700' }}>
-            {isPlacing ? 'Đang xử lý...' : 'Đặt hàng'}
-          </Text>
-        </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

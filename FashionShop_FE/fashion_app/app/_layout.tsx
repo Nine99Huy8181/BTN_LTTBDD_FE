@@ -47,7 +47,8 @@ function RootLayoutContent() {
         try {
           if (dl.startsWith('app://')) {
             const path = dl.replace(/^app:\/\//, '');
-            router.push((`/${path}` as unknown) as any);
+            // router.push((`/${path}` as unknown) as any);
+            router.push('/(role)/(customer)/notification')
           } else {
             await Linking.openURL(dl);
           }
@@ -73,7 +74,8 @@ function RootLayoutContent() {
         try {
           if (dl.startsWith('app://')) {
             const path = dl.replace(/^app:\/\//, '');
-            router.push((`/${path}` as unknown) as any);
+            // router.push((`/${path}` as unknown) as any);
+            router.push('/(role)/(customer)/notification')
           } else {
             await Linking.openURL(dl);
           }

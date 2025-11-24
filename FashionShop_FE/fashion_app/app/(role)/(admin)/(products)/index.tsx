@@ -407,10 +407,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
   },
   cardHeader: {
     flexDirection: "row",

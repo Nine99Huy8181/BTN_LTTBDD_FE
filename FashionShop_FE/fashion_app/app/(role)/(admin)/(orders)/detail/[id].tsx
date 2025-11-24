@@ -55,6 +55,7 @@ export default function OrderDetailScreen() {
               const updated = await OrderService.updateOrderStatus(Number(id), newStatus);
               setOrder(updated);
               Toast.show({ type: 'success', text1: 'Cập nhật thành công!' });
+              router.push('/(role)/(admin)/(orders)')
             } catch (error) {
               Toast.show({ type: 'error', text1: 'Cập nhật thất bại' });
             } finally {

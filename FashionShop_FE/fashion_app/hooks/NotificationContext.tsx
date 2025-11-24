@@ -153,20 +153,22 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             try {
               const dl: string = data.deepLink;
               if (typeof dl === 'string' && dl.startsWith('app://order/')) {
-                // app://order/27 -> convert to role-specific route
                 const orderId = dl.replace(/^app:\/\/order\//, '');
                 if (user && user.role === 'ADMIN') {
-                  router.push((`/(role)/(admin)/(orders)/detail/${orderId}` as unknown) as any);
+                  // router.push((`/(role)/(admin)/(orders)/detail/${orderId}` as unknown) as any);
+                  router.push('/(role)/(admin)/notification')
                 } else if (user && user.role === 'CUSTOMER') {
-                  router.push((`/(role)/(customer)/(profile)/order-detail/${orderId}` as unknown) as any);
+                  // router.push((`/(role)/(customer)/(profile)/order-detail/${orderId}` as unknown) as any);
+                  router.push('/(role)/(customer)/notification')
                 }
               } else if (typeof dl === 'string' && dl.startsWith('app://')) {
                 const path = dl.replace(/^app:\/\//, '');
-                router.push((`/${path}` as unknown) as any);
+                // router.push((`/${path}` as unknown) as any);
+                router.push('/(role)/(admin)/dashboard')
               } else {
-                Linking.openURL(dl).catch(() => {
-                  // fallback
-                });
+                // Linking.openURL(dl).catch(() => {
+                //   // fallback
+                // });
               }
             } catch (e) {
               // ignore

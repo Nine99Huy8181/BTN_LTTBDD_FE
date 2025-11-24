@@ -44,9 +44,10 @@ export default function AdminNotificationsScreen() {
     } catch (e) {}
 
     const deepLink = item.deepLink;
-    if (typeof deepLink === 'string' && deepLink.startsWith('app://admin/order/')) {
+    if (typeof deepLink === 'string' && (deepLink.startsWith('app://admin/order/') || deepLink.startsWith('app://order/'))) {
       const orderId = deepLink.split('/').pop();
-      router.push(`/(role)/(admin)/(orders)/detail/${orderId}`);
+      // Use a relative route within the (admin) group so back returns to notifications
+      router.push(`(orders)/detail/${orderId}` as any);
     }
   };
 

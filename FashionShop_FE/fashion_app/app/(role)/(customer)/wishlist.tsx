@@ -128,6 +128,11 @@ export default function WishlistScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Danh sách yêu thích</Text>
+          <Text style={styles.headerSubtitle}>{filteredProducts.length} sản phẩm</Text>
+        </View>
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
             <Ionicons name="search" size={20} color="#999999" style={styles.searchIcon} />
@@ -145,11 +150,6 @@ export default function WishlistScreen() {
               </TouchableOpacity>
             )}
           </View>
-        </View>
-
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Danh sách yêu thích</Text>
-          <Text style={styles.headerSubtitle}>{filteredProducts.length} sản phẩm</Text>
         </View>
         <View style={styles.divider} />
 

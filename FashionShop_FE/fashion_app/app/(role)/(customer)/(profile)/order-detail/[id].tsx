@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { OrderService } from '@/services/order.service';
 import { showToast } from '@/utils/toast';
 import { useAlertDialog } from '@/hooks/AlertDialogContext';
+import { OrderDTO } from '@/types';
 
 // Hàm chuyển trạng thái + màu sắc (đồng bộ với trang danh sách đơn hàng)
 const getStatusText = (status: string) => {
@@ -53,7 +54,8 @@ export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { showAlert } = useAlertDialog();
-  const [order, setOrder] = useState<any>(null);
+
+  const [order, setOrder] = useState<OrderDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -81,8 +83,7 @@ export default function OrderDetailScreen() {
           try {
             await OrderService.cancelOrder(Number(id));
             showToast.success('Thành công', 'Đơn hàng đã được hủy');
-            // Cập nhật lại trạng thái
-            setOrder({ ...order, orderStatus: 'CANCELLED' });
+            setOrder(prev => prev ? { ...prev, orderStatus: 'CANCELLED' } : null);
           } catch (error: any) {
             showToast.error('Lỗi', error.message || 'Không thể hủy đơn hàng');
           }
@@ -91,10 +92,19 @@ export default function OrderDetailScreen() {
     ]);
   };
 
-  const safeDate = (dateStr?: string | null): string => {
+  // Hàm format ngày đẹp kiểu Việt Nam: 05/04/2025 14:30
+  const formatDateTime = (dateStr?: string | null): string => {
     if (!dateStr?.trim()) return '—';
     const date = new Date(dateStr);
-    return isNaN(date.getTime()) ? '—' : date.toLocaleDateString('vi-VN');
+    if (isNaN(date.getTime())) return '—';
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
   if (loading) {
@@ -117,8 +127,7 @@ export default function OrderDetailScreen() {
     );
   }
 
-  const status = order.orderStatus;
-  const vietnameseStatus = getStatusText(status);
+  const vietnameseStatus = getStatusText(order.orderStatus);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -126,13 +135,13 @@ export default function OrderDetailScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.pageTitle}>Chi tiết đơn hàng</Text>
-          <Text style={styles.orderId}>Mã đơn: #{order.orderId || order.orderID}</Text>
+          <Text style={styles.orderId}>Mã đơn: HD{order.orderID}</Text>
         </View>
 
         {/* Trạng thái nổi bật */}
-        <View style={[styles.statusCard, { backgroundColor: getStatusBg(status) }]}>
+        <View style={[styles.statusCard, { backgroundColor: getStatusBg(order.orderStatus) }]}>
           <Text style={styles.statusLabel}>Trạng thái đơn hàng</Text>
-          <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>
+          <Text style={[styles.statusValue, { color: getStatusColor(order.orderStatus) }]}>
             {vietnameseStatus}
           </Text>
         </View>
@@ -140,30 +149,9 @@ export default function OrderDetailScreen() {
         {/* Danh sách sản phẩm */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sản phẩm đã đặt</Text>
-          {(order.items || order.orderItems || []).map((item: any, index: number) => (
-            <View key={index} style={styles.productItem}>
-              <Image
-                source={{ uri: item.product?.images?.[0] || item.variant?.product?.image || 'https://via.placeholder.com/80' }}
-                style={styles.productImage}
-                resizeMode="cover"
-              />
-              <View style={styles.productInfo}>
-                <Text style={styles.productName} numberOfLines={2}>
-                  {item.product?.name || item.productName}
-                </Text>
-                {(item.variant || item.color || item.size) && (
-                  <Text style={styles.variant}>
-                    Phân loại: {item.variant?.color || item.color}
-                    {item.variant?.size && ` / ${item.variant.size}`}
-                    {item.size && !item.variant?.size && ` / ${item.size}`}
-                  </Text>
-                )}
-                <Text style={styles.quantityPrice}>
-                  x{item.quantity} • {Number(item.price || item.unitPrice).toLocaleString()}₫
-                </Text>
-              </View>
-            </View>
-          ))}
+          {/* Giả sử backend trả về order.items hoặc bạn sẽ thêm sau */}
+          {/* Nếu chưa có thì tạm comment hoặc để mảng rỗng */}
+          {/* {(order.items || []).map((item: any, index: number) => ( ... ))} */}
         </View>
 
         {/* Thông tin giao hàng */}
@@ -171,20 +159,22 @@ export default function OrderDetailScreen() {
           <Text style={styles.sectionTitle}>Thông tin giao hàng</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Người nhận</Text>
-            <Text style={styles.infoValue}>{order.customer?.fullName || order.fullName || 'Khách lẻ'}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Số điện thoại</Text>
-            <Text style={styles.infoValue}>{order.phone || '—'}</Text>
+            <Text style={styles.infoValue}>{order.customerName || 'Khách lẻ'}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Địa chỉ giao</Text>
-            <Text style={styles.infoValue}>{order.address || '—'}</Text>
+            <Text style={styles.infoValue}>{order.shippingAddress || '—'}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Ngày đặt hàng</Text>
-            <Text style={styles.infoValue}>{safeDate(order.orderDate)}</Text>
+            <Text style={styles.infoValue}>{formatDateTime(order.orderDate)}</Text>
           </View>
+          {order.paymentDate && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Ngày thanh toán</Text>
+              <Text style={styles.infoValue}>{formatDateTime(order.paymentDate)}</Text>
+            </View>
+          )}
         </View>
 
         {/* Thanh toán */}
@@ -193,11 +183,39 @@ export default function OrderDetailScreen() {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Phương thức</Text>
             <Text style={styles.infoValue}>
-              {order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' :
-               order.paymentMethod === 'BANKING' ? 'Chuyển khoản ngân hàng' :
-               order.paymentMethod || 'Chưa chọn'}
+              {order.paymentMethod === 'COD'
+                ? 'Thanh toán khi nhận hàng (COD)'
+                : order.paymentMethod === 'BANKING'
+                ? 'Chuyển khoản ngân hàng'
+                : order.paymentMethod || 'Chưa chọn'}
             </Text>
           </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Trạng thái thanh toán</Text>
+            <Text style={styles.infoValue}>
+              {order.paymentStatus === 'PAID' ? 'Đã thanh toán' :
+               order.paymentStatus === 'UNPAID' ? 'Chưa thanh toán' :
+               order.paymentStatus || '—'}
+            </Text>
+          </View>
+          {order.shippingFee > 0 && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Phí vận chuyển</Text>
+              <Text style={styles.infoValue}>{order.shippingFee.toLocaleString('vi-VN')} ₫</Text>
+            </View>
+          )}
+          {order.couponCode && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Mã giảm giá</Text>
+              <Text style={styles.infoValue}>{order.couponCode}</Text>
+            </View>
+          )}
+          {order.notes && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Ghi chú</Text>
+              <Text style={styles.infoValue}>{order.notes}</Text>
+            </View>
+          )}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Tổng cộng</Text>
             <Text style={styles.totalAmount}>
@@ -208,15 +226,13 @@ export default function OrderDetailScreen() {
 
         {/* Nút hành động */}
         <View style={styles.actionButtons}>
-          {/* Chỉ hiện nút hủy khi đang PENDING */}
-          {status === 'PENDING' && (
+          {order.orderStatus === 'PENDING' && (
             <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
               <Text style={styles.cancelBtnText}>Hủy đơn hàng</Text>
             </TouchableOpacity>
           )}
 
-          {/* Chỉ hiện đánh giá khi đã giao hàng thành công */}
-          {status === 'DELIVERED' && (
+          {order.orderStatus === 'DELIVERED' && (
             <TouchableOpacity
               style={styles.reviewBtn}
               onPress={() => router.push(`/order-detail/write-review/${id}`)}

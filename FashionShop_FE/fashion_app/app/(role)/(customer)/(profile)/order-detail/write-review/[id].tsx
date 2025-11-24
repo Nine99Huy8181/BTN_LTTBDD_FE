@@ -22,6 +22,7 @@ import { uploadImageToCloudinary } from '../../../../../../services/cloudinarySe
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { OrderService } from '../../../../../../services/order.service';
 import { showToast } from '../../../../../../utils/toast';
+import { Ionicons } from '@expo/vector-icons';
 type ReviewItem = {
   id: string;
   rating: number;
@@ -82,7 +83,7 @@ export default function ProductReviewScreen() {
       }
     } catch (error) {
       console.log('Error fetching order:', error);
-      showToast.error('Lỗi', 'Không thể tải thông tin đơn hàng');
+      console.log('Không thể tải thông tin đơn hàng');
     } finally {
       setLoading(false);
     }
@@ -268,14 +269,14 @@ export default function ProductReviewScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backText}>Quay lại</Text>
+            <Text style={styles.backText}><Ionicons name="arrow-back" size={22}/></Text>
           </TouchableOpacity>
           <Text style={styles.title}>Gửi đánh giá cho sản phẩm</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.form}>
-            <Text style={styles.label}>Chọn sản phẩm để đánh giá</Text>
+            <Text style={styles.label}>Sản phẩm</Text>
             {orderData?.orderItems && orderData.orderItems.length > 0 ? (
               <View style={{ marginBottom: 16 }}>
                 {orderData.orderItems.map((item: any, index: number) => {
@@ -366,58 +367,175 @@ export default function ProductReviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:{
+  safe: {
     flex: 1,
-  },
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  backButton: { padding: 6, marginRight: 8 },
-  starsContainer: { 
-    flexDirection: 'row', 
-    marginBottom: 10 
-  },
-  starButton: { 
-    padding: 4 
-  },
-  starText: { 
-    fontSize: 32,
-  },
-  backText: { color: '#007AFF' },
-  title: { fontSize: 16, fontWeight: '600' },
-  content: { padding: 12, paddingBottom: 40 },
-  form: { marginBottom: 16, backgroundColor: '#fafafa', padding: 12, borderRadius: 8 },
-  label: { fontSize: 13, marginBottom: 6, fontWeight: '600' },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 6, padding: 8, marginBottom: 10, backgroundColor: '#fff' },
-  submit: { backgroundColor: '#007AFF', padding: 10, borderRadius: 6, alignItems: 'center' },
-  submitText: { color: '#fff', fontWeight: '600' },
-  sectionTitle: { fontSize: 15, fontWeight: '700' },
-  listHeader: { marginBottom: 8 },
-  reviewCard: { backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: '#f0f0f0' },
-  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  author: { fontWeight: '700' },
-  stars: { color: '#f5a623' },
-  date: { fontSize: 11, color: '#666', marginBottom: 6 },
-  comment: { fontSize: 14, color: '#333' },
-  productSelect: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    padding: 12,
-    marginBottom: 8,
     backgroundColor: '#fff',
   },
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#fff',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  backText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000',
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+  },
+  form: {
+    backgroundColor: '#fff',
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#000',
+  },
+  
+  // Product Selection Styles
+  productSelect: {
+    backgroundColor: '#f8f8f8',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#f8f8f8',
+  },
   productSelectActive: {
-    borderColor: '#007AFF',
-    backgroundColor: '#e7f1ff',
+    backgroundColor: '#fff',
+    borderColor: '#000',
   },
   productSelectText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#666',
   },
   productSelectTextActive: {
-    color: '#007AFF',
+    fontSize: 15,
+    color: '#000',
     fontWeight: '600',
   },
+  
+  // Star Rating Styles
+  starsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 20,
+    gap: 8,
+  },
+  starButton: {
+    padding: 4,
+  },
+  starText: {
+    fontSize: 40,
+  },
+  
+  // Input Styles
+  input: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 15,
+    marginBottom: 20,
+    backgroundColor: '#f8f8f8',
+    textAlignVertical: 'top',
+  },
+  
+  // Image Selection Styles
+  imageSection: {
+    marginBottom: 20,
+  },
+  imagePickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  pickImageBtn: {
+    backgroundColor: '#f8f8f8',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+  },
+  pickImageText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  imageCount: {
+    marginLeft: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  imagePreviewContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  imageWrapper: {
+    position: 'relative',
+  },
+  previewImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#ff4444',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  removeImageText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    lineHeight: 16,
+  },
+  
+  // Submit Button
+  submit: {
+    backgroundColor: '#000',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  submitText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  // Success Modal Styles
   centeredView: {
     flex: 1,
     justifyContent: 'center',
@@ -426,51 +544,53 @@ const styles = StyleSheet.create({
   },
   successModal: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 32,
     alignItems: 'center',
-    width: '80%',
+    width: '85%',
+    maxWidth: 400,
   },
   successIcon: {
     fontSize: 60,
+    color: '#4CAF50',
     marginBottom: 16,
+    fontWeight: 'bold',
   },
   successTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
-    marginBottom: 8,
     color: '#000',
+    marginBottom: 8,
   },
   successText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#666',
-    marginBottom: 24,
     textAlign: 'center',
+    marginBottom: 24,
   },
   successButtonContainer: {
     width: '100%',
-    gap: 8,
+    gap: 12,
   },
   successBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
   },
   viewReviewBtn: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#000',
   },
   viewReviewText: {
     color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
-    fontSize: 14,
   },
   backBtn: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f8f8f8',
   },
   backBtnText: {
-    color: '#333',
+    color: '#000',
+    fontSize: 16,
     fontWeight: '600',
-    fontSize: 14,
   },
 });

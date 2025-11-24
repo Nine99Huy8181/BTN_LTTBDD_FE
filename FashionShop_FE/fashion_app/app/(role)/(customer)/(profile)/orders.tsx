@@ -51,6 +51,27 @@ const getStatusBg = (status: string) => {
   }
 };
 
+const parseTimestamp = (input: string | number[] | null | undefined): string => {
+  let numbers: number[] = [];
+
+  if (Array.isArray(input)) {
+    numbers = input.map(n => Number(n));
+  }
+  else if (typeof input === "string") {
+    const cleaned = input.replace(/[\[\]\s]/g, "");
+    numbers = cleaned.split(",").map(n => parseInt(n.trim(), 10));
+  }
+  else {
+    return "-";
+  }
+  if (numbers.length < 5 || numbers.some(n => isNaN(n))) {
+    return "Invalid";
+  }
+
+  const [year, month, day, hour, minute] = numbers;
+  return `${(day)}/${(month)}/${year} ${(hour)}:${(minute)}`;
+};
+
 export default function OrdersScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -151,7 +172,7 @@ export default function OrdersScreen() {
                 activeOpacity={0.8}
               >
                 <View style={styles.cardHeader}>
-                  <Text style={styles.orderCode}>Mã đơn: #{item.orderID}</Text>
+                  <Text style={styles.orderCode}>Mã đơn: HD{item.orderID}</Text>
                   <View
                     style={[
                       styles.statusTag,
@@ -173,7 +194,7 @@ export default function OrdersScreen() {
                 </View>
 
                 <Text style={styles.info}>
-                  Ngày đặt: {item.orderDate}
+                  Ngày đặt: {parseTimestamp(item.orderDate)}
                 </Text>
                 <Text style={styles.info}>
                   Tổng tiền:{' '}

@@ -6,8 +6,6 @@ export default function AuthLayout() {
     <Stack>
       <Stack.Screen name="login" options={{headerShown: false}} />
       <Stack.Screen name="register" options={{ headerShown: false }} />
-      <Stack.Screen name="forgot-password" options={{ title: 'Quên mật khẩu' }} />
-      <Stack.Screen name="verify-email" options={{ title: 'Xác minh Email' }} />
     </Stack>
   );
 }
