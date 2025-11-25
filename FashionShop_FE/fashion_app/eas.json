@@ -4,6 +4,7 @@
     "appVersionSource": "local"
   },
   "build": {
+    "projectRoot": "./fashion_app",
     "preview": {
       "android": {
         "buildType": "apk"
