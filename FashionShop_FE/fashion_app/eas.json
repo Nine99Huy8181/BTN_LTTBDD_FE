@@ -1,8 +1,7 @@
 {
   "cli": {
     "version": ">= 10.0.0",
-    "appVersionSource": "local",
-    "appDirectory": "FashionShop_FE/fashion_app"
+    "appVersionSource": "local"
   },
   "build": {
     "preview": {
